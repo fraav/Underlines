@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour
     private List<CardData> availableDeck = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
 
+
+    private const float InitialDamageMultiplier = 1.0f;
+    private const float InitialBlockMultiplier = 1.0f;
+    private const float InitialHealMultiplier = 1.0f;
     void Awake()
     {
         if (Instance == null)
@@ -29,6 +33,30 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+        public void ResetGameState()
+    {
+        // Resetear multiplicadores globales
+        damageMultiplier = InitialDamageMultiplier;
+        blockMultiplier = InitialBlockMultiplier;
+        healMultiplier = InitialHealMultiplier;
+
+        // Resetear mejoras individuales de cartas
+        foreach (CardData card in allCards)
+        {
+            card.individualBaseValueUpgrade = 0f;
+            card.individualDamageMultiplier = 1.0f;
+            
+            // Guardar los valores reseteados
+            PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
+            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
+        }
+
+        PlayerPrefs.Save();
+
+        // Reiniciar el mazo
+        InitializeDeck();
     }
 
     void LoadCardUpgrades()
@@ -88,7 +116,7 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("Se encontró carta nula en el mazo!");
+                Debug.LogWarning("Se encontrï¿½ carta nula en el mazo!");
             }
         }
 
@@ -104,7 +132,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("HandManager.Instance aún no está disponible");
+            Debug.Log("HandManager.Instance aï¿½n no estï¿½ disponible");
         }
     }
 
@@ -112,7 +140,7 @@ public class GameManager : MonoBehaviour
     {
         if (card == null || !currentHand.Contains(card))
         {
-            Debug.LogWarning("Intento de jugar carta inválida");
+            Debug.LogWarning("Intento de jugar carta invï¿½lida");
             return;
         }
 

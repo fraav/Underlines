@@ -17,7 +17,7 @@ public class Menu_Restart: MonoBehaviour
         }
 
         // Reinicia el estado del juego (cartas y mejoras)
-     /*   if (GameManager.Instance != null)
+        if (GameManager.Instance != null)
         {
             GameManager.Instance.ResetGameState();
         }
@@ -25,7 +25,7 @@ public class Menu_Restart: MonoBehaviour
         {
             Debug.LogWarning("GameManager.Instance no encontrado");
         }
-            */
+            
         // Opcional: Borra otros PlayerPrefs si es necesario
         PlayerPrefs.DeleteKey("FirstRun"); // Para forzar reinicio en el próximo juego
 
