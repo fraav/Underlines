@@ -8,9 +8,14 @@ public class CardData : ScriptableObject
     public float baseValue;
     public string cardName;
     [TextArea] public string description;
+
+    // Sprite para uso en el juego
     public Sprite icon;
 
-    // Nuevos campos para mejoras individuales
+    // Sprite específico para la tienda
+    public Sprite shopIcon;
+
+    // Campos para mejoras individuales
     public float individualBaseValueUpgrade = 0f;
     public float individualDamageMultiplier = 1.0f;
 }
