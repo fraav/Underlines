@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using TMPro;
 
-public class CardDisplay : MonoBehaviour, IPointerDownHandler
+public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("Referencias Obligatorias")]
     [SerializeField] private Image icon;
@@ -12,10 +12,16 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Button playButton;
 
-    [Header("ConfiguraciÛn")]
+    [Header("Configuraci√≥n")]
     [SerializeField] private CanvasGroup canvasGroup;
 
     private CardData currentCard;
+    private RectTransform rectTransform;
+    private Vector3 originalPosition;
+    private Quaternion originalRotation;
+    private Transform originalParent;
+    private bool isDragging = false;
+    private Coroutine moveCoroutine;
 
     void Start()
     {
@@ -27,13 +33,14 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
             }
         }
+        rectTransform = GetComponent<RectTransform>();
     }
 
     public void Initialize(CardData card)
     {
         if (card == null)
         {
-            Debug.LogError("Se intentÛ inicializar carta con CardData nulo");
+            Debug.LogError("Se intent√≥ inicializar carta con CardData nulo");
             return;
         }
 
@@ -81,7 +88,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         {
             case CardData.CardType.Attack:
                 finalValue = upgradedBase * GameManager.Instance.damageMultiplier * card.individualDamageMultiplier;
-                valueType = "DaÒo";
+                valueType = "Da√±o";
                 break;
             case CardData.CardType.Block:
                 finalValue = upgradedBase * GameManager.Instance.blockMultiplier;
@@ -89,7 +96,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 break;
             case CardData.CardType.Heal:
                 finalValue = upgradedBase * GameManager.Instance.healMultiplier;
-                valueType = "CuraciÛn";
+                valueType = "Curaci√≥n";
                 break;
             default:
                 return card.description;
@@ -122,7 +129,35 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        PlayCard();
+        // Mantenemos vac√≠o pero necesario para la interfaz
+    }
+
+    public void MoveToFanPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)
+    {
+        if (moveCoroutine != null)
+            StopCoroutine(moveCoroutine);
+        moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
+    }
+
+    private IEnumerator SmoothMove(Vector3 targetPosition, Quaternion targetRotation, float duration)
+    {
+        float elapsed = 0f;
+        Vector3 startPosition = rectTransform.localPosition;
+        Quaternion startRotation = rectTransform.localRotation;
+
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            rectTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, t);
+            rectTransform.localRotation = Quaternion.Lerp(startRotation, targetRotation, t);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        rectTransform.localPosition = targetPosition;
+        rectTransform.localRotation = targetRotation;
+        originalPosition = targetPosition;
+        originalRotation = targetRotation;
     }
 
     IEnumerator AnimateDiscard()
@@ -145,5 +180,50 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         }
 
         Destroy(gameObject);
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        isDragging = true;
+        originalPosition = rectTransform.localPosition;
+        originalRotation = rectTransform.localRotation;
+        originalParent = transform.parent;
+        transform.SetParent(transform.root); // Sacamos de la jerarqu√≠a de la mano
+        canvasGroup.blocksRaycasts = false;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (isDragging)
+        {
+            Vector2 pos;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                rectTransform.parent as RectTransform, 
+                eventData.position, 
+                eventData.pressEventCamera, 
+                out pos
+            );
+            rectTransform.localPosition = new Vector3(pos.x, pos.y, 0);
+            rectTransform.localRotation = Quaternion.identity;
+        }
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        isDragging = false;
+        canvasGroup.blocksRaycasts = true;
+
+        PlayArea playArea = FindObjectOfType<PlayArea>();
+        if (playArea != null && playArea.IsPointInside(eventData.position))
+        {
+            PlayCard();
+        }
+        else
+        {
+            transform.SetParent(originalParent);
+            if (moveCoroutine != null)
+                StopCoroutine(moveCoroutine);
+            moveCoroutine = StartCoroutine(SmoothMove(originalPosition, originalRotation, 0.2f));
+        }
     }
 }

@@ -999,6 +999,54 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 1
+--- !u!1 &506633497
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 506633498}
+  - component: {fileID: 506633499}
+  m_Layer: 5
+  m_Name: Playarea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &506633498
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 506633497}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1603515570}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.365, y: 0.39625925}
+  m_AnchorMax: {x: 0.67300004, y: 0.6651112}
+  m_AnchoredPosition: {x: 0, y: 0.000015258789}
+  m_SizeDelta: {x: 0.000061035, y: -0.000030518}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &506633499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 506633497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfe22380d6411b94e99749d4e42275ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &531767700
 GameObject:
   m_ObjectHideFlags: 0
@@ -1344,13 +1392,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2781e96cf2e9e03469343bdcc96545d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemPrice: 700
-  itemID: 1
-  consumable: 1
-  cardToUpgrade: {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
+  cardImage: {fileID: 0}
+  cardNameText: {fileID: 0}
+  upgradeCostText: {fileID: 0}
+  upgradeButton: {fileID: 0}
   baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0.5
-  unlimitedPurchases: 0
 --- !u!1 &744800606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1717,6 +1764,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardPrefab: {fileID: 2775043380357742957, guid: 0acd4fe23a0e2ee419e1a7234b0cda98, type: 3}
   handContainer: {fileID: 1827635136}
+  cardSpacing: 250
+  verticalOffset: 30
+  maxArcHeight: 30
+  moveDuration: 0.2
+  fanAngle: -20
 --- !u!4 &1460460142
 Transform:
   m_ObjectHideFlags: 0
@@ -1764,6 +1816,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1827635136}
+  - {fileID: 506633498}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1980,7 +2033,7 @@ GameObject:
   - component: {fileID: 1827635136}
   - component: {fileID: 1827635139}
   - component: {fileID: 1827635138}
-  - component: {fileID: 1827635137}
+  - component: {fileID: 1827635140}
   m_Layer: 5
   m_Name: HandPanel
   m_TagString: Untagged
@@ -2002,37 +2055,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1603515570}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 109.66882, y: 117.20767}
-  m_SizeDelta: {x: 368.9793, y: 234.4153}
+  m_AnchorMin: {x: 0.44839588, y: 0}
+  m_AnchorMax: {x: 0.88658327, y: 0.224}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: -0.000030518}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1827635137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1827635135}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 8
-  m_Spacing: 20
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!114 &1827635138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2071,6 +2098,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1827635135}
   m_CullTransparentMesh: 1
+--- !u!114 &1827635140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827635135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 20
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1860400791
 GameObject:
   m_ObjectHideFlags: 0
@@ -2156,13 +2209,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1860400797}
-        m_TargetAssemblyTypeName: ShopItem, Assembly-CSharp
-        m_MethodName: AttemptPurchase
+      - m_Target: {fileID: 1860400791}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -2233,13 +2286,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2781e96cf2e9e03469343bdcc96545d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemPrice: 200
-  itemID: 0
-  consumable: 1
-  cardToUpgrade: {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  baseValueUpgradeAmount: 0
-  damageMultiplierUpgradeAmount: 0.2
-  unlimitedPurchases: 0
+  cardImage: {fileID: 0}
+  cardNameText: {fileID: 0}
+  upgradeCostText: {fileID: 0}
+  upgradeButton: {fileID: 0}
+  baseValueUpgradeAmount: 2
+  damageMultiplierUpgradeAmount: 0
 --- !u!1 &2045488000
 GameObject:
   m_ObjectHideFlags: 0
