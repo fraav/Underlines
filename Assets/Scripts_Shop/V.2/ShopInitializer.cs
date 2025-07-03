@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 
 public class ShopInitializer : MonoBehaviour
 {
@@ -16,4 +16,4 @@ public class ShopInitializer : MonoBehaviour
             MoneyUI.Instance.UpdateMoneyText(EconomyManager.Instance.CurrentMoney);
         }
     }
-}
+}*/

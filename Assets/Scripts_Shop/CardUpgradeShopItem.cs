@@ -1,85 +1,34 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
-public class CardUpgradeShopItem : MonoBehaviour
+public class CardUpgradeShopItem : ShopItem
 {
-    [Header("Referencias UI")]
-    [SerializeField] private Image cardImage;
-    [SerializeField] private TMP_Text cardNameText;
-    [SerializeField] private TMP_Text upgradeCostText;
-    [SerializeField] private Button upgradeButton;
-
-    [Header("Configuración Mejora")]
+    [Header("Configuración de Mejora")]
+    [SerializeField] private CardData cardToUpgrade;
     [SerializeField] private float baseValueUpgradeAmount = 5f;
     [SerializeField] private float damageMultiplierUpgradeAmount = 0.1f;
+    [SerializeField] private bool unlimitedPurchases = false;
 
-    private CardData cardData;
-    private int cost;
-
-    void Start()
+    protected override void DeliverItem()
     {
-        upgradeButton.onClick.AddListener(TryPurchaseUpgrade);
-    }
-
-    public void SetCard(CardData card)
-    {
-        cardData = card;
-        UpdateUI();
-    }
-
-    public void SetCost(int newCost)
-    {
-        cost = newCost;
-        UpdateUI();
-    }
-
-    private void UpdateUI()
-    {
-        if (cardData == null) return;
-
-        // Usar shopIcon si está disponible, de lo contrario usar icon
-        if (cardData.shopIcon != null)
+        if (cardToUpgrade != null)
         {
-            cardImage.sprite = cardData.shopIcon;
+            // Aplicar mejoras
+            cardToUpgrade.individualBaseValueUpgrade += baseValueUpgradeAmount;
+            cardToUpgrade.individualDamageMultiplier += damageMultiplierUpgradeAmount;
+
+            // Guardar mejoras
+            SaveCardUpgrades(cardToUpgrade);
+
+            // Actualizar UI
+            if (HandManager.Instance != null)
+            {
+                HandManager.Instance.RefreshHand();
+            }
         }
         else
         {
-            cardImage.sprite = cardData.icon;
+            Debug.LogError("CardToUpgrade no asignado en CardUpgradeShopItem");
         }
-
-        cardNameText.text = cardData.cardName;
-        upgradeCostText.text = $"{cost}G";
-    }
-
-    private void TryPurchaseUpgrade()
-    {
-        if (EconomyManager.Instance != null && EconomyManager.Instance.TryPurchaseItem(cost))
-        {
-            DeliverUpgrade();
-        }
-        else
-        {
-            Debug.LogWarning("EconomyManager no encontrado o fondos insuficientes");
-        }
-    }
-
-    private void DeliverUpgrade()
-    {
-        // Aplicar mejoras
-        cardData.individualBaseValueUpgrade += baseValueUpgradeAmount;
-        cardData.individualDamageMultiplier += damageMultiplierUpgradeAmount;
-
-        // Guardar mejoras
-        SaveCardUpgrades(cardData);
-
-        // Actualizar UI en juego
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
-
-        Destroy(gameObject);
     }
 
     private void SaveCardUpgrades(CardData card)

@@ -1392,12 +1392,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2781e96cf2e9e03469343bdcc96545d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardImage: {fileID: 0}
-  cardNameText: {fileID: 0}
-  upgradeCostText: {fileID: 0}
-  upgradeButton: {fileID: 0}
+  itemPrice: 0
+  itemID: 
+  consumable: 1
+  cardToUpgrade: {fileID: 0}
   baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0.5
+  unlimitedPurchases: 0
 --- !u!1 &744800606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1764,10 +1765,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardPrefab: {fileID: 2775043380357742957, guid: 0acd4fe23a0e2ee419e1a7234b0cda98, type: 3}
   handContainer: {fileID: 1827635136}
-  cardSpacing: 250
+  cardSpacing: 220
   verticalOffset: 30
   maxArcHeight: 30
-  moveDuration: 0.2
+  moveDuration: 0.3
   fanAngle: -20
 --- !u!4 &1460460142
 Transform:
@@ -2209,13 +2210,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1860400791}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
+      - m_Target: {fileID: 1860400797}
+        m_TargetAssemblyTypeName: ShopItem, Assembly-CSharp
+        m_MethodName: AttemptPurchase
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -2286,12 +2287,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2781e96cf2e9e03469343bdcc96545d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardImage: {fileID: 0}
-  cardNameText: {fileID: 0}
-  upgradeCostText: {fileID: 0}
-  upgradeButton: {fileID: 0}
+  itemPrice: 500
+  itemID: 0
+  consumable: 0
+  cardToUpgrade: {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
   baseValueUpgradeAmount: 2
-  damageMultiplierUpgradeAmount: 0
+  damageMultiplierUpgradeAmount: 0.2
+  unlimitedPurchases: 1
 --- !u!1 &2045488000
 GameObject:
   m_ObjectHideFlags: 0

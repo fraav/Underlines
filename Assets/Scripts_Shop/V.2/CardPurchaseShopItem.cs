@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -72,4 +72,4 @@ public class CardPurchaseShopItem : MonoBehaviour
             Debug.LogError("ShopManager no encontrado!");
         }
     }
-}
+}*/
