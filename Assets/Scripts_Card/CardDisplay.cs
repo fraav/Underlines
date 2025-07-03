@@ -4,13 +4,12 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using TMPro;
 
-public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class CardDisplay : MonoBehaviour, IPointerDownHandler
 {
     [Header("Referencias Obligatorias")]
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private Button playButton;
 
     [Header("Configuración")]
     [SerializeField] private CanvasGroup canvasGroup;
@@ -19,9 +18,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
     private RectTransform rectTransform;
     private Vector3 originalPosition;
     private Quaternion originalRotation;
-    private Transform originalParent;
-    private bool isDragging = false;
     private Coroutine moveCoroutine;
+    private bool isBeingDiscarded = false;
 
     void Start()
     {
@@ -61,15 +59,18 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
             descriptionText.text = GetDescription(card);
         }
 
-        if (playButton != null)
-        {
-            playButton.onClick.RemoveAllListeners();
-            playButton.onClick.AddListener(PlayCard);
-        }
-
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = true;
+        }
+    }
+
+    public void SetInteractableState(bool interactable)
+    {
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = interactable ? 1f : 0.6f;
+            canvasGroup.blocksRaycasts = interactable;
         }
     }
 
@@ -106,8 +107,23 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
                $"Base: {upgradedBase}";
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        PlayCard();
+    }
+
     public void PlayCard()
     {
+        // Prevenir múltiples llamadas durante la animación
+        if (isBeingDiscarded) return;
+
+        // Solo permitir jugar durante el turno del jugador
+        if (GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
+        {
+            Debug.LogWarning("¡No es el turno del jugador!");
+            return;
+        }
+
         if (currentCard == null || GameManager.Instance == null) return;
 
         switch (currentCard.cardType)
@@ -127,16 +143,27 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
         StartCoroutine(AnimateDiscard());
     }
 
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        // Mantenemos vacío pero necesario para la interfaz
-    }
-
     public void MoveToFanPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)
     {
+        // Detener cualquier movimiento en curso
         if (moveCoroutine != null)
+        {
             StopCoroutine(moveCoroutine);
-        moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
+        }
+
+        // Solo mover si el objeto está activo
+        if (gameObject.activeInHierarchy)
+        {
+            moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
+        }
+        else
+        {
+            // Si está inactivo, establecer posición directamente
+            rectTransform.localPosition = targetPosition;
+            rectTransform.localRotation = targetRotation;
+            originalPosition = targetPosition;
+            originalRotation = targetRotation;
+        }
     }
 
     private IEnumerator SmoothMove(Vector3 targetPosition, Quaternion targetRotation, float duration)
@@ -147,6 +174,9 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
 
         while (elapsed < duration)
         {
+            // Verificar si el objeto sigue activo
+            if (!gameObject.activeInHierarchy) yield break;
+
             float t = elapsed / duration;
             rectTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, t);
             rectTransform.localRotation = Quaternion.Lerp(startRotation, targetRotation, t);
@@ -154,14 +184,20 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
             yield return null;
         }
 
-        rectTransform.localPosition = targetPosition;
-        rectTransform.localRotation = targetRotation;
-        originalPosition = targetPosition;
-        originalRotation = targetRotation;
+        // Verificar nuevamente antes de la posición final
+        if (gameObject.activeInHierarchy)
+        {
+            rectTransform.localPosition = targetPosition;
+            rectTransform.localRotation = targetRotation;
+            originalPosition = targetPosition;
+            originalRotation = targetRotation;
+        }
     }
 
     IEnumerator AnimateDiscard()
     {
+        isBeingDiscarded = true;
+
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = false;
@@ -173,57 +209,19 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
 
         while (elapsed < duration)
         {
+            // Salir si el objeto se desactiva
+            if (!gameObject.activeInHierarchy) yield break;
+
             float progress = elapsed / duration;
             transform.localScale = Vector3.Lerp(startScale, Vector3.zero, progress);
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        Destroy(gameObject);
-    }
-
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        isDragging = true;
-        originalPosition = rectTransform.localPosition;
-        originalRotation = rectTransform.localRotation;
-        originalParent = transform.parent;
-        transform.SetParent(transform.root); // Sacamos de la jerarquía de la mano
-        canvasGroup.blocksRaycasts = false;
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (isDragging)
+        // Destruir solo si sigue activo
+        if (gameObject.activeInHierarchy)
         {
-            Vector2 pos;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rectTransform.parent as RectTransform, 
-                eventData.position, 
-                eventData.pressEventCamera, 
-                out pos
-            );
-            rectTransform.localPosition = new Vector3(pos.x, pos.y, 0);
-            rectTransform.localRotation = Quaternion.identity;
-        }
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        isDragging = false;
-        canvasGroup.blocksRaycasts = true;
-
-        PlayArea playArea = FindObjectOfType<PlayArea>();
-        if (playArea != null && playArea.IsPointInside(eventData.position))
-        {
-            PlayCard();
-        }
-        else
-        {
-            transform.SetParent(originalParent);
-            if (moveCoroutine != null)
-                StopCoroutine(moveCoroutine);
-            moveCoroutine = StartCoroutine(SmoothMove(originalPosition, originalRotation, 0.2f));
+            Destroy(gameObject);
         }
     }
 }

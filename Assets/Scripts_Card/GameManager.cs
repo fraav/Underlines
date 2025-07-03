@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
+
+    // Variables de turno
+    public enum TurnState { PlayerTurn, EnemyTurn }
+    public TurnState currentTurn { get; private set; }
 
     // Variables mejorables
     public float damageMultiplier = 1.0f;
@@ -16,10 +21,13 @@ public class GameManager : MonoBehaviour
     private List<CardData> availableDeck = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
 
+    // Referencia al enemigo
+    public EnemyController enemyController;
 
     private const float InitialDamageMultiplier = 1.0f;
     private const float InitialBlockMultiplier = 1.0f;
     private const float InitialHealMultiplier = 1.0f;
+
     void Awake()
     {
         if (Instance == null)
@@ -28,6 +36,9 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             LoadCardUpgrades();
             InitializeDeck();
+
+            // Iniciar con turno del jugador
+            currentTurn = TurnState.PlayerTurn;
         }
         else
         {
@@ -35,7 +46,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-        public void ResetGameState()
+    public void ResetGameState()
     {
         // Resetear multiplicadores globales
         damageMultiplier = InitialDamageMultiplier;
@@ -47,7 +58,7 @@ public class GameManager : MonoBehaviour
         {
             card.individualBaseValueUpgrade = 0f;
             card.individualDamageMultiplier = 1.0f;
-            
+
             // Guardar los valores reseteados
             PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
             PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
@@ -116,7 +127,7 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("Se encontr� carta nula en el mazo!");
+                Debug.LogWarning("Se encontró carta nula en el mazo!");
             }
         }
 
@@ -132,15 +143,21 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("HandManager.Instance a�n no est� disponible");
+            Debug.Log("HandManager.Instance aún no está disponible");
         }
     }
 
     public void PlayCard(CardData card)
     {
+        if (currentTurn != TurnState.PlayerTurn)
+        {
+            Debug.LogWarning("No es el turno del jugador!");
+            return;
+        }
+
         if (card == null || !currentHand.Contains(card))
         {
-            Debug.LogWarning("Intento de jugar carta inv�lida");
+            Debug.LogWarning("Intento de jugar carta inválida");
             return;
         }
 
@@ -157,6 +174,30 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
             DrawNewHand();
         }
+
+        // Terminar turno del jugador e iniciar turno del enemigo
+        StartCoroutine(EndPlayerTurn());
+    }
+
+    private IEnumerator EndPlayerTurn()
+    {
+        currentTurn = TurnState.EnemyTurn;
+
+        // Deshabilitar interacción del jugador
+        HandManager.Instance.SetInteractable(false);
+
+        // Esperar antes del turno del enemigo (opcional)
+        yield return new WaitForSeconds(0.5f);
+
+        // Iniciar turno del enemigo
+        enemyController.StartEnemyTurn();
+    }
+
+    public void StartPlayerTurn()
+    {
+        currentTurn = TurnState.PlayerTurn;
+        HandManager.Instance.SetInteractable(true);
+        Debug.Log("Turno del Jugador - Puedes jugar cartas");
     }
 
     // Funciones de cartas (modificadas para usar mejoras individuales)

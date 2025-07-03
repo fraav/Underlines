@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.UI; // Necesario para acceder a Button
 
 public class HandManager : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float maxArcHeight = 100f;
     [SerializeField] private float moveDuration = 0.3f;
     [SerializeField] private float fanAngle = 30f;
-    
+
     private List<GameObject> spawnedCards = new List<GameObject>();
 
     void Awake()
@@ -51,6 +52,31 @@ public class HandManager : MonoBehaviour
         else
         {
             RefreshHand();
+            // Actualizar estado inicial de interactividad
+            SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
+        }
+    }
+
+    // Nuevo método para controlar la interactividad
+    public void SetInteractable(bool interactable)
+    {
+        foreach (GameObject cardObj in spawnedCards)
+        {
+            if (cardObj != null)
+            {
+                Button button = cardObj.GetComponent<Button>();
+                if (button != null)
+                {
+                    button.interactable = interactable;
+                }
+
+                // Opcional: Cambiar apariencia visual
+                CardDisplay display = cardObj.GetComponent<CardDisplay>();
+                if (display != null)
+                {
+                    display.SetInteractableState(interactable);
+                }
+            }
         }
     }
 
@@ -115,33 +141,39 @@ public class HandManager : MonoBehaviour
         }
 
         StartCoroutine(ArrangeCardsInFan());
+
+        // Actualizar estado de interactividad al refrescar
+        if (GameManager.Instance != null)
+        {
+            SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
+        }
     }
 
     private IEnumerator ArrangeCardsInFan()
     {
         yield return new WaitForEndOfFrame();
-        
+
         int cardCount = spawnedCards.Count;
         if (cardCount == 0) yield break;
-        
+
         float totalWidth = cardSpacing * (cardCount - 1);
         float startX = -totalWidth / 2f;
-        
+
         for (int i = 0; i < cardCount; i++)
         {
             GameObject card = spawnedCards[i];
             if (card == null) continue;
-            
+
             // Calcular posición en arco parabólico
             float t = i / (float)(cardCount - 1);
             float x = startX + i * cardSpacing;
-            
+
             // Altura basada en función parabólica
             float y = verticalOffset + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
-            
+
             // Rotación basada en posición
             float rotation = Mathf.Lerp(-fanAngle, fanAngle, t);
-            
+
             CardDisplay display = card.GetComponent<CardDisplay>();
             if (display != null)
             {
