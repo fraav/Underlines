@@ -24,6 +24,10 @@ public class GameManager : MonoBehaviour
     // Referencia al enemigo
     public EnemyController enemyController;
 
+    // Sistemas de Salud
+    public HealthSystem playerHealth;
+    public HealthSystem enemyHealth;
+
     private const float InitialDamageMultiplier = 1.0f;
     private const float InitialBlockMultiplier = 1.0f;
     private const float InitialHealMultiplier = 1.0f;
@@ -36,6 +40,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             LoadCardUpgrades();
             InitializeDeck();
+            InitializeHealthSystems();
 
             // Iniciar con turno del jugador
             currentTurn = TurnState.PlayerTurn;
@@ -44,6 +49,40 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void InitializeHealthSystems()
+    {
+        // Configurar salud del jugador
+        if (playerHealth == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                playerHealth = player.GetComponent<HealthSystem>();
+                if (playerHealth == null)
+                {
+                    playerHealth = player.AddComponent<HealthSystem>();
+                }
+                playerHealth.SetMaxHealth(100);
+            }
+        }
+
+        // Configurar salud del enemigo a través del EnemyController
+        if (enemyController != null)
+        {
+            enemyHealth = enemyController.GetComponent<HealthSystem>();
+            if (enemyHealth == null)
+            {
+                enemyHealth = enemyController.gameObject.AddComponent<HealthSystem>();
+            }
+        }
+    }
+
+    public void OnEnemyDefeated()
+    {
+        Debug.Log("¡Enemigo derrotado! Victoria.");
+        // Aquí puedes agregar lógica adicional como mostrar pantalla de victoria
     }
 
     public void ResetGameState()
@@ -68,6 +107,9 @@ public class GameManager : MonoBehaviour
 
         // Reiniciar el mazo
         InitializeDeck();
+
+        // Reiniciar salud
+        InitializeHealthSystems();
     }
 
     void LoadCardUpgrades()
@@ -205,7 +247,14 @@ public class GameManager : MonoBehaviour
     {
         float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
                           damageMultiplier * card.individualDamageMultiplier;
-        Debug.Log($"Atacando por {finalDamage} puntos");
+        int damage = Mathf.RoundToInt(finalDamage);
+        Debug.Log($"Atacando por {damage} puntos");
+
+        // Aplicar daño al enemigo
+        if (enemyController != null)
+        {
+            enemyController.TakeDamage(damage);
+        }
     }
 
     public void Card_Block(CardData card)
@@ -217,7 +266,14 @@ public class GameManager : MonoBehaviour
     public void Card_Heal(CardData card)
     {
         float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
-        Debug.Log($"Curando {finalHeal} puntos");
+        int healAmount = Mathf.RoundToInt(finalHeal);
+        Debug.Log($"Curando {healAmount} puntos");
+
+        // Curar al jugador
+        if (playerHealth != null)
+        {
+            playerHealth.Heal(healAmount);
+        }
     }
 
     // Funciones para tienda (mejoras globales)
