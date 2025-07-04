@@ -1064,6 +1064,8 @@ GameObject:
   - component: {fileID: 520477870}
   - component: {fileID: 520477869}
   - component: {fileID: 520477868}
+  - component: {fileID: 520477873}
+  - component: {fileID: 520477872}
   m_Layer: 0
   m_Name: Capsule (1)
   m_TagString: Untagged
@@ -1162,6 +1164,58 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &520477872
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520477867}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 351b1bf4835ea461aa4fedad0d42cfd3, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &520477873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520477867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18230bb3a8c616643b7c78dc4093965f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attacks:
+  - animationName: Cap1
+    duration: 2
+    damage: 0
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  - animationName: Cap2
+    duration: 2
+    damage: 0
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  - animationName: Cap3
+    duration: 2
+    damage: 0
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  enemyAnimator: {fileID: 520477872}
+  healthBarPosition: {fileID: 0}
 --- !u!1 &533549371
 GameObject:
   m_ObjectHideFlags: 0
@@ -1182,7 +1236,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &533549372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2458,7 +2512,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
-  enemyController: {fileID: 533549372}
+  enemyController: {fileID: 520477873}
   playerController: {fileID: 14151858}
 --- !u!4 &932123689
 Transform:
