@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.UI; // Necesario para acceder a Button
+using UnityEngine.UI;
 
 public class HandManager : MonoBehaviour
 {
@@ -52,29 +52,27 @@ public class HandManager : MonoBehaviour
         else
         {
             RefreshHand();
-            // Actualizar estado inicial de interactividad
             SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
         }
     }
 
-    // Nuevo método para controlar la interactividad
     public void SetInteractable(bool interactable)
     {
         foreach (GameObject cardObj in spawnedCards)
         {
             if (cardObj != null)
             {
-                Button button = cardObj.GetComponent<Button>();
-                if (button != null)
-                {
-                    button.interactable = interactable;
-                }
-
-                // Opcional: Cambiar apariencia visual
+                // Deshabilitar completamente durante animaciones
                 CardDisplay display = cardObj.GetComponent<CardDisplay>();
                 if (display != null)
                 {
                     display.SetInteractableState(interactable);
+                    
+                    CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
+                    if (canvasGroup != null)
+                    {
+                        canvasGroup.blocksRaycasts = interactable;
+                    }
                 }
             }
         }
@@ -141,12 +139,7 @@ public class HandManager : MonoBehaviour
         }
 
         StartCoroutine(ArrangeCardsInFan());
-
-        // Actualizar estado de interactividad al refrescar
-        if (GameManager.Instance != null)
-        {
-            SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
-        }
+        SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
     }
 
     private IEnumerator ArrangeCardsInFan()
@@ -164,14 +157,9 @@ public class HandManager : MonoBehaviour
             GameObject card = spawnedCards[i];
             if (card == null) continue;
 
-            // Calcular posición en arco parabólico
             float t = i / (float)(cardCount - 1);
             float x = startX + i * cardSpacing;
-
-            // Altura basada en función parabólica
             float y = verticalOffset + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
-
-            // Rotación basada en posición
             float rotation = Mathf.Lerp(-fanAngle, fanAngle, t);
 
             CardDisplay display = card.GetComponent<CardDisplay>();

@@ -126,6 +126,13 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         if (currentCard == null || GameManager.Instance == null) return;
 
+        // Deshabilitar interacción con todas las cartas
+        HandManager.Instance.SetInteractable(false);
+
+        // Iniciar animación de descarte de la carta
+        StartCoroutine(AnimateDiscard());
+
+        // Ejecutar la lógica de la carta
         switch (currentCard.cardType)
         {
             case CardData.CardType.Attack:
@@ -138,9 +145,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 GameManager.Instance.Card_Heal(currentCard);
                 break;
         }
-
-        GameManager.Instance.PlayCard(currentCard);
-        StartCoroutine(AnimateDiscard());
     }
 
     public void MoveToFanPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)

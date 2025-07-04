@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
 
     // Referencia al enemigo
     public EnemyController enemyController;
+    // Nueva referencia al jugador
+    public PlayerController playerController;
 
     private const float InitialDamageMultiplier = 1.0f;
     private const float InitialBlockMultiplier = 1.0f;
@@ -174,12 +176,9 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
             DrawNewHand();
         }
-
-        // Terminar turno del jugador e iniciar turno del enemigo
-        StartCoroutine(EndPlayerTurn());
     }
 
-    private IEnumerator EndPlayerTurn()
+    public IEnumerator EndPlayerTurn()
     {
         currentTurn = TurnState.EnemyTurn;
 
@@ -200,24 +199,54 @@ public class GameManager : MonoBehaviour
         Debug.Log("Turno del Jugador - Puedes jugar cartas");
     }
 
-    // Funciones de cartas (modificadas para usar mejoras individuales)
+    // Funciones de cartas modificadas
     public void Card_Attack(CardData card)
     {
+        if (playerController == null)
+        {
+            Debug.LogError("PlayerController no asignado en GameManager!");
+            return;
+        }
+
         float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
                           damageMultiplier * card.individualDamageMultiplier;
-        Debug.Log($"Atacando por {finalDamage} puntos");
+        Debug.Log($"Preparando ataque de {finalDamage} puntos");
+
+        // Función para aplicar el daño (se llamará durante la animación)
+        void ApplyDamage()
+        {
+            Debug.Log($"Aplicando daño: {finalDamage} puntos");
+            enemyController.TakeDamage((int)finalDamage);
+        }
+
+        // Función para completar el turno (se llamará al final de la animación)
+        void CompleteTurn()
+        {
+            StartCoroutine(EndPlayerTurn());
+        }
+
+        // Iniciar animación del jugador
+        playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
     }
 
     public void Card_Block(CardData card)
     {
         float finalBlock = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
         Debug.Log($"Bloqueando {finalBlock} puntos");
+
+        // Para cartas sin animación, terminar turno inmediatamente
+        PlayCard(card);
+        StartCoroutine(EndPlayerTurn());
     }
 
     public void Card_Heal(CardData card)
     {
         float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
         Debug.Log($"Curando {finalHeal} puntos");
+
+        // Para cartas sin animación, terminar turno inmediatamente
+        PlayCard(card);
+        StartCoroutine(EndPlayerTurn());
     }
 
     // Funciones para tienda (mejoras globales)
