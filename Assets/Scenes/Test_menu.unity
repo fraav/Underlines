@@ -295,7 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37a0df4b09ff5dc4e8a140ffdd128175, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moneyammount: 200
+  moneyammount: 1500
 --- !u!114 &722717979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -364,6 +364,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
+  enemyController: {fileID: 0}
+  playerController: {fileID: 0}
 --- !u!4 &1132603630
 Transform:
   m_ObjectHideFlags: 0
@@ -483,7 +485,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Test1
+          m_StringArgument: prueba
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1149513080

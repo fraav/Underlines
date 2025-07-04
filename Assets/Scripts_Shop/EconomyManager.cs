@@ -26,7 +26,7 @@ public class EconomyManager : MonoBehaviour
     }
         public void ResetMoney()
     {
-        currentMoney = 200; // O el valor inicial que prefieras
+        currentMoney = 1500; // O el valor inicial que prefieras
         SaveMoney();
         
         if (MoneyUI.Instance != null)
