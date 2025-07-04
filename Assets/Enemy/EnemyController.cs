@@ -3,43 +3,130 @@ using System.Collections;
 
 public class EnemyController : MonoBehaviour
 {
-    [SerializeField] private Animator enemyAnimator;
-    [SerializeField] private string attackTrigger = "Attack";
-    [SerializeField] private float turnDuration = 3.0f;
+    [System.Serializable]
+    public class EnemyAttack
+    {
+        public string animationName;
+        public float duration;
+        public int damage;
+        public ParticleSystem effect;
+        public AudioClip sound;
+    }
 
-    private int attackTriggerHash;
+    [Header("Configuraci贸n de Ataques")]
+    [SerializeField] private EnemyAttack[] attacks;
+
+    [Header("Referencias")]
+    [SerializeField] private Animator enemyAnimator;
+    [SerializeField] private Transform healthBarPosition;
+
+    private int lastAttackIndex = -1;
+    private bool isDead = false;
 
     void Start()
     {
-        // Convertir el nombre a hash para mejor rendimiento
-        attackTriggerHash = Animator.StringToHash(attackTrigger);
+        // Validar configuraci贸n
+        if (attacks.Length == 0)
+        {
+            Debug.LogError("No hay ataques configurados para el enemigo!");
+        }
+
+        if (enemyAnimator == null)
+        {
+            enemyAnimator = GetComponent<Animator>();
+        }
     }
 
     public void StartEnemyTurn()
     {
+        if (isDead) return;
+
         StartCoroutine(PerformEnemyTurn());
     }
 
     private IEnumerator PerformEnemyTurn()
     {
-        Debug.Log("Turno del Enemigo - Iniciando acci髇");
+        Debug.Log("Turno del Enemigo - Iniciando acci贸n");
 
-        // Activar trigger de ataque
+        // Seleccionar ataque aleatorio
+        int attackIndex = SelectRandomAttack();
+        EnemyAttack selectedAttack = attacks[attackIndex];
+
+        // Ejecutar animaci贸n
         if (enemyAnimator != null)
         {
-            enemyAnimator.SetTrigger(attackTriggerHash);
+            enemyAnimator.Play(selectedAttack.animationName);
         }
         else
         {
             Debug.LogWarning("Animator del enemigo no asignado!");
         }
 
-        // Esperar mientras se ejecuta la animaci髇
-        yield return new WaitForSeconds(turnDuration);
+        // Activar efecto visual si existe
+        if (selectedAttack.effect != null)
+        {
+            selectedAttack.effect.Play();
+        }
+
+        // Reproducir sonido si existe
+        if (selectedAttack.sound != null)
+        {
+            AudioSource.PlayClipAtPoint(selectedAttack.sound, transform.position);
+        }
+
+        // Esperar mientras se ejecuta la animaci贸n
+        yield return new WaitForSeconds(selectedAttack.duration);
 
         Debug.Log("Turno del Enemigo - Finalizado");
 
         // Terminar turno y volver al jugador
         GameManager.Instance.StartPlayerTurn();
+    }
+
+    private int SelectRandomAttack()
+    {
+        // Si solo hay un ataque
+        if (attacks.Length == 1) return 0;
+
+        // Seleccionar aleatoriamente evitando repeticiones consecutivas
+        int newIndex;
+        do
+        {
+            newIndex = Random.Range(0, attacks.Length);
+        } while (newIndex == lastAttackIndex && attacks.Length > 1);
+
+        lastAttackIndex = newIndex;
+        return newIndex;
+    }
+
+    private void OnEnemyDeath()
+    {
+        isDead = true;
+        Debug.Log("隆Enemigo derrotado!");
+
+        // Desactivar componentes
+        if (enemyAnimator != null)
+        {
+            enemyAnimator.SetTrigger("Die");
+        }
+
+        // Desactivar colisiones
+        Collider2D collider = GetComponent<Collider2D>();
+        if (collider != null) collider.enabled = false;
+
+        // Notificar al GameManager
+        // GameManager.Instance.OnEnemyDefeated();
+
+        // Destruir despu茅s de un tiempo
+        Destroy(gameObject, 2f);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (!isDead)
+        {
+            // L贸gica para manejar el da帽o sin sistema de salud
+            Debug.Log($"Enemigo recibi贸 {damage} puntos de da帽o");
+        }
     }
 }
