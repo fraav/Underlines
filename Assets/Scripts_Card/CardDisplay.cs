@@ -10,6 +10,10 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
+    
+    [Header("Descripción Emergente")]
+    [SerializeField] private GameObject descriptionPanel;
+    [SerializeField] private TMP_Text fullDescriptionText;
 
     [Header("Configuración")]
     [SerializeField] private CanvasGroup canvasGroup;
@@ -32,6 +36,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
             }
         }
         rectTransform = GetComponent<RectTransform>();
+        
+        // Ocultar panel de descripción al inicio
+        if (descriptionPanel != null) 
+        {
+            descriptionPanel.SetActive(false);
+        }
     }
 
     public void Initialize(CardData card)
@@ -57,6 +67,11 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         if (descriptionText != null)
         {
             descriptionText.text = GetDescription(card);
+        }
+
+        if (fullDescriptionText != null)
+        {
+            fullDescriptionText.text = GetFullDescription(card);
         }
 
         if (canvasGroup != null)
@@ -109,7 +124,68 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        PlayCard();
+        // Clic izquierdo: jugar carta
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            PlayCard();
+        }
+        // Clic derecho: mostrar/ocultar descripción
+        else if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            ToggleDescription();
+        }
+    }
+
+    private void ToggleDescription()
+    {
+        if (descriptionPanel == null || isBeingDiscarded) return;
+        
+        // Alternar visibilidad del panel
+        bool isActive = !descriptionPanel.activeSelf;
+        descriptionPanel.SetActive(isActive);
+        
+        // Si estamos activando, traer al frente
+        if (isActive)
+        {
+            transform.SetAsLastSibling();
+        }
+    }
+    
+    private string GetFullDescription(CardData card)
+    {
+        if (GameManager.Instance == null) return card.description;
+        
+        float upgradedBase = card.baseValue + card.individualBaseValueUpgrade;
+        float finalValue = 0f;
+        string valueType = "";
+        string typeName = "";
+
+        switch (card.cardType)
+        {
+            case CardData.CardType.Attack:
+                finalValue = upgradedBase * GameManager.Instance.damageMultiplier * card.individualDamageMultiplier;
+                valueType = "Daño";
+                typeName = "Ataque";
+                break;
+            case CardData.CardType.Block:
+                finalValue = upgradedBase * GameManager.Instance.blockMultiplier;
+                valueType = "Bloqueo";
+                typeName = "Defensa";
+                break;
+            case CardData.CardType.Heal:
+                finalValue = upgradedBase * GameManager.Instance.healMultiplier;
+                valueType = "Curación";
+                typeName = "Curación";
+                break;
+            default:
+                return card.description;
+        }
+
+        return $"<b>{card.cardName}</b>\n\n" +
+               $"{card.description}\n\n" +
+               $"{valueType}: <color=#FFD700>{finalValue.ToString("F1")}</color>\n" +
+               $"Valor Base: {upgradedBase}\n" +
+               $"<i>Tipo: {typeName}</i>";
     }
 
     public void PlayCard()
@@ -205,6 +281,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = false;
+        }
+        
+        // Ocultar descripción si está visible
+        if (descriptionPanel != null && descriptionPanel.activeSelf)
+        {
+            descriptionPanel.SetActive(false);
         }
 
         float duration = 0.3f;
