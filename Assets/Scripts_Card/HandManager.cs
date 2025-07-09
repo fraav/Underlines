@@ -1,12 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.UI;
 
 public class HandManager : MonoBehaviour
 {
     public static HandManager Instance;
 
+    [Header("Card Display Settings")]
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private Transform handContainer;
     [SerializeField] private float cardSpacing = 150f;
@@ -31,54 +31,39 @@ public class HandManager : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(InitializeAfterGM());
+        StartCoroutine(InitializeAfterGameManager());
     }
 
-    IEnumerator InitializeAfterGM()
+    private IEnumerator InitializeAfterGameManager()
     {
         int maxAttempts = 10;
-        int attempts = 0;
-
-        while (GameManager.Instance == null && attempts < maxAttempts)
+        while (GameManager.Instance == null && maxAttempts-- > 0)
         {
             yield return new WaitForSeconds(0.1f);
-            attempts++;
         }
 
-        if (GameManager.Instance == null)
-        {
-            Debug.LogError("GameManager no se inicializó después de 1 segundo!");
-        }
-        else
+        if (GameManager.Instance != null)
         {
             RefreshHand();
-            SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
-        }
-    }
-
-    public void SetInteractable(bool interactable)
-    {
-        foreach (GameObject cardObj in spawnedCards)
-        {
-            if (cardObj != null)
-            {
-                // Deshabilitar completamente durante animaciones
-                CardDisplay display = cardObj.GetComponent<CardDisplay>();
-                if (display != null)
-                {
-                    display.SetInteractableState(interactable);
-                    
-                    CanvasGroup canvasGroup = cardObj.GetComponent<CanvasGroup>();
-                    if (canvasGroup != null)
-                    {
-                        canvasGroup.blocksRaycasts = interactable;
-                    }
-                }
-            }
+            UpdateInteractableState();
         }
     }
 
     public void RefreshHand()
+    {
+        ClearExistingCards();
+        
+        if (GameManager.Instance == null || GameManager.Instance.currentHand == null)
+        {
+            return;
+        }
+
+        CreateNewCards();
+        StartCoroutine(ArrangeCardsInFan());
+        UpdateInteractableState();
+    }
+
+    private void ClearExistingCards()
     {
         foreach (var card in spawnedCards)
         {
@@ -88,44 +73,17 @@ public class HandManager : MonoBehaviour
             }
         }
         spawnedCards.Clear();
+    }
 
-        if (GameManager.Instance == null)
-        {
-            Debug.LogError("GameManager.Instance es nulo en RefreshHand!");
-            return;
-        }
-
-        if (GameManager.Instance.currentHand == null)
-        {
-            Debug.LogError("currentHand es nulo en RefreshHand!");
-            return;
-        }
-
+    private void CreateNewCards()
+    {
         foreach (CardData card in GameManager.Instance.currentHand)
         {
-            if (card == null)
-            {
-                Debug.LogWarning("Se encontró carta nula en la mano. Saltando...");
-                continue;
-            }
-
-            if (cardPrefab == null)
-            {
-                Debug.LogError("CardPrefab no asignado en HandManager!");
-                return;
-            }
-
-            if (handContainer == null)
-            {
-                Debug.LogError("HandContainer no asignado en HandManager!");
-                return;
-            }
+            if (card == null) continue;
 
             GameObject newCard = Instantiate(cardPrefab, handContainer);
-            newCard.transform.localPosition = Vector3.zero;
-            newCard.transform.localRotation = Quaternion.identity;
-
             CardDisplay display = newCard.GetComponent<CardDisplay>();
+            
             if (display != null)
             {
                 display.Initialize(card);
@@ -133,19 +91,15 @@ public class HandManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("CardDisplay no encontrado en el prefab de carta");
                 Destroy(newCard);
             }
         }
-
-        StartCoroutine(ArrangeCardsInFan());
-        SetInteractable(GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn);
     }
 
     private IEnumerator ArrangeCardsInFan()
     {
         yield return new WaitForEndOfFrame();
-
+        
         int cardCount = spawnedCards.Count;
         if (cardCount == 0) yield break;
 
@@ -157,7 +111,7 @@ public class HandManager : MonoBehaviour
             GameObject card = spawnedCards[i];
             if (card == null) continue;
 
-            float t = i / (float)(cardCount - 1);
+            float t = cardCount > 1 ? i / (float)(cardCount - 1) : 0.5f;
             float x = startX + i * cardSpacing;
             float y = verticalOffset + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
             float rotation = Mathf.Lerp(-fanAngle, fanAngle, t);
@@ -172,5 +126,27 @@ public class HandManager : MonoBehaviour
                 );
             }
         }
+    }
+
+    public void SetInteractable(bool interactable)
+    {
+        foreach (GameObject cardObj in spawnedCards)
+        {
+            if (cardObj != null)
+            {
+                CardDisplay display = cardObj.GetComponent<CardDisplay>();
+                if (display != null)
+                {
+                    display.SetInteractableState(interactable);
+                }
+            }
+        }
+    }
+
+    private void UpdateInteractableState()
+    {
+        bool interactable = GameManager.Instance != null && 
+                          GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn;
+        SetInteractable(interactable);
     }
 }

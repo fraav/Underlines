@@ -4,74 +4,95 @@ using System.Collections;
 public class PlayerController : MonoBehaviour
 {
     [System.Serializable]
-    public class PlayerCardAction
+    public class CardAnimation
     {
         public CardData.CardType cardType;
         public string animationTrigger;
-        public float damagePointTime; // Tiempo para aplicar daño
-        public float animationDuration;
+        public float actionPointTime = 0.5f;
+        public float animationDuration = 1f;
         public ParticleSystem effect;
         public AudioClip sound;
     }
 
-    [Header("Configuración de Acciones")]
-    [SerializeField] private PlayerCardAction[] cardActions;
-
-    [Header("Referencias")]
+    [Header("Card Animations")]
+    [SerializeField] private CardAnimation[] cardAnimations;
     [SerializeField] private Animator animator;
+    [SerializeField] private GameObject highlightEffect;
 
-    private PlayerCardAction GetActionForCard(CardData.CardType type)
+    public HealthSystem healthSystem;
+
+    public void PlayCardAnimation(CardData card, System.Action onAction, System.Action onComplete)
     {
-        foreach (var action in cardActions)
+        CardAnimation animation = GetAnimationForCard(card.cardType);
+        if (animation == null)
         {
-            if (action.cardType == type) return action;
+            Debug.LogWarning($"No animation found for card type: {card.cardType}");
+            onAction?.Invoke();
+            onComplete?.Invoke();
+            return;
+        }
+
+        StartCoroutine(PerformCardAnimation(animation, onAction, onComplete));
+    }
+
+    private IEnumerator PerformCardAnimation(CardAnimation animation, System.Action onAction, System.Action onComplete)
+    {
+        // Trigger animation
+        if (animator != null)
+        {
+            animator.SetTrigger(animation.animationTrigger);
+        }
+
+        // Play effects
+        if (animation.effect != null)
+        {
+            animation.effect.Play();
+        }
+
+        if (animation.sound != null)
+        {
+            AudioSource.PlayClipAtPoint(animation.sound, transform.position);
+        }
+
+        // Wait for action point
+        yield return new WaitForSeconds(animation.actionPointTime);
+        onAction?.Invoke();
+
+        // Wait for remaining animation time
+        float remainingTime = animation.animationDuration - animation.actionPointTime;
+        if (remainingTime > 0)
+        {
+            yield return new WaitForSeconds(remainingTime);
+        }
+
+        onComplete?.Invoke();
+    }
+
+    private CardAnimation GetAnimationForCard(CardData.CardType cardType)
+    {
+        foreach (var anim in cardAnimations)
+        {
+            if (anim.cardType == cardType)
+            {
+                return anim;
+            }
         }
         return null;
     }
 
-    public void PlayCardAnimation(CardData card, System.Action damageCallback, System.Action animationComplete)
+    public void SetHighlight(bool active)
     {
-        PlayerCardAction action = GetActionForCard(card.cardType);
-        if (action == null)
+        if (highlightEffect != null)
         {
-            Debug.LogError($"No hay acción configurada para el tipo de carta: {card.cardType}");
-            damageCallback?.Invoke();
-            animationComplete?.Invoke();
-            return;
+            highlightEffect.SetActive(active);
         }
-
-        StartCoroutine(PerformCardAction(action, damageCallback, animationComplete));
     }
 
-    private IEnumerator PerformCardAction(PlayerCardAction action, System.Action damageCallback, System.Action animationComplete)
+    private void OnMouseDown()
     {
-        // Activar animación
-        if (animator != null)
+        if (GameManager.Instance != null)
         {
-            animator.SetTrigger(action.animationTrigger);
+            GameManager.Instance.SelectTarget(gameObject);
         }
-        else
-        {
-            Debug.LogWarning("Animator del jugador no asignado!");
-        }
-
-        // Activar efecto visual
-        if (action.effect != null) action.effect.Play();
-
-        // Reproducir sonido
-        if (action.sound != null) AudioSource.PlayClipAtPoint(action.sound, transform.position);
-
-        // Esperar hasta el momento de aplicar daño
-        yield return new WaitForSeconds(action.damagePointTime);
-        
-        // Aplicar daño
-        damageCallback?.Invoke();
-
-        // Esperar el resto de la animación
-        float remainingTime = action.animationDuration - action.damagePointTime;
-        if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
-        
-        // Completar animación
-        animationComplete?.Invoke();
     }
 }

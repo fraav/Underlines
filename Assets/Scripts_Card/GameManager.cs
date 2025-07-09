@@ -7,28 +7,29 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    // Variables de turno
-    public enum TurnState { PlayerTurn, EnemyTurn }
+    public enum TurnState { PlayerTurn, EnemyTurn, SelectingTarget }
     public TurnState currentTurn { get; private set; }
 
-    // Variables mejorables
+    [Header("Game Settings")]
     public float damageMultiplier = 1.0f;
     public float blockMultiplier = 1.0f;
     public float healMultiplier = 1.0f;
 
-    // Sistema de cartas
+    [Header("Card System")]
     public List<CardData> allCards = new List<CardData>();
     private List<CardData> availableDeck = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
 
-    // Referencia al enemigo
+    [Header("References")]
     public EnemyController enemyController;
-    // Nueva referencia al jugador
     public PlayerController playerController;
+    public HealthSystem playerHealth;
+    public HealthSystem enemyHealth;
 
-    private const float InitialDamageMultiplier = 1.0f;
-    private const float InitialBlockMultiplier = 1.0f;
-    private const float InitialHealMultiplier = 1.0f;
+    private CardData selectedCard;
+    private bool playerIsValidTarget;
+    private bool enemyIsValidTarget;
+    private const string PlayerHealthKey = "PlayerCurrentHealth";
 
     void Awake()
     {
@@ -36,11 +37,7 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadCardUpgrades();
-            InitializeDeck();
-
-            // Iniciar con turno del jugador
-            currentTurn = TurnState.PlayerTurn;
+            InitializeGame();
         }
         else
         {
@@ -48,44 +45,165 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void ResetGameState()
+    void InitializeGame()
     {
-        // Resetear multiplicadores globales
-        damageMultiplier = InitialDamageMultiplier;
-        blockMultiplier = InitialBlockMultiplier;
-        healMultiplier = InitialHealMultiplier;
-
-        // Resetear mejoras individuales de cartas
-        foreach (CardData card in allCards)
-        {
-            card.individualBaseValueUpgrade = 0f;
-            card.individualDamageMultiplier = 1.0f;
-
-            // Guardar los valores reseteados
-            PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
-            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
-        }
-
-        PlayerPrefs.Save();
-
-        // Reiniciar el mazo
+        LoadCardUpgrades();
         InitializeDeck();
+        InitializeHealthSystems();
+        currentTurn = TurnState.PlayerTurn;
+        
+        if (playerHealth != null) playerHealth.OnDeath.AddListener(OnPlayerDeath);
+        if (enemyHealth != null) enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
     }
 
-    void LoadCardUpgrades()
+    void InitializeHealthSystems()
     {
-        foreach (CardData card in allCards)
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
         {
-            card.individualBaseValueUpgrade = PlayerPrefs.GetFloat($"{card.cardName}_baseUpgrade", 0f);
-            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1.0f);
+            playerHealth = player.GetComponent<HealthSystem>();
+            if (playerHealth == null) playerHealth = player.AddComponent<HealthSystem>();
+            playerHealth.SetMaxHealth(100);
+            playerHealth.LoadHealth(PlayerHealthKey, 100);
+            playerHealth.OnHealthChanged.AddListener((health) => {
+                playerHealth.SaveHealth(PlayerHealthKey);
+            });
         }
+
+        if (enemyController != null)
+        {
+            enemyHealth = enemyController.GetComponent<HealthSystem>();
+            if (enemyHealth == null) enemyHealth = enemyController.gameObject.AddComponent<HealthSystem>();
+            enemyHealth.SetMaxHealth(100);
+        }
+    }
+
+    public void StartTargetSelection(CardData card)
+    {
+        selectedCard = card;
+        currentTurn = TurnState.SelectingTarget;
+        
+        switch (card.cardType)
+        {
+            case CardData.CardType.Attack:
+                playerIsValidTarget = false;
+                enemyIsValidTarget = true;
+                break;
+            case CardData.CardType.Block:
+            case CardData.CardType.Heal:
+                playerIsValidTarget = true;
+                enemyIsValidTarget = false;
+                break;
+        }
+        
+        if (playerController != null) playerController.SetHighlight(playerIsValidTarget);
+        if (enemyController != null) enemyController.SetHighlight(enemyIsValidTarget);
+    }
+
+    public void SelectTarget(GameObject target)
+    {
+        if (currentTurn != TurnState.SelectingTarget || selectedCard == null) return;
+
+        bool isValid = (target.CompareTag("Player") && playerIsValidTarget) || 
+                      (target.CompareTag("Enemy") && enemyIsValidTarget);
+
+        if (!isValid) return;
+
+        if (playerController != null) playerController.SetHighlight(false);
+        if (enemyController != null) enemyController.SetHighlight(false);
+
+        // Remove card from hand before executing action
+        RemoveCardFromHand(selectedCard);
+
+        // Execute card action
+        ExecuteCardAction(selectedCard);
+
+        currentTurn = TurnState.PlayerTurn;
+        selectedCard = null;
+    }
+
+    private void RemoveCardFromHand(CardData card)
+    {
+        if (currentHand.Contains(card))
+        {
+            currentHand.Remove(card);
+            availableDeck.Add(card);
+            HandManager.Instance.RefreshHand();
+            
+            if (currentHand.Count == 0)
+            {
+                ShuffleDeck();
+                DrawNewHand();
+            }
+        }
+    }
+
+    private void ExecuteCardAction(CardData card)
+    {
+        switch (card.cardType)
+        {
+            case CardData.CardType.Attack:
+                Card_Attack(card);
+                break;
+            case CardData.CardType.Block:
+                Card_Block(card);
+                break;
+            case CardData.CardType.Heal:
+                Card_Heal(card);
+                break;
+        }
+    }
+
+    public void Card_Attack(CardData card)
+    {
+        float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
+                          damageMultiplier * card.individualDamageMultiplier;
+
+        void ApplyDamage()
+        {
+            if (enemyHealth != null) enemyHealth.TakeDamage((int)finalDamage);
+        }
+
+        void CompleteTurn()
+        {
+            StartCoroutine(EndPlayerTurn());
+        }
+
+        playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
+    }
+
+    public void Card_Block(CardData card)
+    {
+        float finalBlock = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
+        StartCoroutine(EndPlayerTurn());
+    }
+
+    public void Card_Heal(CardData card)
+    {
+        float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
+        if (playerHealth != null) playerHealth.Heal((int)finalHeal);
+        StartCoroutine(EndPlayerTurn());
+    }
+
+    public IEnumerator EndPlayerTurn()
+    {
+        currentTurn = TurnState.EnemyTurn;
+        HandManager.Instance.SetInteractable(false);
+        yield return new WaitForSeconds(0.5f);
+        enemyController.StartEnemyTurn();
+    }
+
+    public void StartPlayerTurn()
+    {
+        currentTurn = TurnState.PlayerTurn;
+        HandManager.Instance.SetInteractable(true);
     }
 
     void InitializeDeck()
     {
         if (allCards == null || allCards.Count == 0)
         {
-            Debug.LogError("No hay cartas asignadas en allCards!");
+            Debug.LogError("No cards assigned in allCards!");
             return;
         }
 
@@ -112,7 +230,7 @@ public class GameManager : MonoBehaviour
 
         if (availableDeck == null || availableDeck.Count == 0)
         {
-            Debug.LogWarning("No hay cartas disponibles en el mazo! Reciclando...");
+            Debug.LogWarning("No cards available in deck! Reshuffling...");
             availableDeck.AddRange(allCards);
             ShuffleDeck();
         }
@@ -127,10 +245,6 @@ public class GameManager : MonoBehaviour
                 currentHand.Add(card);
                 availableDeck.Remove(card);
             }
-            else
-            {
-                Debug.LogWarning("Se encontró carta nula en el mazo!");
-            }
         }
 
         if (availableDeck.Count == 0)
@@ -143,137 +257,48 @@ public class GameManager : MonoBehaviour
         {
             HandManager.Instance.RefreshHand();
         }
-        else
+    }
+
+    void LoadCardUpgrades()
+    {
+        foreach (CardData card in allCards)
         {
-            Debug.Log("HandManager.Instance aún no está disponible");
+            card.individualBaseValueUpgrade = PlayerPrefs.GetFloat($"{card.cardName}_baseUpgrade", 0f);
+            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1.0f);
         }
     }
 
-    public void PlayCard(CardData card)
+    public void OnEnemyDefeated()
     {
-        if (currentTurn != TurnState.PlayerTurn)
-        {
-            Debug.LogWarning("No es el turno del jugador!");
-            return;
-        }
-
-        if (card == null || !currentHand.Contains(card))
-        {
-            Debug.LogWarning("Intento de jugar carta inválida");
-            return;
-        }
-
-        currentHand.Remove(card);
-        availableDeck.Add(card);
-
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
-
-        if (currentHand.Count == 0)
-        {
-            ShuffleDeck();
-            DrawNewHand();
-        }
+        Debug.Log("Enemy defeated! Victory.");
     }
 
-    public IEnumerator EndPlayerTurn()
+    private void OnPlayerDeath()
     {
-        currentTurn = TurnState.EnemyTurn;
-
-        // Deshabilitar interacción del jugador
-        HandManager.Instance.SetInteractable(false);
-
-        // Esperar antes del turno del enemigo (opcional)
-        yield return new WaitForSeconds(0.5f);
-
-        // Iniciar turno del enemigo
-        enemyController.StartEnemyTurn();
+        Debug.Log("Player defeated! Game Over.");
     }
 
-    public void StartPlayerTurn()
+    public void ResetGameState()
     {
-        currentTurn = TurnState.PlayerTurn;
-        HandManager.Instance.SetInteractable(true);
-        Debug.Log("Turno del Jugador - Puedes jugar cartas");
-    }
+        damageMultiplier = 1.0f;
+        blockMultiplier = 1.0f;
+        healMultiplier = 1.0f;
 
-    // Funciones de cartas modificadas
-    public void Card_Attack(CardData card)
-    {
-        if (playerController == null)
+        foreach (CardData card in allCards)
         {
-            Debug.LogError("PlayerController no asignado en GameManager!");
-            return;
+            card.individualBaseValueUpgrade = 0f;
+            card.individualDamageMultiplier = 1.0f;
+            PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
+            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
         }
 
-        float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
-                          damageMultiplier * card.individualDamageMultiplier;
-        Debug.Log($"Preparando ataque de {finalDamage} puntos");
-
-        // Función para aplicar el daño (se llamará durante la animación)
-        void ApplyDamage()
+        PlayerPrefs.Save();
+        InitializeDeck();
+        
+        if (playerHealth != null)
         {
-            Debug.Log($"Aplicando daño: {finalDamage} puntos");
-            enemyController.TakeDamage((int)finalDamage);
-        }
-
-        // Función para completar el turno (se llamará al final de la animación)
-        void CompleteTurn()
-        {
-            StartCoroutine(EndPlayerTurn());
-        }
-
-        // Iniciar animación del jugador
-        playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
-    }
-
-    public void Card_Block(CardData card)
-    {
-        float finalBlock = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
-        Debug.Log($"Bloqueando {finalBlock} puntos");
-
-        // Para cartas sin animación, terminar turno inmediatamente
-        PlayCard(card);
-        StartCoroutine(EndPlayerTurn());
-    }
-
-    public void Card_Heal(CardData card)
-    {
-        float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
-        Debug.Log($"Curando {finalHeal} puntos");
-
-        // Para cartas sin animación, terminar turno inmediatamente
-        PlayCard(card);
-        StartCoroutine(EndPlayerTurn());
-    }
-
-    // Funciones para tienda (mejoras globales)
-    public void UpgradeDamage(float upgrade)
-    {
-        damageMultiplier += upgrade;
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
-    }
-
-    public void UpgradeBlock(float upgrade)
-    {
-        blockMultiplier += upgrade;
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
-    }
-
-    public void UpgradeHeal(float upgrade)
-    {
-        healMultiplier += upgrade;
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
+            playerHealth.SetMaxHealth(100);
+            PlayerPrefs.DeleteKey(PlayerHealthKey);
         }
     }
 }

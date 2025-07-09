@@ -7,88 +7,92 @@ public class EnemyController : MonoBehaviour
     public class EnemyAttack
     {
         public string animationName;
-        public float duration;
-        public int damage;
+        public float duration = 1f;
+        public int damage = 10;
         public ParticleSystem effect;
         public AudioClip sound;
     }
 
-    [Header("Configuración de Ataques")]
+    [Header("Attacks")]
     [SerializeField] private EnemyAttack[] attacks;
+    [SerializeField] private GameObject highlightEffect;
+    [SerializeField] private Animator animator;
 
-    [Header("Referencias")]
-    [SerializeField] private Animator enemyAnimator;
-    [SerializeField] private Transform healthBarPosition;
-
+    public HealthSystem healthSystem;
     private int lastAttackIndex = -1;
     private bool isDead = false;
 
     void Start()
     {
-        // Validar configuración
-        if (attacks.Length == 0)
+        InitializeHealthSystem();
+    }
+
+    private void InitializeHealthSystem()
+    {
+        if (healthSystem == null)
         {
-            Debug.LogError("No hay ataques configurados para el enemigo!");
+            healthSystem = GetComponent<HealthSystem>();
+            if (healthSystem == null)
+            {
+                healthSystem = gameObject.AddComponent<HealthSystem>();
+            }
         }
 
-        if (enemyAnimator == null)
-        {
-            enemyAnimator = GetComponent<Animator>();
-        }
+        healthSystem.OnDeath.AddListener(OnDeath);
     }
 
     public void StartEnemyTurn()
     {
         if (isDead) return;
-
-        StartCoroutine(PerformEnemyTurn());
+        StartCoroutine(PerformAttack());
     }
 
-    private IEnumerator PerformEnemyTurn()
+    private IEnumerator PerformAttack()
     {
-        Debug.Log("Turno del Enemigo - Iniciando acción");
-
-        // Seleccionar ataque aleatorio
-        int attackIndex = SelectRandomAttack();
-        EnemyAttack selectedAttack = attacks[attackIndex];
-
-        // Ejecutar animación
-        if (enemyAnimator != null)
+        EnemyAttack attack = SelectAttack();
+        
+        // Play animation
+        if (animator != null)
         {
-            enemyAnimator.Play(selectedAttack.animationName);
-        }
-        else
-        {
-            Debug.LogWarning("Animator del enemigo no asignado!");
+            animator.Play(attack.animationName);
         }
 
-        // Activar efecto visual si existe
-        if (selectedAttack.effect != null)
+        // Play effects
+        if (attack.effect != null)
         {
-            selectedAttack.effect.Play();
+            attack.effect.Play();
         }
 
-        // Reproducir sonido si existe
-        if (selectedAttack.sound != null)
+        if (attack.sound != null)
         {
-            AudioSource.PlayClipAtPoint(selectedAttack.sound, transform.position);
+            AudioSource.PlayClipAtPoint(attack.sound, transform.position);
         }
 
-        // Esperar mientras se ejecuta la animación
-        yield return new WaitForSeconds(selectedAttack.duration);
+        yield return new WaitForSeconds(attack.duration);
 
-        Debug.Log("Turno del Enemigo - Finalizado");
+        // Apply damage
+        if (GameManager.Instance != null && GameManager.Instance.playerHealth != null)
+        {
+            GameManager.Instance.playerHealth.TakeDamage(attack.damage);
+        }
 
-        // Terminar turno y volver al jugador
+        // End turn
         GameManager.Instance.StartPlayerTurn();
     }
 
-    private int SelectRandomAttack()
+    private EnemyAttack SelectAttack()
     {
-        // Si solo hay un ataque
-        if (attacks.Length == 1) return 0;
+        if (attacks.Length == 0)
+        {
+            Debug.LogError("No attacks configured!");
+            return new EnemyAttack();
+        }
 
-        // Seleccionar aleatoriamente evitando repeticiones consecutivas
+        if (attacks.Length == 1)
+        {
+            return attacks[0];
+        }
+
         int newIndex;
         do
         {
@@ -96,37 +100,49 @@ public class EnemyController : MonoBehaviour
         } while (newIndex == lastAttackIndex && attacks.Length > 1);
 
         lastAttackIndex = newIndex;
-        return newIndex;
-    }
-
-    private void OnEnemyDeath()
-    {
-        isDead = true;
-        Debug.Log("¡Enemigo derrotado!");
-
-        // Desactivar componentes
-        if (enemyAnimator != null)
-        {
-            enemyAnimator.SetTrigger("Die");
-        }
-
-        // Desactivar colisiones
-        Collider2D collider = GetComponent<Collider2D>();
-        if (collider != null) collider.enabled = false;
-
-        // Notificar al GameManager
-        // GameManager.Instance.OnEnemyDefeated();
-
-        // Destruir después de un tiempo
-        Destroy(gameObject, 2f);
+        return attacks[newIndex];
     }
 
     public void TakeDamage(int damage)
     {
-        if (!isDead)
+        if (!isDead && healthSystem != null)
         {
-            // Lógica para manejar el daño sin sistema de salud
-            Debug.Log($"Enemigo recibió {damage} puntos de daño");
+            healthSystem.TakeDamage(damage);
+        }
+    }
+
+    private void OnDeath()
+    {
+        isDead = true;
+        
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+        }
+
+        Collider2D collider = GetComponent<Collider2D>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
+
+        GameManager.Instance.OnEnemyDefeated();
+        Destroy(gameObject, 2f);
+    }
+
+    public void SetHighlight(bool active)
+    {
+        if (highlightEffect != null)
+        {
+            highlightEffect.SetActive(active);
+        }
+    }
+
+    private void OnMouseDown()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SelectTarget(gameObject);
         }
     }
 }
