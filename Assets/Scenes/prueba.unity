@@ -4012,20 +4012,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18230bb3a8c616643b7c78dc4093965f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attacks:
-  - animationName: Cap1
-    duration: 2
-    damage: 0
+  actions:
+  - actionType: 0
+    animationName: Cap1
+    duration: 3
+    actionPointTime: 2
+    value: 30
     effect: {fileID: 0}
     sound: {fileID: 0}
-  - animationName: Cap2
-    duration: 2
-    damage: 0
+  - actionType: 0
+    animationName: Cap2
+    duration: 3
+    actionPointTime: 2
+    value: 50
     effect: {fileID: 0}
     sound: {fileID: 0}
-  - animationName: Cap3
-    duration: 2
-    damage: 0
+  - actionType: 1
+    animationName: Cap3
+    duration: 3
+    actionPointTime: 2
+    value: 50
     effect: {fileID: 0}
     sound: {fileID: 0}
   highlightEffect: {fileID: 0}

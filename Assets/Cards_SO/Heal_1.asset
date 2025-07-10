@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Heal_1
   m_EditorClassIdentifier: 
   cardType: 2
-  baseValue: 10
+  baseValue: 60
   cardName: Heal_1
   description: Cura
   icon: {fileID: 21300000, guid: 2a10622635edf4400bdcf9ab8beffaac, type: 3}
