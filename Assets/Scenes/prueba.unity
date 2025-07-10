@@ -7570,9 +7570,9 @@ MonoBehaviour:
   healMultiplier: 1
   allCards:
   - {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  - {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  - {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
+  - {fileID: 11400000, guid: 77e51a545e76c40019fd0f1269ce2cd7, type: 2}
+  - {fileID: 11400000, guid: da56aa78bd70b406aaf6ff055ad099bd, type: 2}
+  - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
   - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
   - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
