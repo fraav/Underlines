@@ -376,11 +376,11 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.20392157}
+    m_NormalColor: {r: 0, g: 0, b: 0, a: 0.043137256}
     m_HighlightedColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
-    m_PressedColor: {r: 1, g: 0.9687811, b: 0, a: 0.2901961}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0.24705882}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.18431373}
+    m_PressedColor: {r: 1, g: 0.9687811, b: 0, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.05490196}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -428,6 +428,8 @@ MonoBehaviour:
   descriptionText: {fileID: 5022247432102898942}
   descriptionPanel: {fileID: 5626228518477466087}
   fullDescriptionText: {fileID: 848260550312838369}
+  selectionIndicator: {fileID: 0}
+  selectedScale: 1.1
 --- !u!225 &349237897856621831
 CanvasGroup:
   m_ObjectHideFlags: 0

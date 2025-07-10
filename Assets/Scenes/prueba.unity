@@ -291,79 +291,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 11426046}
   m_Mesh: {fileID: -8367231247473855917, guid: c25187b10e2aae345bb01b69abf49b2c, type: 3}
---- !u!1 &14151857
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 14151859}
-  - component: {fileID: 14151858}
-  - component: {fileID: 14151860}
-  m_Layer: 0
-  m_Name: PlayerController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &14151858
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14151857}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27a47a3e0dae94c3fb3a1a324b6238ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cardAnimations:
-  - cardType: 0
-    animationTrigger: Attack
-    actionPointTime: 1
-    animationDuration: 2
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  animator: {fileID: 1313455309}
-  highlightEffect: {fileID: 0}
-  healthSystem: {fileID: 0}
---- !u!4 &14151859
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14151857}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 392.53058, y: 314.66367, z: 20.227722}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &14151860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14151857}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4deb908cbe264844aa7a3b49091f0e6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnHealthChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDeath:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &35918040
 GameObject:
   m_ObjectHideFlags: 0
@@ -1635,10 +1562,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1176975804}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.44839588, y: 0}
-  m_AnchorMax: {x: 0.88658327, y: 0.224}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -0.000030518}
+  m_AnchorMin: {x: 0.4433125, y: 0}
+  m_AnchorMax: {x: 0.91300005, y: 0.28800002}
+  m_AnchoredPosition: {x: 5, y: 0}
+  m_SizeDelta: {x: -9.9999, y: -0.000030518}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &258743363
 MonoBehaviour:
@@ -1679,7 +1606,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.050980393}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.007843138}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2739,7 +2666,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -3954,7 +3881,7 @@ GameObject:
   - component: {fileID: 520477872}
   - component: {fileID: 520477874}
   m_Layer: 0
-  m_Name: Capsule (1)
+  m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4103,7 +4030,7 @@ MonoBehaviour:
     sound: {fileID: 0}
   highlightEffect: {fileID: 0}
   animator: {fileID: 520477872}
-  healthSystem: {fileID: 0}
+  healthSystem: {fileID: 520477874}
 --- !u!114 &520477874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4118,10 +4045,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   OnHealthChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 229608589}
+        m_TargetAssemblyTypeName: HealthBarUI, Assembly-CSharp
+        m_MethodName: SetHealthSystem
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 520477874}
+          m_ObjectArgumentAssemblyTypeName: HealthSystem, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   OnDeath:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1032262312}
+        m_TargetAssemblyTypeName: EconomyManager, Assembly-CSharp
+        m_MethodName: AddMoney
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 220
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &521495358
 GameObject:
   m_ObjectHideFlags: 0
@@ -4208,171 +4159,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 521495358}
   m_Mesh: {fileID: -1803497515303125963, guid: c25187b10e2aae345bb01b69abf49b2c, type: 3}
---- !u!1 &533549371
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 533549377}
-  - component: {fileID: 533549376}
-  - component: {fileID: 533549375}
-  - component: {fileID: 533549374}
-  - component: {fileID: 533549373}
-  - component: {fileID: 533549372}
-  m_Layer: 0
-  m_Name: Enemy
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &533549372
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18230bb3a8c616643b7c78dc4093965f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  attacks:
-  - animationName: Attack
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  - animationName: Attack2
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  - animationName: Attack3
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  highlightEffect: {fileID: 0}
-  animator: {fileID: 0}
-  healthSystem: {fileID: 0}
---- !u!95 &533549373
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9eda253dcbe3d5d41a97bff9c53cdab7, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!136 &533549374
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &533549375
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 6d18a0a8717db0645b4de3e44fa27880, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &533549376
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &533549377
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 533549371}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 14.6, y: 0.5, z: 48.2}
-  m_LocalScale: {x: 5.8007, y: 5.8007, z: 5.8007}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &549211309
 GameObject:
   m_ObjectHideFlags: 0
@@ -7786,9 +7572,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   enemyController: {fileID: 520477873}
-  playerController: {fileID: 14151858}
-  playerHealth: {fileID: 0}
-  enemyHealth: {fileID: 0}
+  playerController: {fileID: 1313455314}
+  playerHealth: {fileID: 1313455313}
+  enemyHealth: {fileID: 520477874}
 --- !u!4 &932123689
 Transform:
   m_ObjectHideFlags: 0
@@ -9986,8 +9772,10 @@ GameObject:
   - component: {fileID: 1313455310}
   - component: {fileID: 1313455309}
   - component: {fileID: 1313455312}
-  m_Layer: 0
-  m_Name: PJ
+  - component: {fileID: 1313455314}
+  - component: {fileID: 1313455313}
+  m_Layer: 3
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10058,7 +9846,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 9
   m_Sprite: {fileID: 21300000, guid: 234199d13b2f20843a8db7cd659d609b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -10085,8 +9873,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &1313455312
-CapsuleCollider:
+--- !u!65 &1313455312
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -10099,15 +9887,71 @@ CapsuleCollider:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
+  m_LayerOverridePriority: 10
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 3.2048855
-  m_Height: 9.168758
-  m_Direction: 1
-  m_Center: {x: -7.0919323, y: -3.1215134, z: 0}
+  serializedVersion: 3
+  m_Size: {x: 4.8967667, y: 8.8401375, z: 5.983336}
+  m_Center: {x: -5.4724007, y: 0, z: -0.5593207}
+--- !u!114 &1313455313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1313455308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4deb908cbe264844aa7a3b49091f0e6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  OnHealthChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1640580290}
+        m_TargetAssemblyTypeName: HealthBarUI, Assembly-CSharp
+        m_MethodName: SetHealthSystem
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1313455313}
+          m_ObjectArgumentAssemblyTypeName: HealthSystem, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1313455314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1313455308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27a47a3e0dae94c3fb3a1a324b6238ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardAnimations:
+  - cardType: 0
+    animationTrigger: Attack
+    actionPointTime: 1
+    animationDuration: 2
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  - cardType: 2
+    animationTrigger: Heal
+    actionPointTime: 1
+    animationDuration: 2
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  animator: {fileID: 1313455309}
+  highlightEffect: {fileID: 0}
+  healthSystem: {fileID: 1313455313}
 --- !u!1 &1313771617
 GameObject:
   m_ObjectHideFlags: 0
@@ -10511,50 +10355,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1372358471}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &1382449854
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1382449856}
-  - component: {fileID: 1382449855}
-  m_Layer: 0
-  m_Name: Player_H
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1382449855
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1382449854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a870968b663a8394b9ee265b411b124e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &1382449856
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1382449854}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 38.882412, y: 8.639896, z: -9.906727}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1390970615
 GameObject:
   m_ObjectHideFlags: 0
@@ -11760,6 +11560,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: tren02-1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c25187b10e2aae345bb01b69abf49b2c, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -12092,7 +11896,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   healthSlider: {fileID: 1390970617}
   healthText: {fileID: 0}
-  healthSystem: {fileID: 14151860}
+  healthSystem: {fileID: 0}
   showText: 1
 --- !u!1 &1657220821
 GameObject:
@@ -13831,7 +13635,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -15984,24 +15788,21 @@ SceneRoots:
   - {fileID: 732817126}
   - {fileID: 2016442473}
   - {fileID: 399360464}
-  - {fileID: 520477871}
   - {fileID: 693783170}
   - {fileID: 819462938}
   - {fileID: 1587749482}
   - {fileID: 819213111}
   - {fileID: 1124199603}
   - {fileID: 1460588611}
-  - {fileID: 1313455311}
   - {fileID: 234034181}
+  - {fileID: 520477871}
+  - {fileID: 1313455311}
   - {fileID: 1108483666}
   - {fileID: 1032262314}
-  - {fileID: 1382449856}
   - {fileID: 932123689}
   - {fileID: 1176975804}
   - {fileID: 867720230}
-  - {fileID: 533549377}
   - {fileID: 433456535}
-  - {fileID: 14151859}
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 1754125058}

@@ -24,10 +24,10 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
-        InitializeHealthSystem();
+        SetupHealthSystem();
     }
 
-    private void InitializeHealthSystem()
+    private void SetupHealthSystem()
     {
         if (healthSystem == null)
         {
@@ -37,8 +37,13 @@ public class EnemyController : MonoBehaviour
                 healthSystem = gameObject.AddComponent<HealthSystem>();
             }
         }
-
+        healthSystem.SetMaxHealth(100);
         healthSystem.OnDeath.AddListener(OnDeath);
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.enemyHealth = healthSystem;
+        }
     }
 
     public void StartEnemyTurn()
@@ -50,14 +55,11 @@ public class EnemyController : MonoBehaviour
     private IEnumerator PerformAttack()
     {
         EnemyAttack attack = SelectAttack();
-        
-        // Play animation
-        if (animator != null)
+        if (animator != null && !string.IsNullOrEmpty(attack.animationName))
         {
             animator.Play(attack.animationName);
         }
 
-        // Play effects
         if (attack.effect != null)
         {
             attack.effect.Play();
@@ -70,28 +72,21 @@ public class EnemyController : MonoBehaviour
 
         yield return new WaitForSeconds(attack.duration);
 
-        // Apply damage
         if (GameManager.Instance != null && GameManager.Instance.playerHealth != null)
         {
             GameManager.Instance.playerHealth.TakeDamage(attack.damage);
         }
 
-        // End turn
-        GameManager.Instance.StartPlayerTurn();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StartPlayerTurn();
+        }
     }
 
     private EnemyAttack SelectAttack()
     {
-        if (attacks.Length == 0)
-        {
-            Debug.LogError("No attacks configured!");
-            return new EnemyAttack();
-        }
-
-        if (attacks.Length == 1)
-        {
-            return attacks[0];
-        }
+        if (attacks.Length == 0) return new EnemyAttack();
+        if (attacks.Length == 1) return attacks[0];
 
         int newIndex;
         do
@@ -105,16 +100,12 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (!isDead && healthSystem != null)
-        {
-            healthSystem.TakeDamage(damage);
-        }
+        if (!isDead) healthSystem?.TakeDamage(damage);
     }
 
     private void OnDeath()
     {
         isDead = true;
-        
         if (animator != null)
         {
             animator.SetTrigger("Die");
@@ -126,16 +117,16 @@ public class EnemyController : MonoBehaviour
             collider.enabled = false;
         }
 
-        GameManager.Instance.OnEnemyDefeated();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnEnemyDefeated();
+        }
         Destroy(gameObject, 2f);
     }
 
     public void SetHighlight(bool active)
     {
-        if (highlightEffect != null)
-        {
-            highlightEffect.SetActive(active);
-        }
+        if (highlightEffect != null) highlightEffect.SetActive(active);
     }
 
     private void OnMouseDown()

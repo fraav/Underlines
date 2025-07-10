@@ -4,9 +4,9 @@ using UnityEngine.Events;
 public class HealthSystem : MonoBehaviour
 {
     [System.Serializable]
-    public class HealthEvent : UnityEvent<int> {}
+    public class HealthEvent : UnityEvent<int> { }
     [System.Serializable]
-    public class DeathEvent : UnityEvent {}
+    public class DeathEvent : UnityEvent { }
 
     public int MaxHealth { get; private set; } = 100;
     public int CurrentHealth { get; private set; }
@@ -29,20 +29,14 @@ public class HealthSystem : MonoBehaviour
     public void TakeDamage(int amount)
     {
         if (CurrentHealth <= 0) return;
-
         CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0, MaxHealth);
         OnHealthChanged.Invoke(CurrentHealth);
-
-        if (CurrentHealth == 0)
-        {
-            OnDeath.Invoke();
-        }
+        if (CurrentHealth == 0) OnDeath.Invoke();
     }
 
     public void Heal(int amount)
     {
         if (CurrentHealth <= 0) return;
-
         CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0, MaxHealth);
         OnHealthChanged.Invoke(CurrentHealth);
     }

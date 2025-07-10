@@ -26,7 +26,9 @@ public class GameManager : MonoBehaviour
     public HealthSystem playerHealth;
     public HealthSystem enemyHealth;
 
-    private CardData selectedCard;
+    public CardData selectedCard { get; private set; }
+    public CardDisplay selectedCardDisplay { get; private set; }
+
     private bool playerIsValidTarget;
     private bool enemyIsValidTarget;
     private const string PlayerHealthKey = "PlayerCurrentHealth";
@@ -45,13 +47,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            CancelSelection();
+        }
+    }
+
     void InitializeGame()
     {
         LoadCardUpgrades();
         InitializeDeck();
         InitializeHealthSystems();
         currentTurn = TurnState.PlayerTurn;
-        
+
         if (playerHealth != null) playerHealth.OnDeath.AddListener(OnPlayerDeath);
         if (enemyHealth != null) enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
     }
@@ -78,11 +88,36 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void StartTargetSelection(CardData card)
+    public void CancelSelection()
     {
+        if (currentTurn == TurnState.SelectingTarget)
+        {
+            playerController?.SetHighlight(false);
+            enemyController?.SetHighlight(false);
+
+            if (selectedCardDisplay != null)
+            {
+                selectedCardDisplay.SetSelected(false);
+                selectedCardDisplay = null;
+            }
+
+            currentTurn = TurnState.PlayerTurn;
+            selectedCard = null;
+        }
+    }
+
+    public void StartTargetSelection(CardData card, CardDisplay display)
+    {
+        if (selectedCardDisplay != null && selectedCardDisplay != display)
+        {
+            selectedCardDisplay.SetSelected(false);
+        }
+
         selectedCard = card;
+        selectedCardDisplay = display;
         currentTurn = TurnState.SelectingTarget;
-        
+        selectedCardDisplay?.SetSelected(true);
+
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
@@ -95,28 +130,30 @@ public class GameManager : MonoBehaviour
                 enemyIsValidTarget = false;
                 break;
         }
-        
-        if (playerController != null) playerController.SetHighlight(playerIsValidTarget);
-        if (enemyController != null) enemyController.SetHighlight(enemyIsValidTarget);
+
+        playerController?.SetHighlight(playerIsValidTarget);
+        enemyController?.SetHighlight(enemyIsValidTarget);
     }
 
     public void SelectTarget(GameObject target)
     {
         if (currentTurn != TurnState.SelectingTarget || selectedCard == null) return;
 
-        bool isValid = (target.CompareTag("Player") && playerIsValidTarget) || 
+        bool isValid = (target.CompareTag("Player") && playerIsValidTarget) ||
                       (target.CompareTag("Enemy") && enemyIsValidTarget);
 
         if (!isValid) return;
 
-        if (playerController != null) playerController.SetHighlight(false);
-        if (enemyController != null) enemyController.SetHighlight(false);
-
-        // Remove card from hand before executing action
+        playerController?.SetHighlight(false);
+        enemyController?.SetHighlight(false);
         RemoveCardFromHand(selectedCard);
-
-        // Execute card action
         ExecuteCardAction(selectedCard);
+
+        if (selectedCardDisplay != null)
+        {
+            selectedCardDisplay.SetSelected(false);
+            selectedCardDisplay = null;
+        }
 
         currentTurn = TurnState.PlayerTurn;
         selectedCard = null;
@@ -129,7 +166,7 @@ public class GameManager : MonoBehaviour
             currentHand.Remove(card);
             availableDeck.Add(card);
             HandManager.Instance.RefreshHand();
-            
+
             if (currentHand.Count == 0)
             {
                 ShuffleDeck();
@@ -161,27 +198,30 @@ public class GameManager : MonoBehaviour
 
         void ApplyDamage()
         {
-            if (enemyHealth != null) enemyHealth.TakeDamage((int)finalDamage);
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage((int)finalDamage);
+            }
+            else
+            {
+                Debug.LogError("enemyHealth is null in Card_Attack");
+            }
         }
 
-        void CompleteTurn()
-        {
-            StartCoroutine(EndPlayerTurn());
-        }
+        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
     }
 
     public void Card_Block(CardData card)
     {
-        float finalBlock = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
         StartCoroutine(EndPlayerTurn());
     }
 
     public void Card_Heal(CardData card)
     {
         float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
-        if (playerHealth != null) playerHealth.Heal((int)finalHeal);
+        playerHealth?.Heal((int)finalHeal);
         StartCoroutine(EndPlayerTurn());
     }
 
@@ -201,12 +241,6 @@ public class GameManager : MonoBehaviour
 
     void InitializeDeck()
     {
-        if (allCards == null || allCards.Count == 0)
-        {
-            Debug.LogError("No cards assigned in allCards!");
-            return;
-        }
-
         availableDeck.Clear();
         availableDeck.AddRange(allCards);
         ShuffleDeck();
@@ -228,9 +262,8 @@ public class GameManager : MonoBehaviour
     {
         currentHand.Clear();
 
-        if (availableDeck == null || availableDeck.Count == 0)
+        if (availableDeck.Count == 0)
         {
-            Debug.LogWarning("No cards available in deck! Reshuffling...");
             availableDeck.AddRange(allCards);
             ShuffleDeck();
         }
@@ -253,10 +286,7 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
         }
 
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
+        HandManager.Instance?.RefreshHand();
     }
 
     void LoadCardUpgrades()
@@ -294,7 +324,7 @@ public class GameManager : MonoBehaviour
 
         PlayerPrefs.Save();
         InitializeDeck();
-        
+
         if (playerHealth != null)
         {
             playerHealth.SetMaxHealth(100);

@@ -21,32 +21,40 @@ public class PlayerController : MonoBehaviour
 
     public HealthSystem healthSystem;
 
+    void Start()
+    {
+        if (healthSystem == null)
+        {
+            healthSystem = GetComponent<HealthSystem>();
+            if (healthSystem == null)
+            {
+                healthSystem = gameObject.AddComponent<HealthSystem>();
+                healthSystem.SetMaxHealth(100);
+            }
+        }
+    }
+
     public void PlayCardAnimation(CardData card, System.Action onAction, System.Action onComplete)
     {
         CardAnimation animation = GetAnimationForCard(card.cardType);
-        if (animation == null)
-        {
-            Debug.LogWarning($"No animation found for card type: {card.cardType}");
-            onAction?.Invoke();
-            onComplete?.Invoke();
-            return;
-        }
-
+        if (animation == null) return;
         StartCoroutine(PerformCardAnimation(animation, onAction, onComplete));
     }
 
     private IEnumerator PerformCardAnimation(CardAnimation animation, System.Action onAction, System.Action onComplete)
     {
-        // Trigger animation
-        if (animator != null)
+        if (animator != null && !string.IsNullOrEmpty(animation.animationTrigger))
         {
             animator.SetTrigger(animation.animationTrigger);
         }
 
-        // Play effects
         if (animation.effect != null)
         {
             animation.effect.Play();
+        }
+        else
+        {
+            Debug.LogWarning("Particle effect is missing for animation: " + animation.animationTrigger);
         }
 
         if (animation.sound != null)
@@ -54,16 +62,11 @@ public class PlayerController : MonoBehaviour
             AudioSource.PlayClipAtPoint(animation.sound, transform.position);
         }
 
-        // Wait for action point
         yield return new WaitForSeconds(animation.actionPointTime);
         onAction?.Invoke();
 
-        // Wait for remaining animation time
         float remainingTime = animation.animationDuration - animation.actionPointTime;
-        if (remainingTime > 0)
-        {
-            yield return new WaitForSeconds(remainingTime);
-        }
+        if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
 
         onComplete?.Invoke();
     }
@@ -72,27 +75,18 @@ public class PlayerController : MonoBehaviour
     {
         foreach (var anim in cardAnimations)
         {
-            if (anim.cardType == cardType)
-            {
-                return anim;
-            }
+            if (anim.cardType == cardType) return anim;
         }
         return null;
     }
 
     public void SetHighlight(bool active)
     {
-        if (highlightEffect != null)
-        {
-            highlightEffect.SetActive(active);
-        }
+        if (highlightEffect != null) highlightEffect.SetActive(active);
     }
 
     private void OnMouseDown()
     {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.SelectTarget(gameObject);
-        }
+        GameManager.Instance?.SelectTarget(gameObject);
     }
 }

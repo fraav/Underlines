@@ -13,6 +13,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private GameObject descriptionPanel;
     [SerializeField] private TMP_Text fullDescriptionText;
+    [SerializeField] private GameObject selectionIndicator;
+    [SerializeField] private float selectedScale = 1.1f;
 
     private CardData currentCard;
     private RectTransform rectTransform;
@@ -24,14 +26,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
-    }
-
-    void Start()
-    {
-        if (descriptionPanel != null) 
-        {
-            descriptionPanel.SetActive(false);
-        }
+        if (selectionIndicator != null) selectionIndicator.SetActive(false);
     }
 
     public void Initialize(CardData card)
@@ -41,65 +36,14 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         SetInteractableState(true);
     }
 
-    private void UpdateCardDisplay()
+    public void SetSelected(bool selected)
     {
-        if (icon != null && currentCard.icon != null) 
+        if (selectionIndicator != null && !isBeingDiscarded)
         {
-            icon.sprite = currentCard.icon;
+            selectionIndicator.SetActive(selected);
         }
 
-        if (titleText != null)
-        {
-            titleText.text = currentCard.cardName;
-        }
-
-        if (descriptionText != null)
-        {
-            descriptionText.text = GetShortDescription();
-        }
-
-        if (fullDescriptionText != null)
-        {
-            fullDescriptionText.text = GetFullDescription();
-        }
-    }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        if (isBeingDiscarded) return;
-
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            SelectCard();
-        }
-        else if (eventData.button == PointerEventData.InputButton.Right)
-        {
-            ToggleDescription();
-        }
-    }
-
-    private void SelectCard()
-    {
-        if (GameManager.Instance == null || 
-            GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
-        {
-            return;
-        }
-
-        GameManager.Instance.StartTargetSelection(currentCard);
-    }
-
-    private void ToggleDescription()
-    {
-        if (descriptionPanel == null) return;
-        
-        bool isActive = !descriptionPanel.activeSelf;
-        descriptionPanel.SetActive(isActive);
-        
-        if (isActive)
-        {
-            transform.SetAsLastSibling();
-        }
+        transform.localScale = selected ? Vector3.one * selectedScale : Vector3.one;
     }
 
     public void SetInteractableState(bool interactable)
@@ -111,26 +55,56 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         }
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (isBeingDiscarded) return;
+
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (GameManager.Instance.currentTurn == GameManager.TurnState.SelectingTarget &&
+                GameManager.Instance.selectedCard == currentCard)
+            {
+                GameManager.Instance.CancelSelection();
+                return;
+            }
+
+            SelectCard();
+        }
+        else if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            ToggleDescription();
+        }
+    }
+
+    private void SelectCard()
+    {
+        if (GameManager.Instance == null ||
+            GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
+        {
+            return;
+        }
+
+        GameManager.Instance.StartTargetSelection(currentCard, this);
+    }
+
+    private void ToggleDescription()
+    {
+        if (descriptionPanel == null) return;
+        descriptionPanel.SetActive(!descriptionPanel.activeSelf);
+        if (descriptionPanel.activeSelf) transform.SetAsLastSibling();
+    }
+
     public void DiscardCard()
     {
         if (isBeingDiscarded) return;
-        
         StartCoroutine(DiscardAnimation());
     }
 
     private IEnumerator DiscardAnimation()
     {
         isBeingDiscarded = true;
-        
-        if (canvasGroup != null)
-        {
-            canvasGroup.blocksRaycasts = false;
-        }
-
-        if (descriptionPanel != null && descriptionPanel.activeSelf)
-        {
-            descriptionPanel.SetActive(false);
-        }
+        canvasGroup.blocksRaycasts = false;
+        if (descriptionPanel != null) descriptionPanel.SetActive(false);
 
         float duration = 0.3f;
         float elapsed = 0f;
@@ -148,11 +122,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
     public void MoveToFanPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)
     {
-        if (moveCoroutine != null)
-        {
-            StopCoroutine(moveCoroutine);
-        }
-
+        if (moveCoroutine != null) StopCoroutine(moveCoroutine);
         moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
     }
 
@@ -174,12 +144,17 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         rectTransform.localRotation = targetRotation;
     }
 
+    private void UpdateCardDisplay()
+    {
+        if (icon != null && currentCard.icon != null) icon.sprite = currentCard.icon;
+        if (titleText != null) titleText.text = currentCard.cardName;
+        if (descriptionText != null) descriptionText.text = GetShortDescription();
+        if (fullDescriptionText != null) fullDescriptionText.text = GetFullDescription();
+    }
+
     private string GetShortDescription()
     {
-        if (GameManager.Instance == null || currentCard == null)
-        {
-            return currentCard.description;
-        }
+        if (GameManager.Instance == null) return currentCard.description;
 
         float upgradedValue = currentCard.baseValue + currentCard.individualBaseValueUpgrade;
         float finalValue = 0f;
@@ -203,7 +178,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 return currentCard.description;
         }
 
-        return $"{valueType}: {finalValue:F1}\nBase: {upgradedValue:F1}";
+        return $"{valueType}: {finalValue:F1}";
     }
 
     private string GetFullDescription()
@@ -238,8 +213,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         return $"<b>{currentCard.cardName}</b>\n\n" +
                $"{currentCard.description}\n\n" +
-               $"{valueType}: <color=#FFD700>{finalValue:F1}</color>\n" +
-               $"Base Value: {upgradedValue:F1}\n" +
-               $"<i>Type: {cardType}</i>";
+               $"{valueType}: <color=#FFD700>{finalValue:F1}</color>";
     }
 }

@@ -19,14 +19,8 @@ public class HandManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     void Start()
@@ -36,28 +30,17 @@ public class HandManager : MonoBehaviour
 
     private IEnumerator InitializeAfterGameManager()
     {
-        int maxAttempts = 10;
-        while (GameManager.Instance == null && maxAttempts-- > 0)
+        while (GameManager.Instance == null)
         {
             yield return new WaitForSeconds(0.1f);
         }
-
-        if (GameManager.Instance != null)
-        {
-            RefreshHand();
-            UpdateInteractableState();
-        }
+        RefreshHand();
     }
 
     public void RefreshHand()
     {
         ClearExistingCards();
-        
-        if (GameManager.Instance == null || GameManager.Instance.currentHand == null)
-        {
-            return;
-        }
-
+        if (GameManager.Instance == null || GameManager.Instance.currentHand == null) return;
         CreateNewCards();
         StartCoroutine(ArrangeCardsInFan());
         UpdateInteractableState();
@@ -67,10 +50,7 @@ public class HandManager : MonoBehaviour
     {
         foreach (var card in spawnedCards)
         {
-            if (card != null)
-            {
-                Destroy(card);
-            }
+            if (card != null) Destroy(card);
         }
         spawnedCards.Clear();
     }
@@ -79,11 +59,9 @@ public class HandManager : MonoBehaviour
     {
         foreach (CardData card in GameManager.Instance.currentHand)
         {
-            if (card == null) continue;
-
             GameObject newCard = Instantiate(cardPrefab, handContainer);
             CardDisplay display = newCard.GetComponent<CardDisplay>();
-            
+
             if (display != null)
             {
                 display.Initialize(card);
@@ -99,7 +77,7 @@ public class HandManager : MonoBehaviour
     private IEnumerator ArrangeCardsInFan()
     {
         yield return new WaitForEndOfFrame();
-        
+
         int cardCount = spawnedCards.Count;
         if (cardCount == 0) yield break;
 
@@ -138,6 +116,11 @@ public class HandManager : MonoBehaviour
                 if (display != null)
                 {
                     display.SetInteractableState(interactable);
+
+                    if (!interactable && display == GameManager.Instance?.selectedCardDisplay)
+                    {
+                        display.SetSelected(false);
+                    }
                 }
             }
         }
@@ -145,7 +128,7 @@ public class HandManager : MonoBehaviour
 
     private void UpdateInteractableState()
     {
-        bool interactable = GameManager.Instance != null && 
+        bool interactable = GameManager.Instance != null &&
                           GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn;
         SetInteractable(interactable);
     }
