@@ -710,24 +710,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18230bb3a8c616643b7c78dc4093965f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attacks:
-  - animationName: Attack
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  - animationName: Attack2
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  - animationName: Attack3
-    duration: 3
-    damage: 0
-    effect: {fileID: 0}
-    sound: {fileID: 0}
-  enemyAnimator: {fileID: 176679490}
-  healthBarPosition: {fileID: 0}
+  actions: []
+  highlightEffect: {fileID: 0}
+  animator: {fileID: 0}
+  healthSystem: {fileID: 0}
 --- !u!95 &176679490
 Animator:
   serializedVersion: 7
@@ -1725,7 +1711,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: prueba
+          m_StringArgument: testin
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &580858432
@@ -2771,6 +2757,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   enemyController: {fileID: 176679489}
   playerController: {fileID: 0}
+  playerHealth: {fileID: 0}
+  enemyHealth: {fileID: 0}
 --- !u!4 &1689255287
 Transform:
   m_ObjectHideFlags: 0
