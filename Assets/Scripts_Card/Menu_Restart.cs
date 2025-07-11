@@ -30,7 +30,7 @@ public class Menu_Restart: MonoBehaviour
         PlayerPrefs.DeleteKey("FirstRun"); // Para forzar reinicio en el próximo juego
 
         // Carga la primera escena del juego
-        SceneManager.LoadScene("NombreDeTuPrimeraEscena");
+        SceneManager.LoadScene("2_MainMenu");
     }
 
     // Llamado desde el botón "Continuar" (si aplica)
