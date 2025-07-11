@@ -4082,6 +4082,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 324812328}
+        m_TargetAssemblyTypeName: TestingScene, Assembly-CSharp
+        m_MethodName: LoadNextScene
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 220
+          m_FloatArgument: 0
+          m_StringArgument: Shop
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &521495358
 GameObject:
   m_ObjectHideFlags: 0
@@ -7127,8 +7139,8 @@ MonoBehaviour:
   cardSpacing: 220
   verticalOffset: 30
   maxArcHeight: 30
-  moveDuration: 0.3
   fanAngle: -20
+  moveDuration: 0.3
 --- !u!4 &867720230
 Transform:
   m_ObjectHideFlags: 0
@@ -9933,7 +9945,19 @@ MonoBehaviour:
         m_CallState: 2
   OnDeath:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 324812328}
+        m_TargetAssemblyTypeName: TestingScene, Assembly-CSharp
+        m_MethodName: LoadNextScene
+        m_Mode: 5
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Test_Menu
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1313455314
 MonoBehaviour:
   m_ObjectHideFlags: 0
