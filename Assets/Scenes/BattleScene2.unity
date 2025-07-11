@@ -3380,7 +3380,7 @@ GameObject:
   - component: {fileID: 433456533}
   - component: {fileID: 433456532}
   m_Layer: 5
-  m_Name: Shop (1)
+  m_Name: Money_UI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4036,6 +4036,9 @@ MonoBehaviour:
     sound: {fileID: 0}
   highlightEffect: {fileID: 0}
   animator: {fileID: 520477872}
+  deathReward: 380
+  baseAttack: 10
+  currentAttackMultiplier: 1
   healthSystem: {fileID: 520477874}
 --- !u!114 &520477874
 MonoBehaviour:
@@ -4658,7 +4661,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Test1
+          m_StringArgument: Shop
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &566453958
@@ -7581,6 +7584,7 @@ MonoBehaviour:
   playerController: {fileID: 1313455314}
   playerHealth: {fileID: 1313455313}
   enemyHealth: {fileID: 520477874}
+  isBattleScene: 0
 --- !u!4 &932123689
 Transform:
   m_ObjectHideFlags: 0
@@ -9952,6 +9956,12 @@ MonoBehaviour:
   - cardType: 2
     animationTrigger: Heal
     actionPointTime: 1
+    animationDuration: 2
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  - cardType: 1
+    animationTrigger: Block
+    actionPointTime: 5
     animationDuration: 2
     effect: {fileID: 0}
     sound: {fileID: 0}
