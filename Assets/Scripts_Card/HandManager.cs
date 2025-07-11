@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.SceneManagement;
 
 public class HandManager : MonoBehaviour
 {
@@ -37,14 +36,12 @@ public class HandManager : MonoBehaviour
 
     private IEnumerator InitializeHand()
     {
-        // Esperar hasta que GameManager esté completamente listo
         while (GameManager.Instance == null || GameManager.Instance.currentHand == null)
         {
             yield return new WaitForSeconds(0.1f);
         }
 
-        // Solo refrescar si estamos en batalla
-        if (SceneManager.GetActiveScene().name == "BattleScene")
+        if (GameManager.Instance.isBattleScene)
         {
             RefreshHand();
         }

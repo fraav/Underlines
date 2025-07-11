@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     public HealthSystem playerHealth;
     public HealthSystem enemyHealth;
 
+    [Header("Scene Settings")]
+    public bool isBattleScene = false;
+
     public CardData selectedCard { get; private set; }
     public CardDisplay selectedCardDisplay { get; private set; }
 
@@ -58,7 +61,15 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Escena cargada: {scene.name}");
         FindSceneReferences();
+        CheckIfBattleScene();
         InitializeGameForScene();
+    }
+
+    private void CheckIfBattleScene()
+    {
+        // Verificamos si hay un enemigo en la escena
+        isBattleScene = GameObject.FindGameObjectWithTag("Enemy") != null;
+        Debug.Log($"¿Es escena de combate? {isBattleScene}");
     }
 
     void InitializeGame()
@@ -99,7 +110,7 @@ public class GameManager : MonoBehaviour
 
     private void InitializeGameForScene()
     {
-        if (SceneManager.GetActiveScene().name == "BattleScene")
+        if (isBattleScene)
         {
             if (playerHealth != null)
             {
@@ -117,14 +128,12 @@ public class GameManager : MonoBehaviour
                 enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
             }
 
-            // Inicializamos la batalla después de un frame para dar tiempo a otros componentes
             StartCoroutine(InitializeBattle());
         }
     }
 
     private IEnumerator InitializeBattle()
     {
-        // Esperamos un frame para que HandManager se inicialice
         yield return new WaitForEndOfFrame();
 
         ResetCardSystemForNewBattle();
@@ -133,17 +142,10 @@ public class GameManager : MonoBehaviour
 
     private void ResetCardSystemForNewBattle()
     {
-        // 1. Limpiamos la mano actual
         currentHand.Clear();
-
-        // 2. Reconstruimos el mazo disponible con todas las cartas
         availableDeck.Clear();
         availableDeck.AddRange(allCards);
-
-        // 3. Barajamos el mazo
         ShuffleDeck();
-
-        // 4. Robamos una nueva mano
         DrawNewHand();
     }
 
@@ -345,7 +347,6 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
         }
 
-        // Solo refrescamos si HandManager está listo
         if (HandManager.Instance != null)
         {
             HandManager.Instance.RefreshHand();

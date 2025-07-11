@@ -1115,7 +1115,7 @@ MonoBehaviour:
   itemID: 0
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  baseValueUpgradeAmount: 4
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!114 &394795912
@@ -1494,7 +1494,7 @@ MonoBehaviour:
   itemID: 0
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: 77e51a545e76c40019fd0f1269ce2cd7, type: 2}
-  baseValueUpgradeAmount: 4
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!114 &542616859
@@ -1711,7 +1711,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: BattleScene
+          m_StringArgument: Testin
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &580858432
@@ -1918,7 +1918,7 @@ MonoBehaviour:
   itemID: 
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
-  baseValueUpgradeAmount: 2
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!1 &744800606
@@ -2499,7 +2499,7 @@ MonoBehaviour:
   itemID: 
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
-  baseValueUpgradeAmount: 2
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!114 &1541945385
@@ -2759,6 +2759,7 @@ MonoBehaviour:
   playerController: {fileID: 0}
   playerHealth: {fileID: 0}
   enemyHealth: {fileID: 0}
+  isBattleScene: 0
 --- !u!4 &1689255287
 Transform:
   m_ObjectHideFlags: 0
@@ -2830,7 +2831,7 @@ MonoBehaviour:
   itemID: 0
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  baseValueUpgradeAmount: 4
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!114 &1722816514
@@ -3333,7 +3334,7 @@ MonoBehaviour:
   itemID: 0
   consumable: 1
   cardToUpgrade: {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
-  baseValueUpgradeAmount: 4
+  baseValueUpgradeAmount: 10
   damageMultiplierUpgradeAmount: 0
   unlimitedPurchases: 0
 --- !u!1 &2045488000

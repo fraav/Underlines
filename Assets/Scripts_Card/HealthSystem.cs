@@ -8,7 +8,7 @@ public class HealthSystem : MonoBehaviour
     [System.Serializable]
     public class DeathEvent : UnityEvent { }
 
-    public int MaxHealth { get; private set; } = 100;
+    public int MaxHealth { get; private set; } = 200;
     public int CurrentHealth { get; private set; }
 
     public HealthEvent OnHealthChanged = new HealthEvent();
