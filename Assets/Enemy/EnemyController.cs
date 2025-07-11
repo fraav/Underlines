@@ -10,8 +10,8 @@ public class EnemyController : MonoBehaviour
         public ActionType actionType;
         public string animationName;
         public float duration = 1f;
-        public float actionPointTime = 0.5f; // Momento para aplicar el efecto
-        public int value = 10; // Daño o curación
+        public float actionPointTime = 0.5f;
+        public int value = 10;
         public ParticleSystem effect;
         public AudioClip sound;
     }
@@ -21,6 +21,9 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private GameObject highlightEffect;
     [SerializeField] private Animator animator;
 
+    [Header("Reward Settings")]
+    [SerializeField] private int deathReward = 50; // Dinero que da al morir
+
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
     private bool isDead = false;
@@ -28,6 +31,18 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         SetupHealthSystem();
+    }
+
+    private void OnEnable()
+    {
+        // Suscribirse al evento de recompensas
+        EconomyManager.OnRewardGiven += HandleReward;
+    }
+
+    private void OnDisable()
+    {
+        // Desuscribirse para prevenir memory leaks
+        EconomyManager.OnRewardGiven -= HandleReward;
     }
 
     private void SetupHealthSystem()
@@ -73,13 +88,9 @@ public class EnemyController : MonoBehaviour
             AudioSource.PlayClipAtPoint(action.sound, transform.position);
         }
 
-        // Esperar hasta el punto de acción
         yield return new WaitForSeconds(action.actionPointTime);
-
-        // Aplicar el efecto (daño o curación)
         ApplyActionEffect(action);
 
-        // Esperar el tiempo restante de la animación
         float remainingTime = action.duration - action.actionPointTime;
         if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
 
@@ -143,11 +154,25 @@ public class EnemyController : MonoBehaviour
         if (collider3D != null) collider3D.enabled = false;
         if (collider2D != null) collider2D.enabled = false;
 
+        // Dar recompensa usando el sistema estático
+        EconomyManager.GiveReward(deathReward);
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnEnemyDefeated();
         }
         Destroy(gameObject, 2f);
+    }
+
+    // Manejar recompensas (opcional: para efectos locales)
+    private void HandleReward(int amount)
+    {
+        if (isDead && amount == deathReward)
+        {
+            // Aquí puedes agregar efectos específicos para este enemigo
+            // Ej: mostrar texto flotante con la recompensa
+            Debug.Log($"Enemigo dio recompensa: {amount}");
+        }
     }
 
     public void SetHighlight(bool active)

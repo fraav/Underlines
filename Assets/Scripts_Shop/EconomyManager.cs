@@ -6,6 +6,9 @@ public class EconomyManager : MonoBehaviour
 {
     public static EconomyManager Instance { get; private set; }
 
+    // Evento estático para recompensas
+    public static event System.Action<int> OnRewardGiven;
+
     private int currentMoney;
     public int CurrentMoney => currentMoney;
 
@@ -24,24 +27,34 @@ public class EconomyManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-        public void ResetMoney()
+
+    public void ResetMoney()
     {
-        currentMoney = 1500; // O el valor inicial que prefieras
+        currentMoney = 1500;
         SaveMoney();
-        
+
         if (MoneyUI.Instance != null)
             MoneyUI.Instance.UpdateMoneyText(currentMoney);
     }
 
-    // Funci�n p�blica para a�adir dinero desde cualquier script
+    // Método público para añadir dinero
     public void AddMoney(int amount)
     {
         currentMoney += amount;
         SaveMoney();
 
-        // Actualizar UI
         if (MoneyUI.Instance != null)
             MoneyUI.Instance.UpdateMoneyText(currentMoney);
+    }
+
+    // Método estático para dar recompensas
+    public static void GiveReward(int amount)
+    {
+        if (Instance != null)
+        {
+            Instance.AddMoney(amount);
+        }
+        OnRewardGiven?.Invoke(amount);
     }
 
     public bool TryPurchaseItem(int cost)
@@ -69,9 +82,4 @@ public class EconomyManager : MonoBehaviour
         PlayerPrefs.SetInt(MoneyKey, currentMoney);
         PlayerPrefs.Save();
     }
-
-
-    // A�adir 100 unidades de dinero //
-   // EconomyManager.Instance.AddMoney(100); //
-
 }

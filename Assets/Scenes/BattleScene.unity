@@ -4036,6 +4036,7 @@ MonoBehaviour:
     sound: {fileID: 0}
   highlightEffect: {fileID: 0}
   animator: {fileID: 520477872}
+  deathReward: 380
   healthSystem: {fileID: 520477874}
 --- !u!114 &520477874
 MonoBehaviour:
