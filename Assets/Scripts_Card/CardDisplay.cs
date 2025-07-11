@@ -157,20 +157,18 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         if (GameManager.Instance == null) return currentCard.description;
 
         float upgradedValue = currentCard.baseValue + currentCard.individualBaseValueUpgrade;
-        float finalValue = 0f;
 
         switch (currentCard.cardType)
         {
             case CardData.CardType.Attack:
-                finalValue = upgradedValue * GameManager.Instance.damageMultiplier * currentCard.individualDamageMultiplier;
-                return $"Damage: {finalValue:F1}";
+                float attackValue = upgradedValue * GameManager.Instance.damageMultiplier * currentCard.individualDamageMultiplier;
+                return $"Damage: {attackValue:F1}";
             case CardData.CardType.Block:
-                finalValue = upgradedValue * GameManager.Instance.blockMultiplier;
-                // Mostrar como porcentaje de reducción
-                return $"Reduce: {finalValue:F0}%";
+                float blockValue = upgradedValue * GameManager.Instance.blockMultiplier;
+                return $"Reduce: {blockValue:F0}%";
             case CardData.CardType.Heal:
-                finalValue = upgradedValue * GameManager.Instance.healMultiplier;
-                return $"Heal: {finalValue:F1}";
+                float healValue = upgradedValue * GameManager.Instance.healMultiplier;
+                return $"Heal: {healValue:F1}";
             default:
                 return currentCard.description;
         }
@@ -181,27 +179,25 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         if (currentCard == null) return "";
 
         float upgradedValue = currentCard.baseValue + currentCard.individualBaseValueUpgrade;
-        float finalValue = 0f;
 
         switch (currentCard.cardType)
         {
             case CardData.CardType.Attack:
-                finalValue = upgradedValue * GameManager.Instance.damageMultiplier * currentCard.individualDamageMultiplier;
+                float attackValue = upgradedValue * GameManager.Instance.damageMultiplier * currentCard.individualDamageMultiplier;
                 return $"<b>{currentCard.cardName}</b>\n\n" +
                        $"{currentCard.description}\n\n" +
-                       $"Damage: <color=#FFD700>{finalValue:F1}</color>";
+                       $"Damage: <color=#FFD700>{attackValue:F1}</color>";
             case CardData.CardType.Block:
-                finalValue = upgradedValue * GameManager.Instance.blockMultiplier;
-                // Descripción mejorada para bloqueo
+                float blockValue = upgradedValue * GameManager.Instance.blockMultiplier;
                 return $"<b>{currentCard.cardName}</b>\n\n" +
                        $"{currentCard.description}\n\n" +
-                       $"Reduces enemy attack by <color=#FFD700>{finalValue:F0}%</color> " +
+                       $"Reduces enemy attack by <color=#FFD700>{blockValue:F0}%</color> " +
                        $"on their next turn";
             case CardData.CardType.Heal:
-                finalValue = upgradedValue * GameManager.Instance.healMultiplier;
+                float healValue = upgradedValue * GameManager.Instance.healMultiplier;
                 return $"<b>{currentCard.cardName}</b>\n\n" +
                        $"{currentCard.description}\n\n" +
-                       $"Heal: <color=#FFD700>{finalValue:F1}</color>";
+                       $"Heal: <color=#FFD700>{healValue:F1}</color>";
             default:
                 return currentCard.description;
         }

@@ -22,12 +22,12 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private Animator animator;
 
     [Header("Reward Settings")]
-    [SerializeField] private int deathReward = 50; // Dinero que da al morir
+    [SerializeField] private int deathReward = 50;
 
     [Header("Attack Settings")]
-    public int baseAttack = 10; // Valor base de ataque
-    public float currentAttackMultiplier = 1.0f; // Multiplicador actual
-    private float originalAttackMultiplier = 1.0f; // Guarda el valor original
+    public int baseAttack = 10;
+    public float currentAttackMultiplier = 1.0f;
+    private float originalAttackMultiplier = 1.0f;
 
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
@@ -36,18 +36,16 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         SetupHealthSystem();
-        originalAttackMultiplier = currentAttackMultiplier; // Guardar valor original
+        originalAttackMultiplier = currentAttackMultiplier;
     }
 
     private void OnEnable()
     {
-        // Suscribirse al evento de recompensas
         EconomyManager.OnRewardGiven += HandleReward;
     }
 
     private void OnDisable()
     {
-        // Desuscribirse para prevenir memory leaks
         EconomyManager.OnRewardGiven -= HandleReward;
     }
 
@@ -113,7 +111,6 @@ public class EnemyController : MonoBehaviour
             case EnemyAction.ActionType.Damage:
                 if (GameManager.Instance != null && GameManager.Instance.playerHealth != null)
                 {
-                    // Aplicamos el multiplicador actual al daño base
                     int finalDamage = Mathf.RoundToInt(action.value * currentAttackMultiplier);
                     GameManager.Instance.playerHealth.TakeDamage(finalDamage);
                 }
@@ -162,24 +159,23 @@ public class EnemyController : MonoBehaviour
         if (collider3D != null) collider3D.enabled = false;
         if (collider2D != null) collider2D.enabled = false;
 
-        // Dar recompensa usando el sistema estático
         EconomyManager.GiveReward(deathReward);
 
         if (GameManager.Instance != null)
         {
+            GameManager.Instance.enemyController = null;
+            GameManager.Instance.enemyHealth = null;
             GameManager.Instance.OnEnemyDefeated();
         }
+
         Destroy(gameObject, 2f);
     }
 
-    // Manejar recompensas (opcional: para efectos locales)
     private void HandleReward(int amount)
     {
         if (isDead && amount == deathReward)
         {
-            // Aquí puedes agregar efectos específicos para este enemigo
-            // Ej: mostrar texto flotante con la recompensa
-            Debug.Log($"Enemigo dio recompensa: {amount}");
+            Debug.Log($"Enemy gave reward: {amount}");
         }
     }
 
@@ -196,13 +192,11 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    // Nuevo método para aplicar reducción de daño
     public void ApplyAttackReduction(float reductionMultiplier)
     {
         currentAttackMultiplier = reductionMultiplier;
     }
 
-    // Nuevo método para restaurar ataque original
     public void ResetAttackMultiplier()
     {
         currentAttackMultiplier = originalAttackMultiplier;

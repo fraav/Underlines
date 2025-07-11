@@ -12,8 +12,8 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float cardSpacing = 150f;
     [SerializeField] private float verticalOffset = -100f;
     [SerializeField] private float maxArcHeight = 100f;
-    [SerializeField] private float moveDuration = 0.3f;
     [SerializeField] private float fanAngle = 30f;
+    [SerializeField] private float moveDuration = 0.3f;
 
     private List<GameObject> spawnedCards = new List<GameObject>();
 
@@ -51,6 +51,7 @@ public class HandManager : MonoBehaviour
     {
         ClearExistingCards();
         if (GameManager.Instance == null || GameManager.Instance.currentHand == null) return;
+
         CreateNewCards();
         StartCoroutine(ArrangeCardsInFan());
         UpdateInteractableState();
@@ -139,7 +140,13 @@ public class HandManager : MonoBehaviour
     private void UpdateInteractableState()
     {
         bool interactable = GameManager.Instance != null &&
-                          GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn;
+                          GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn &&
+                          GameManager.Instance.isBattleScene;
+
         SetInteractable(interactable);
+
+        Debug.Log($"UpdateInteractableState - Interactable: {interactable}, " +
+                  $"Turn: {GameManager.Instance?.currentTurn}, " +
+                  $"BattleScene: {GameManager.Instance?.isBattleScene}");
     }
 }

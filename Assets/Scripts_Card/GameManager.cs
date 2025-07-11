@@ -59,17 +59,36 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"Escena cargada: {scene.name}");
+        Debug.Log($"Scene loaded: {scene.name}");
+
+        // Clear references when leaving battle scene
+        if (!scene.name.Contains("Battle"))
+        {
+            CleanBattleReferences();
+        }
+
         FindSceneReferences();
         CheckIfBattleScene();
         InitializeGameForScene();
     }
 
+    public void CleanBattleReferences()
+    {
+        enemyController = null;
+        enemyHealth = null;
+        selectedCard = null;
+        selectedCardDisplay = null;
+        currentTurn = TurnState.PlayerTurn;
+
+        // Clear current hand
+        currentHand.Clear();
+        availableDeck.Clear();
+    }
+
     private void CheckIfBattleScene()
     {
-        // Verificamos si hay un enemigo en la escena
         isBattleScene = GameObject.FindGameObjectWithTag("Enemy") != null;
-        Debug.Log($"¿Es escena de combate? {isBattleScene}");
+        Debug.Log($"Is battle scene? {isBattleScene}");
     }
 
     void InitializeGame()
@@ -89,8 +108,6 @@ public class GameManager : MonoBehaviour
             {
                 playerHealth = player.AddComponent<HealthSystem>();
             }
-
-            Debug.Log("Referencia de jugador encontrada");
         }
 
         GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
@@ -103,8 +120,6 @@ public class GameManager : MonoBehaviour
             {
                 enemyHealth = enemy.AddComponent<HealthSystem>();
             }
-
-            Debug.Log("Referencia de enemigo encontrada");
         }
     }
 
@@ -112,6 +127,8 @@ public class GameManager : MonoBehaviour
     {
         if (isBattleScene)
         {
+            currentTurn = TurnState.PlayerTurn;
+
             if (playerHealth != null)
             {
                 playerHealth.SetMaxHealth(100);
@@ -135,9 +152,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator InitializeBattle()
     {
         yield return new WaitForEndOfFrame();
-
         ResetCardSystemForNewBattle();
-        currentTurn = TurnState.PlayerTurn;
     }
 
     private void ResetCardSystemForNewBattle()
@@ -147,14 +162,28 @@ public class GameManager : MonoBehaviour
         availableDeck.AddRange(allCards);
         ShuffleDeck();
         DrawNewHand();
+
+        currentTurn = TurnState.PlayerTurn;
+
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(true);
+        }
     }
 
-    void Update()
+    public void OnEnemyDefeated()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        Debug.Log("Enemy defeated! Victory.");
+        CancelSelection();
+        if (HandManager.Instance != null)
         {
-            CancelSelection();
+            HandManager.Instance.RefreshHand();
         }
+    }
+
+    private void OnPlayerDeath()
+    {
+        Debug.Log("Player defeated! Game Over.");
     }
 
     public void CancelSelection()
@@ -271,10 +300,6 @@ public class GameManager : MonoBehaviour
             {
                 enemyHealth.TakeDamage((int)finalDamage);
             }
-            else
-            {
-                Debug.LogError("enemyHealth is null in Card_Attack");
-            }
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
@@ -284,10 +309,7 @@ public class GameManager : MonoBehaviour
 
     public void Card_Block(CardData card)
     {
-        // Calcular el valor de bloqueo
         float blockValue = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
-
-        // Aplicar reducción al enemigo (50% de reducción = 0.5f)
         float reductionMultiplier = 1f - (blockValue / 100f);
 
         if (enemyController != null)
@@ -315,7 +337,6 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
-        // Restaurar el ataque del enemigo a su valor original
         if (enemyController != null)
         {
             enemyController.ResetAttackMultiplier();
@@ -377,16 +398,6 @@ public class GameManager : MonoBehaviour
             card.individualBaseValueUpgrade = PlayerPrefs.GetFloat($"{card.cardName}_baseUpgrade", 0f);
             card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1.0f);
         }
-    }
-
-    public void OnEnemyDefeated()
-    {
-        Debug.Log("Enemy defeated! Victory.");
-    }
-
-    private void OnPlayerDeath()
-    {
-        Debug.Log("Player defeated! Game Over.");
     }
 
     public void ResetGameState()
