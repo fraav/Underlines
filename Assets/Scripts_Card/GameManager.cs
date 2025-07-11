@@ -312,19 +312,36 @@ public class GameManager : MonoBehaviour
         float blockValue = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
         float reductionMultiplier = 1f - (blockValue / 100f);
 
-        if (enemyController != null)
+        void ApplyBlock()
         {
-            enemyController.ApplyAttackReduction(reductionMultiplier);
+            if (enemyController != null)
+            {
+                enemyController.ApplyAttackReduction(reductionMultiplier);
+                Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
+            }
         }
 
-        StartCoroutine(EndPlayerTurn());
+        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
+
+        playerController.PlayCardAnimation(card, ApplyBlock, CompleteTurn);
     }
 
     public void Card_Heal(CardData card)
     {
         float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
-        playerHealth?.Heal((int)finalHeal);
-        StartCoroutine(EndPlayerTurn());
+
+        void ApplyHeal()
+        {
+            if (playerHealth != null)
+            {
+                playerHealth.Heal((int)finalHeal);
+                /// Debug.Log($"Curación aplicada. Salud actual: {playerHealth.currentHealth}");
+            }
+        }
+
+        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
+
+        playerController.PlayCardAnimation(card, ApplyHeal, CompleteTurn);
     }
 
     public IEnumerator EndPlayerTurn()
