@@ -7127,8 +7127,8 @@ MonoBehaviour:
   cardSpacing: 220
   verticalOffset: 30
   maxArcHeight: 30
-  moveDuration: 0.3
   fanAngle: -20
+  moveDuration: 0.3
 --- !u!4 &867720230
 Transform:
   m_ObjectHideFlags: 0
@@ -9961,7 +9961,7 @@ MonoBehaviour:
     sound: {fileID: 0}
   - cardType: 1
     animationTrigger: Block
-    actionPointTime: 5
+    actionPointTime: 1
     animationDuration: 2
     effect: {fileID: 0}
     sound: {fileID: 0}
