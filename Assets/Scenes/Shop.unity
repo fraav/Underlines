@@ -713,6 +713,9 @@ MonoBehaviour:
   actions: []
   highlightEffect: {fileID: 0}
   animator: {fileID: 0}
+  deathReward: 50
+  baseAttack: 10
+  currentAttackMultiplier: 1
   healthSystem: {fileID: 0}
 --- !u!95 &176679490
 Animator:
