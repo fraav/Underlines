@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -39,6 +40,7 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
             InitializeGame();
         }
         else
@@ -47,44 +49,109 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Update()
+    void OnDestroy()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            CancelSelection();
-        }
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"Escena cargada: {scene.name}");
+        FindSceneReferences();
+        InitializeGameForScene();
     }
 
     void InitializeGame()
     {
         LoadCardUpgrades();
-        InitializeDeck();
-        InitializeHealthSystems();
-        currentTurn = TurnState.PlayerTurn;
-
-        if (playerHealth != null) playerHealth.OnDeath.AddListener(OnPlayerDeath);
-        if (enemyHealth != null) enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
     }
 
-    void InitializeHealthSystems()
+    private void FindSceneReferences()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
+            playerController = player.GetComponent<PlayerController>();
             playerHealth = player.GetComponent<HealthSystem>();
-            if (playerHealth == null) playerHealth = player.AddComponent<HealthSystem>();
-            playerHealth.SetMaxHealth(100);
-            playerHealth.LoadHealth(PlayerHealthKey, 100);
-            playerHealth.OnHealthChanged.AddListener((health) => {
-                playerHealth.SaveHealth(PlayerHealthKey);
-            });
+
+            if (playerHealth == null)
+            {
+                playerHealth = player.AddComponent<HealthSystem>();
+            }
+
+            Debug.Log("Referencia de jugador encontrada");
         }
 
-        if (enemyController != null)
+        GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
+        if (enemy != null)
         {
-            enemyHealth = enemyController.GetComponent<HealthSystem>();
-            if (enemyHealth == null) enemyHealth = enemyController.gameObject.AddComponent<HealthSystem>();
-            enemyHealth.SetMaxHealth(100);
+            enemyController = enemy.GetComponent<EnemyController>();
+            enemyHealth = enemy.GetComponent<HealthSystem>();
+
+            if (enemyHealth == null)
+            {
+                enemyHealth = enemy.AddComponent<HealthSystem>();
+            }
+
+            Debug.Log("Referencia de enemigo encontrada");
+        }
+    }
+
+    private void InitializeGameForScene()
+    {
+        if (SceneManager.GetActiveScene().name == "BattleScene")
+        {
+            if (playerHealth != null)
+            {
+                playerHealth.SetMaxHealth(100);
+                playerHealth.LoadHealth(PlayerHealthKey, 100);
+                playerHealth.OnHealthChanged.AddListener((health) => {
+                    playerHealth.SaveHealth(PlayerHealthKey);
+                });
+                playerHealth.OnDeath.AddListener(OnPlayerDeath);
+            }
+
+            if (enemyHealth != null)
+            {
+                enemyHealth.SetMaxHealth(100);
+                enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
+            }
+
+            // Inicializamos la batalla después de un frame para dar tiempo a otros componentes
+            StartCoroutine(InitializeBattle());
+        }
+    }
+
+    private IEnumerator InitializeBattle()
+    {
+        // Esperamos un frame para que HandManager se inicialice
+        yield return new WaitForEndOfFrame();
+
+        ResetCardSystemForNewBattle();
+        currentTurn = TurnState.PlayerTurn;
+    }
+
+    private void ResetCardSystemForNewBattle()
+    {
+        // 1. Limpiamos la mano actual
+        currentHand.Clear();
+
+        // 2. Reconstruimos el mazo disponible con todas las cartas
+        availableDeck.Clear();
+        availableDeck.AddRange(allCards);
+
+        // 3. Barajamos el mazo
+        ShuffleDeck();
+
+        // 4. Robamos una nueva mano
+        DrawNewHand();
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            CancelSelection();
         }
     }
 
@@ -239,14 +306,6 @@ public class GameManager : MonoBehaviour
         HandManager.Instance.SetInteractable(true);
     }
 
-    void InitializeDeck()
-    {
-        availableDeck.Clear();
-        availableDeck.AddRange(allCards);
-        ShuffleDeck();
-        DrawNewHand();
-    }
-
     public void ShuffleDeck()
     {
         for (int i = availableDeck.Count - 1; i > 0; i--)
@@ -286,7 +345,11 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
         }
 
-        HandManager.Instance?.RefreshHand();
+        // Solo refrescamos si HandManager está listo
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
     }
 
     void LoadCardUpgrades()
@@ -323,7 +386,7 @@ public class GameManager : MonoBehaviour
         }
 
         PlayerPrefs.Save();
-        InitializeDeck();
+        ResetCardSystemForNewBattle();
 
         if (playerHealth != null)
         {
