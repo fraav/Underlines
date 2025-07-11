@@ -6,16 +6,16 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Test_Menu.unity
+    path: Assets/Scenes/Escenas_Buenas/Test_Menu.unity
     guid: 3f4554e5e925842f7bd54930ffee25fa
   - enabled: 1
-    path: Assets/Scenes/BattleScene.unity
+    path: Assets/Scenes/Escenas_Buenas/BattleScene.unity
     guid: ce7f8d34bcea6e747a97ad8ae56036eb
   - enabled: 1
-    path: Assets/Scenes/Shop.unity
+    path: Assets/Scenes/Escenas_Buenas/Shop.unity
     guid: 9fef2798ad0c3444fb2231a50d5fb63c
   - enabled: 1
-    path: Assets/Scenes/BattleScene2.unity
+    path: Assets/Scenes/Escenas_Buenas/BattleScene2.unity
     guid: c5cc14d0e6e42af478171bd76057b655
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

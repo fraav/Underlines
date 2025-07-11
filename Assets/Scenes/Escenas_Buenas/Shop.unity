@@ -1077,7 +1077,7 @@ GameObject:
   - component: {fileID: 394795912}
   - component: {fileID: 394795911}
   m_Layer: 5
-  m_Name: Image (4)
+  m_Name: fondo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1455,7 +1455,7 @@ GameObject:
   - component: {fileID: 542616859}
   - component: {fileID: 542616858}
   m_Layer: 5
-  m_Name: Image (5)
+  m_Name: Compra_Ataque+
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1623,7 +1623,7 @@ GameObject:
   - component: {fileID: 580858431}
   - component: {fileID: 580858430}
   m_Layer: 5
-  m_Name: Button
+  m_Name: Boton_CambioEscena
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1770,7 +1770,7 @@ GameObject:
   - component: {fileID: 600822890}
   - component: {fileID: 600822894}
   m_Layer: 5
-  m_Name: Image (1)
+  m_Name: Compra_Heal+
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2231,7 +2231,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1333910050
 Transform:
   m_ObjectHideFlags: 0
@@ -2429,8 +2429,8 @@ MonoBehaviour:
   cardSpacing: 220
   verticalOffset: 30
   maxArcHeight: 30
-  moveDuration: 0.3
   fanAngle: -20
+  moveDuration: 0.3
 --- !u!4 &1460460142
 Transform:
   m_ObjectHideFlags: 0
@@ -2793,7 +2793,7 @@ GameObject:
   - component: {fileID: 1722816514}
   - component: {fileID: 1722816513}
   m_Layer: 5
-  m_Name: Image (2)
+  m_Name: fondo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3186,7 +3186,7 @@ GameObject:
   - component: {fileID: 1860400793}
   - component: {fileID: 1860400797}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Compra_Ataque+
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
