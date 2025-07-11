@@ -24,6 +24,11 @@ public class EnemyController : MonoBehaviour
     [Header("Reward Settings")]
     [SerializeField] private int deathReward = 50; // Dinero que da al morir
 
+    [Header("Attack Settings")]
+    public int baseAttack = 10; // Valor base de ataque
+    public float currentAttackMultiplier = 1.0f; // Multiplicador actual
+    private float originalAttackMultiplier = 1.0f; // Guarda el valor original
+
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
     private bool isDead = false;
@@ -31,6 +36,7 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         SetupHealthSystem();
+        originalAttackMultiplier = currentAttackMultiplier; // Guardar valor original
     }
 
     private void OnEnable()
@@ -107,7 +113,9 @@ public class EnemyController : MonoBehaviour
             case EnemyAction.ActionType.Damage:
                 if (GameManager.Instance != null && GameManager.Instance.playerHealth != null)
                 {
-                    GameManager.Instance.playerHealth.TakeDamage(action.value);
+                    // Aplicamos el multiplicador actual al daño base
+                    int finalDamage = Mathf.RoundToInt(action.value * currentAttackMultiplier);
+                    GameManager.Instance.playerHealth.TakeDamage(finalDamage);
                 }
                 break;
 
@@ -186,5 +194,17 @@ public class EnemyController : MonoBehaviour
         {
             GameManager.Instance.SelectTarget(gameObject);
         }
+    }
+
+    // Nuevo método para aplicar reducción de daño
+    public void ApplyAttackReduction(float reductionMultiplier)
+    {
+        currentAttackMultiplier = reductionMultiplier;
+    }
+
+    // Nuevo método para restaurar ataque original
+    public void ResetAttackMultiplier()
+    {
+        currentAttackMultiplier = originalAttackMultiplier;
     }
 }

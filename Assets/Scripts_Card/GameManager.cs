@@ -284,6 +284,17 @@ public class GameManager : MonoBehaviour
 
     public void Card_Block(CardData card)
     {
+        // Calcular el valor de bloqueo
+        float blockValue = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
+
+        // Aplicar reducción al enemigo (50% de reducción = 0.5f)
+        float reductionMultiplier = 1f - (blockValue / 100f);
+
+        if (enemyController != null)
+        {
+            enemyController.ApplyAttackReduction(reductionMultiplier);
+        }
+
         StartCoroutine(EndPlayerTurn());
     }
 
@@ -304,6 +315,12 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
+        // Restaurar el ataque del enemigo a su valor original
+        if (enemyController != null)
+        {
+            enemyController.ResetAttackMultiplier();
+        }
+
         currentTurn = TurnState.PlayerTurn;
         HandManager.Instance.SetInteractable(true);
     }

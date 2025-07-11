@@ -4037,6 +4037,8 @@ MonoBehaviour:
   highlightEffect: {fileID: 0}
   animator: {fileID: 520477872}
   deathReward: 380
+  baseAttack: 10
+  currentAttackMultiplier: 1
   healthSystem: {fileID: 520477874}
 --- !u!114 &520477874
 MonoBehaviour:
@@ -9954,6 +9956,12 @@ MonoBehaviour:
   - cardType: 2
     animationTrigger: Heal
     actionPointTime: 1
+    animationDuration: 2
+    effect: {fileID: 0}
+    sound: {fileID: 0}
+  - cardType: 1
+    animationTrigger: Block
+    actionPointTime: 5
     animationDuration: 2
     effect: {fileID: 0}
     sound: {fileID: 0}
