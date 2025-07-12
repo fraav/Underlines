@@ -16,7 +16,7 @@ MonoBehaviour:
   baseValue: 70
   cardName: Attack_1
   description: Ataca
-  icon: {fileID: 21300000, guid: b6c1c13fd48884ae590e3e1c51948795, type: 3}
+  icon: {fileID: 21300000, guid: 8d9116558b06f174cbe02b7571937fe8, type: 3}
   shopIcon: {fileID: 0}
-  individualBaseValueUpgrade: 0
+  individualBaseValueUpgrade: 10
   individualDamageMultiplier: 1

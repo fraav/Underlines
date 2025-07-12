@@ -2,35 +2,29 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections;
+using System.Linq;
 
 public class SceneTransitionManager : MonoBehaviour
 {
     public static SceneTransitionManager Instance;
 
-    [Header("Animation Settings")]
-    public Animator transitionAnimator;
-    public float minLoadTime = 0.5f;
-    public float fadeAnimationBuffer = 0.2f;
+    [Header("Transition Settings")]
+    public Image fadePanel;
+    public float fadeDuration = 1f;
+    public bool fadeOnStart = true;
+    public Color fadeColor = Color.white;
 
-    [Header("Manual Fade Settings")]
-    public Image fadeOverlay;
-    public float manualFadeDuration = 1f;
-    public Color fadeColor = Color.black;
+    public bool IsTransitioning { get; private set; }
 
-    private string targetScene;
-    private bool isTransitioning;
-    private bool isQuitting;
-
-    public bool IsTransitioning => isTransitioning;
-
-    void Awake()
+    private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
-            InitializeFadeSystem();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            
+            if (fadePanel == null) CreateFadePanel();
         }
         else
         {
@@ -38,178 +32,134 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
-    void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
-
-    private void InitializeFadeSystem()
+    private void CreateFadePanel()
     {
-        if (fadeOverlay != null)
-        {
-            fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
-            fadeOverlay.gameObject.SetActive(false);
-        }
+        GameObject canvasObj = new GameObject("TransitionCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 999;
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
+        DontDestroyOnLoad(canvasObj);
+
+        GameObject panelObj = new GameObject("FadePanel");
+        panelObj.transform.SetParent(canvasObj.transform);
+        fadePanel = panelObj.AddComponent<Image>();
+        
+        fadePanel.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
+        fadePanel.rectTransform.anchorMin = Vector2.zero;
+        fadePanel.rectTransform.anchorMax = Vector2.one;
+        fadePanel.rectTransform.offsetMin = Vector2.zero;
+        fadePanel.rectTransform.offsetMax = Vector2.zero;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        ResetFadeState();
+        if (fadeOnStart) StartCoroutine(FadeIn());
     }
 
     public void ResetFadeState()
     {
-        if (fadeOverlay != null && !isTransitioning)
+        if (fadePanel != null)
         {
-            fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
-            fadeOverlay.gameObject.SetActive(false);
+            fadePanel.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
         }
+        IsTransitioning = false;
     }
 
     public void TransitionToScene(string sceneName)
     {
-        if (isTransitioning) return;
-        targetScene = sceneName;
-        StartCoroutine(TransitionSequence());
+        StartCoroutine(Transition(sceneName));
     }
 
-    public void TransitionToQuit()
+    public IEnumerator LoadSceneWithCleanup(string sceneName)
     {
-        if (isTransitioning) return;
-        isQuitting = true;
-        StartCoroutine(TransitionSequence());
+        yield return StartCoroutine(FadeOut());
+        
+        CleanupBattleObjects();
+        
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private void CleanupBattleObjects()
+    {
+        CardDisplay[] cards = FindObjectsOfType<CardDisplay>(true);
+        foreach (CardDisplay card in cards)
+        {
+            if (card != null) Destroy(card.gameObject);
+        }
+        
+        HandManager handManager = FindObjectOfType<HandManager>(true);
+        if (handManager != null) Destroy(handManager.gameObject);
+    }
+
+    private IEnumerator Transition(string sceneName)
+    {
+        yield return FadeOut();
+        SceneManager.LoadScene(sceneName);
     }
 
     public void PlayFadeOutOnSceneLoad()
     {
-        if (transitionAnimator != null && transitionAnimator.isActiveAndEnabled)
-        {
-            transitionAnimator.ResetTrigger("FadeIn");
-            transitionAnimator.ResetTrigger("FadeOut");
-            transitionAnimator.SetTrigger("FadeOut");
-        }
-        else
-        {
-            StartCoroutine(ManualFade(0));
-        }
+        StartCoroutine(FadeOut());
     }
 
-    private IEnumerator TransitionSequence()
+    public IEnumerator FadeOut()
     {
-        isTransitioning = true;
-
-        // Fade In
-        bool usedAnimator = false;
-        if (transitionAnimator != null && transitionAnimator.isActiveAndEnabled)
-        {
-            usedAnimator = true;
-            transitionAnimator.ResetTrigger("FadeIn");
-            transitionAnimator.ResetTrigger("FadeOut");
-            transitionAnimator.SetTrigger("FadeIn");
-            
-            yield return StartCoroutine(WaitForAnimation("FadeIn"));
-        }
-        else if (fadeOverlay != null)
-        {
-            fadeOverlay.gameObject.SetActive(true);
-            yield return StartCoroutine(ManualFade(1));
-        }
-        else
-        {
-            yield return new WaitForSecondsRealtime(minLoadTime);
-        }
-
-        // Scene Load
-        if (!isQuitting)
-        {
-            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(targetScene);
-            asyncLoad.allowSceneActivation = false;
-            
-            float elapsed = 0f;
-            while (elapsed < minLoadTime)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                yield return null;
-            }
-            
-            asyncLoad.allowSceneActivation = true;
-            
-            while (!asyncLoad.isDone)
-            {
-                yield return null;
-            }
-
-            // Fade Out
-            if (usedAnimator)
-            {
-                PlayFadeOutOnSceneLoad();
-            }
-            else if (fadeOverlay != null)
-            {
-                yield return StartCoroutine(ManualFade(0));
-            }
-        }
-        else
-        {
-            #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-            #else
-            Application.Quit();
-            #endif
-        }
-
-        // Cleanup
-        if (!isQuitting && fadeOverlay != null && fadeOverlay.gameObject.activeSelf)
-        {
-            fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
-            fadeOverlay.gameObject.SetActive(false);
-        }
-
-        isTransitioning = false;
-    }
-
-    private IEnumerator WaitForAnimation(string stateName)
-    {
-        if (transitionAnimator == null) yield break;
+        IsTransitioning = true;
         
-        float timeout = 1f;
-        float elapsed = 0f;
-        
-        while (!transitionAnimator.GetCurrentAnimatorStateInfo(0).IsName(stateName) && elapsed < timeout)
+        if (fadePanel == null) 
         {
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
-        }
-        
-        if (elapsed >= timeout)
-        {
-            Debug.LogWarning($"Animation {stateName} timed out");
+            IsTransitioning = false;
             yield break;
         }
         
-        float animLength = transitionAnimator.GetCurrentAnimatorStateInfo(0).length;
-        yield return new WaitForSecondsRealtime(animLength + fadeAnimationBuffer);
-    }
-
-    private IEnumerator ManualFade(float targetAlpha)
-    {
-        if (fadeOverlay == null) yield break;
-        
-        float startAlpha = fadeOverlay.color.a;
-        float elapsed = 0f;
-        
-        while (elapsed < manualFadeDuration)
+        float timer = 0;
+        while (timer < fadeDuration)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / manualFadeDuration);
-            fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, newAlpha);
+            timer += Time.deltaTime;
+            float alpha = Mathf.Clamp01(timer / fadeDuration);
+            fadePanel.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, alpha);
             yield return null;
         }
         
-        fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, targetAlpha);
+        IsTransitioning = false;
+    }
+
+    public IEnumerator FadeIn()
+    {
+        IsTransitioning = true;
         
-        if (Mathf.Approximately(targetAlpha, 0f))
+        if (fadePanel == null) 
         {
-            yield return new WaitForSecondsRealtime(0.1f);
-            fadeOverlay.gameObject.SetActive(false);
+            IsTransitioning = false;
+            yield break;
         }
+        
+        float timer = fadeDuration;
+        while (timer > 0)
+        {
+            timer -= Time.deltaTime;
+            float alpha = Mathf.Clamp01(timer / fadeDuration);
+            fadePanel.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, alpha);
+            yield return null;
+        }
+        
+        IsTransitioning = false;
+    }
+
+    public void TransitionToQuit()
+    {
+        StartCoroutine(QuitGame());
+    }
+
+    private IEnumerator QuitGame()
+    {
+        yield return FadeOut();
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
 }

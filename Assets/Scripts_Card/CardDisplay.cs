@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class CardDisplay : MonoBehaviour, IPointerDownHandler
@@ -27,6 +28,17 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
         if (selectionIndicator != null) selectionIndicator.SetActive(false);
+    }
+
+    void Start()
+    {
+        // Verificación mejorada para todas las escenas de batalla
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (!sceneName.Contains("Battle"))
+        {
+            Debug.LogWarning($"Destruyendo CardDisplay en escena incorrecta: {sceneName}");
+            Destroy(gameObject);
+        }
     }
 
     public void Initialize(CardData card)
@@ -61,8 +73,9 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         if (eventData.button == PointerEventData.InputButton.Left)
         {
+            // Corrección: Usar propiedad pública SelectedCard
             if (GameManager.Instance.currentTurn == GameManager.TurnState.SelectingTarget &&
-                GameManager.Instance.selectedCard == currentCard)
+                GameManager.Instance.SelectedCard == currentCard)
             {
                 GameManager.Instance.CancelSelection();
                 return;

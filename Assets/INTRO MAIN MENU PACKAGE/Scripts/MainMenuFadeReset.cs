@@ -1,29 +1,22 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class MainMenuFadeReset : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private Image fadeOverlay;
-    [SerializeField] private Color fadeColor = Color.black;
-
     void Start()
     {
-        ResetFadeState();
-        
-        // Verificación adicional con el manager
-        if (SceneTransitionManager.Instance != null)
+        // Verificar si estamos en el menú principal
+        if (SceneManager.GetActiveScene().name == "MainMenu")
         {
-            SceneTransitionManager.Instance.ResetFadeState();
+            ResetFadeState();
         }
     }
 
     private void ResetFadeState()
     {
-        if (fadeOverlay != null)
+        if (SceneTransitionManager.Instance != null)
         {
-            fadeOverlay.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
-            fadeOverlay.gameObject.SetActive(false);
+            SceneTransitionManager.Instance.ResetFadeState();
         }
     }
 }

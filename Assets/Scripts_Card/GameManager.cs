@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Linq;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,12 +32,31 @@ public class GameManager : MonoBehaviour
     [Header("Scene Settings")]
     public bool isBattleScene = false;
 
-    public CardData selectedCard { get; private set; }
-    public CardDisplay selectedCardDisplay { get; private set; }
+    [Header("Audio Settings")]
+    public AudioSource audioSource;
+    public AudioClip attackCardSound;
+    public AudioClip blockCardSound;
+    public AudioClip healCardSound;
+    public AudioClip playerHurtSound;
+    public AudioClip enemyHurtSound;
+    public AudioClip victorySound;
+    public AudioClip defeatSound;
+    public AudioClip enemyAttackSound;
+    public AudioClip enemyHealSound;
 
+    [Header("Transition Settings")]
+    public float resultDisplayTime = 2f;
+
+    private bool isTransitioning = false;
     private bool playerIsValidTarget;
     private bool enemyIsValidTarget;
     private const string PlayerHealthKey = "PlayerCurrentHealth";
+    
+    // Campos privados con propiedades públicas para acceso externo
+    private CardData selectedCard;
+    private CardDisplay selectedCardDisplay;
+    public CardData SelectedCard => selectedCard;
+    public CardDisplay SelectedCardDisplay => selectedCardDisplay;
 
     void Awake()
     {
@@ -108,6 +129,11 @@ public class GameManager : MonoBehaviour
             {
                 playerHealth = player.AddComponent<HealthSystem>();
             }
+            
+            // Configurar sonidos de daño para el jugador
+            playerHealth.OnTakeDamage.AddListener((damage) => {
+                PlaySound(playerHurtSound);
+            });
         }
 
         GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
@@ -119,6 +145,18 @@ public class GameManager : MonoBehaviour
             if (enemyHealth == null)
             {
                 enemyHealth = enemy.AddComponent<HealthSystem>();
+            }
+            
+            // Configurar sonidos de daño para el enemigo
+            enemyHealth.OnTakeDamage.AddListener((damage) => {
+                PlaySound(enemyHurtSound);
+            });
+            
+            // Configurar sonidos para acciones del enemigo
+            if (enemyController != null)
+            {
+                enemyController.OnEnemyAttack.AddListener(() => PlaySound(enemyAttackSound));
+                enemyController.OnEnemyHeal.AddListener(() => PlaySound(enemyHealSound));
             }
         }
     }
@@ -153,6 +191,14 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         ResetCardSystemForNewBattle();
+        
+        // Fade in al inicio de la batalla
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeIn()
+            );
+        }
     }
 
     private void ResetCardSystemForNewBattle()
@@ -173,17 +219,73 @@ public class GameManager : MonoBehaviour
 
     public void OnEnemyDefeated()
     {
+        if (isTransitioning) return;
+        
         Debug.Log("Enemy defeated! Victory.");
+        PlaySound(victorySound);
+        
         CancelSelection();
         if (HandManager.Instance != null)
         {
             HandManager.Instance.RefreshHand();
         }
+        
+        StartCoroutine(VictoryRoutine());
+    }
+
+    private IEnumerator VictoryRoutine()
+    {
+        isTransitioning = true;
+        
+        // Fade out usando SceneTransitionManager
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeOut()
+            );
+        }
+        else
+        {
+            // Implementación de respaldo
+            yield return new WaitForSeconds(1f);
+        }
+        
+        // Cambiar a la escena de mapa
+
+        
+        isTransitioning = false;
     }
 
     private void OnPlayerDeath()
     {
+        if (isTransitioning) return;
+        
         Debug.Log("Player defeated! Game Over.");
+        PlaySound(defeatSound);
+        StartCoroutine(DefeatRoutine());
+    }
+
+    private IEnumerator DefeatRoutine()
+    {
+        isTransitioning = true;
+        
+        // Fade out usando SceneTransitionManager
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeOut()
+            );
+        }
+        else
+        {
+            // Implementación de respaldo
+            yield return new WaitForSeconds(1f);
+        }
+        
+        // Cambiar al menú principal
+        SceneManager.LoadScene("MainMenu");
+        
+        isTransitioning = false;
     }
 
     public void CancelSelection()
@@ -275,15 +377,19 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteCardAction(CardData card)
     {
+        // Reproducir sonido según el tipo de carta
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
+                PlaySound(attackCardSound);
                 Card_Attack(card);
                 break;
             case CardData.CardType.Block:
+                PlaySound(blockCardSound);
                 Card_Block(card);
                 break;
             case CardData.CardType.Heal:
+                PlaySound(healCardSound);
                 Card_Heal(card);
                 break;
         }
@@ -335,7 +441,6 @@ public class GameManager : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.Heal((int)finalHeal);
-                /// Debug.Log($"Curación aplicada. Salud actual: {playerHealth.currentHealth}");
             }
         }
 
@@ -438,6 +543,14 @@ public class GameManager : MonoBehaviour
         {
             playerHealth.SetMaxHealth(100);
             PlayerPrefs.DeleteKey(PlayerHealthKey);
+        }
+    }
+    
+    private void PlaySound(AudioClip clip, float volume = 1.0f)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip, volume);
         }
     }
 }

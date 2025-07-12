@@ -16,7 +16,7 @@ MonoBehaviour:
   baseValue: 120
   cardName: Heal_1
   description: Cura
-  icon: {fileID: 21300000, guid: 2a10622635edf4400bdcf9ab8beffaac, type: 3}
+  icon: {fileID: 21300000, guid: b2e048c7f64a3c04ca7df7d5059c70f8, type: 3}
   shopIcon: {fileID: 0}
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1

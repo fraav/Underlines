@@ -1,5 +1,7 @@
+// EnemyController.cs
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Events;
 
 public class EnemyController : MonoBehaviour
 {
@@ -32,6 +34,10 @@ public class EnemyController : MonoBehaviour
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
     private bool isDead = false;
+
+    // Nuevos eventos para acciones del enemigo
+    public UnityEvent OnEnemyAttack = new UnityEvent();
+    public UnityEvent OnEnemyHeal = new UnityEvent();
 
     void Start()
     {
@@ -113,6 +119,7 @@ public class EnemyController : MonoBehaviour
                 {
                     int finalDamage = Mathf.RoundToInt(action.value * currentAttackMultiplier);
                     GameManager.Instance.playerHealth.TakeDamage(finalDamage);
+                    OnEnemyAttack.Invoke(); // Invocar evento de ataque
                 }
                 break;
 
@@ -120,6 +127,7 @@ public class EnemyController : MonoBehaviour
                 if (healthSystem != null)
                 {
                     healthSystem.Heal(action.value);
+                    OnEnemyHeal.Invoke(); // Invocar evento de curación
                 }
                 break;
         }

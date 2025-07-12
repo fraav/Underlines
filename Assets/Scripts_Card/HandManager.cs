@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class HandManager : MonoBehaviour
 {
@@ -19,18 +20,21 @@ public class HandManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     void Start()
     {
+        // Verificación mejorada para todas las escenas de batalla
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (!sceneName.Contains("Battle"))
+        {
+            Debug.LogWarning($"Destruyendo HandManager en escena incorrecta: {sceneName}");
+            Destroy(gameObject);
+            return;
+        }
+        
         StartCoroutine(InitializeHand());
     }
 
@@ -41,10 +45,7 @@ public class HandManager : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
         }
 
-        if (GameManager.Instance.isBattleScene)
-        {
-            RefreshHand();
-        }
+        if (GameManager.Instance.isBattleScene) RefreshHand();
     }
 
     public void RefreshHand()
@@ -78,10 +79,7 @@ public class HandManager : MonoBehaviour
                 display.Initialize(card);
                 spawnedCards.Add(newCard);
             }
-            else
-            {
-                Destroy(newCard);
-            }
+            else Destroy(newCard);
         }
     }
 
@@ -128,7 +126,7 @@ public class HandManager : MonoBehaviour
                 {
                     display.SetInteractableState(interactable);
 
-                    if (!interactable && display == GameManager.Instance?.selectedCardDisplay)
+                    if (!interactable && display == GameManager.Instance?.SelectedCardDisplay)
                     {
                         display.SetSelected(false);
                     }
@@ -144,9 +142,5 @@ public class HandManager : MonoBehaviour
                           GameManager.Instance.isBattleScene;
 
         SetInteractable(interactable);
-
-        Debug.Log($"UpdateInteractableState - Interactable: {interactable}, " +
-                  $"Turn: {GameManager.Instance?.currentTurn}, " +
-                  $"BattleScene: {GameManager.Instance?.isBattleScene}");
     }
 }
