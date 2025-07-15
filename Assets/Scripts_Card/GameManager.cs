@@ -84,9 +84,7 @@ public class GameManager : MonoBehaviour
 
         // Clear references when leaving battle scene
         if (!scene.name.Contains("Battle"))
-        {
             CleanBattleReferences();
-        }
 
         FindSceneReferences();
         CheckIfBattleScene();
@@ -101,7 +99,6 @@ public class GameManager : MonoBehaviour
         selectedCardDisplay = null;
         currentTurn = TurnState.PlayerTurn;
 
-        // Clear current hand
         currentHand.Clear();
         availableDeck.Clear();
     }
@@ -124,16 +121,9 @@ public class GameManager : MonoBehaviour
         {
             playerController = player.GetComponent<PlayerController>();
             playerHealth = player.GetComponent<HealthSystem>();
-
             if (playerHealth == null)
-            {
                 playerHealth = player.AddComponent<HealthSystem>();
-            }
-            
-            // Configurar sonidos de daño para el jugador
-            playerHealth.OnTakeDamage.AddListener((damage) => {
-                PlaySound(playerHurtSound);
-            });
+            playerHealth.OnTakeDamage.AddListener(dmg => PlaySound(playerHurtSound));
         }
 
         GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
@@ -141,18 +131,10 @@ public class GameManager : MonoBehaviour
         {
             enemyController = enemy.GetComponent<EnemyController>();
             enemyHealth = enemy.GetComponent<HealthSystem>();
-
             if (enemyHealth == null)
-            {
                 enemyHealth = enemy.AddComponent<HealthSystem>();
-            }
-            
-            // Configurar sonidos de daño para el enemigo
-            enemyHealth.OnTakeDamage.AddListener((damage) => {
-                PlaySound(enemyHurtSound);
-            });
-            
-            // Configurar sonidos para acciones del enemigo
+            enemyHealth.OnTakeDamage.AddListener(dmg => PlaySound(enemyHurtSound));
+
             if (enemyController != null)
             {
                 enemyController.OnEnemyAttack.AddListener(() => PlaySound(enemyAttackSound));
@@ -163,42 +145,32 @@ public class GameManager : MonoBehaviour
 
     private void InitializeGameForScene()
     {
-        if (isBattleScene)
+        if (!isBattleScene) return;
+
+        currentTurn = TurnState.PlayerTurn;
+
+        if (playerHealth != null)
         {
-            currentTurn = TurnState.PlayerTurn;
-
-            if (playerHealth != null)
-            {
-                playerHealth.SetMaxHealth(100);
-                playerHealth.LoadHealth(PlayerHealthKey, 100);
-                playerHealth.OnHealthChanged.AddListener((health) => {
-                    playerHealth.SaveHealth(PlayerHealthKey);
-                });
-                playerHealth.OnDeath.AddListener(OnPlayerDeath);
-            }
-
-            if (enemyHealth != null)
-            {
-                enemyHealth.SetMaxHealth(100);
-                enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
-            }
-
-            StartCoroutine(InitializeBattle());
+            playerHealth.SetMaxHealth(100);
+            playerHealth.LoadHealth(PlayerHealthKey, 100);
+            playerHealth.OnHealthChanged.AddListener(h => playerHealth.SaveHealth(PlayerHealthKey));
+            playerHealth.OnDeath.AddListener(OnPlayerDeath);
         }
+
+        if (enemyHealth != null)
+            enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
+
+        StartCoroutine(InitializeBattle());
     }
 
     private IEnumerator InitializeBattle()
     {
         yield return new WaitForEndOfFrame();
         ResetCardSystemForNewBattle();
-        
+
         // Fade in al inicio de la batalla
-        if (SceneTransitionManager.Instance != null)
-        {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeIn()
-            );
-        }
+        if (FadeManager.Instance != null)
+            yield return FadeManager.Instance.FadeIn();
     }
 
     private void ResetCardSystemForNewBattle()
@@ -212,54 +184,41 @@ public class GameManager : MonoBehaviour
         currentTurn = TurnState.PlayerTurn;
 
         if (HandManager.Instance != null)
-        {
             HandManager.Instance.SetInteractable(true);
-        }
     }
 
     public void OnEnemyDefeated()
     {
         if (isTransitioning) return;
-        
+
         Debug.Log("Enemy defeated! Victory.");
         PlaySound(victorySound);
-        
         CancelSelection();
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
-        
+        HandManager.Instance?.RefreshHand();
         StartCoroutine(VictoryRoutine());
     }
 
     private IEnumerator VictoryRoutine()
     {
-        isTransitioning = true;
-        
-        // Fade out usando SceneTransitionManager
-        if (SceneTransitionManager.Instance != null)
+        string nextScene = SceneManager.GetActiveScene().name == "BattleScene" ? "Shop" : "Credits";
+
+        // Fade out → cargar → fade in
+        if (FadeManager.Instance != null)
         {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeOut()
-            );
+            FadeManager.Instance.FadeToScene(nextScene);
+            yield break;
         }
         else
         {
-            // Implementación de respaldo
-            yield return new WaitForSeconds(1f);
+            SceneManager.LoadScene(nextScene);
+            yield break;
         }
-        
-        // Cambiar a la escena de mapa
-
-        
-        isTransitioning = false;
     }
 
     private void OnPlayerDeath()
     {
         if (isTransitioning) return;
-        
+
         Debug.Log("Player defeated! Game Over.");
         PlaySound(defeatSound);
         StartCoroutine(DefeatRoutine());
@@ -268,23 +227,14 @@ public class GameManager : MonoBehaviour
     private IEnumerator DefeatRoutine()
     {
         isTransitioning = true;
-        
-        // Fade out usando SceneTransitionManager
-        if (SceneTransitionManager.Instance != null)
-        {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeOut()
-            );
-        }
+
+        // Fade out usando FadeManager
+        if (FadeManager.Instance != null)
+            yield return FadeManager.Instance.FadeOut();
         else
-        {
-            // Implementación de respaldo
             yield return new WaitForSeconds(1f);
-        }
-        
-        // Cambiar al menú principal
+
         SceneManager.LoadScene("MainMenu");
-        
         isTransitioning = false;
     }
 
@@ -309,9 +259,7 @@ public class GameManager : MonoBehaviour
     public void StartTargetSelection(CardData card, CardDisplay display)
     {
         if (selectedCardDisplay != null && selectedCardDisplay != display)
-        {
             selectedCardDisplay.SetSelected(false);
-        }
 
         selectedCard = card;
         selectedCardDisplay = display;
@@ -377,7 +325,6 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteCardAction(CardData card)
     {
-        // Reproducir sonido según el tipo de carta
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
@@ -402,10 +349,7 @@ public class GameManager : MonoBehaviour
 
         void ApplyDamage()
         {
-            if (enemyHealth != null)
-            {
-                enemyHealth.TakeDamage((int)finalDamage);
-            }
+            enemyHealth?.TakeDamage((int)finalDamage);
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
@@ -420,11 +364,8 @@ public class GameManager : MonoBehaviour
 
         void ApplyBlock()
         {
-            if (enemyController != null)
-            {
-                enemyController.ApplyAttackReduction(reductionMultiplier);
-                Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
-            }
+            enemyController?.ApplyAttackReduction(reductionMultiplier);
+            Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
@@ -438,10 +379,7 @@ public class GameManager : MonoBehaviour
 
         void ApplyHeal()
         {
-            if (playerHealth != null)
-            {
-                playerHealth.Heal((int)finalHeal);
-            }
+            playerHealth?.Heal((int)finalHeal);
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
@@ -459,11 +397,7 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
-        if (enemyController != null)
-        {
-            enemyController.ResetAttackMultiplier();
-        }
-
+        enemyController?.ResetAttackMultiplier();
         currentTurn = TurnState.PlayerTurn;
         HandManager.Instance.SetInteractable(true);
     }
@@ -473,7 +407,7 @@ public class GameManager : MonoBehaviour
         for (int i = availableDeck.Count - 1; i > 0; i--)
         {
             int randomIndex = Random.Range(0, i + 1);
-            CardData temp = availableDeck[i];
+            var temp = availableDeck[i];
             availableDeck[i] = availableDeck[randomIndex];
             availableDeck[randomIndex] = temp;
         }
@@ -482,7 +416,6 @@ public class GameManager : MonoBehaviour
     public void DrawNewHand()
     {
         currentHand.Clear();
-
         if (availableDeck.Count == 0)
         {
             availableDeck.AddRange(allCards);
@@ -490,15 +423,12 @@ public class GameManager : MonoBehaviour
         }
 
         int drawCount = Mathf.Min(4, availableDeck.Count);
-        List<CardData> drawnCards = availableDeck.Take(drawCount).ToList();
+        var drawnCards = availableDeck.Take(drawCount).ToList();
 
-        foreach (CardData card in drawnCards)
+        foreach (var card in drawnCards)
         {
-            if (card != null)
-            {
-                currentHand.Add(card);
-                availableDeck.Remove(card);
-            }
+            currentHand.Add(card);
+            availableDeck.Remove(card);
         }
 
         if (availableDeck.Count == 0)
@@ -507,38 +437,35 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
         }
 
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
+        HandManager.Instance?.RefreshHand();
     }
 
     void LoadCardUpgrades()
     {
-        foreach (CardData card in allCards)
+        foreach (var card in allCards)
         {
             card.individualBaseValueUpgrade = PlayerPrefs.GetFloat($"{card.cardName}_baseUpgrade", 0f);
-            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1.0f);
+            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1f);
         }
     }
 
     public void ResetGameState()
     {
-        damageMultiplier = 1.0f;
-        blockMultiplier = 1.0f;
-        healMultiplier = 1.0f;
+        damageMultiplier = 1f;
+        blockMultiplier = 1f;
+        healMultiplier = 1f;
 
-        foreach (CardData card in allCards)
+        foreach (var card in allCards)
         {
             card.individualBaseValueUpgrade = 0f;
-            card.individualDamageMultiplier = 1.0f;
+            card.individualDamageMultiplier = 1f;
             PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
-            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
+            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1f);
         }
 
         PlayerPrefs.Save();
         ResetCardSystemForNewBattle();
-
+        
         if (playerHealth != null)
         {
             playerHealth.SetMaxHealth(100);
@@ -546,11 +473,9 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    private void PlaySound(AudioClip clip, float volume = 1.0f)
+    private void PlaySound(AudioClip clip, float volume = 1f)
     {
         if (audioSource != null && clip != null)
-        {
             audioSource.PlayOneShot(clip, volume);
-        }
     }
 }
