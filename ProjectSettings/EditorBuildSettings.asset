@@ -28,7 +28,13 @@ EditorBuildSettings:
     guid: 9fef2798ad0c3444fb2231a50d5fb63c
   - enabled: 1
     path: Assets/Scenes/Escenas_Buenas/BattleScene2.unity
+    guid: c3761b8ff6cdc364b91d6a63b577227c
+  - enabled: 0
+    path: Assets/Scenes/Escenas_Buenas/BattleScene3.unity
     guid: c5cc14d0e6e42af478171bd76057b655
+  - enabled: 0
+    path: Assets/Scenes/Escenas_Buenas/BattleScene4.unity
+    guid: f80ea432a12a3af42a52f4b2f44d7d75
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
