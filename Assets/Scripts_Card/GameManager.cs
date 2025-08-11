@@ -84,7 +84,9 @@ public class GameManager : MonoBehaviour
 
         // Clear references when leaving battle scene
         if (!scene.name.Contains("Battle"))
+        {
             CleanBattleReferences();
+        }
 
         FindSceneReferences();
         CheckIfBattleScene();
@@ -99,6 +101,7 @@ public class GameManager : MonoBehaviour
         selectedCardDisplay = null;
         currentTurn = TurnState.PlayerTurn;
 
+        // Clear current hand
         currentHand.Clear();
         availableDeck.Clear();
     }
@@ -121,9 +124,16 @@ public class GameManager : MonoBehaviour
         {
             playerController = player.GetComponent<PlayerController>();
             playerHealth = player.GetComponent<HealthSystem>();
+
             if (playerHealth == null)
+            {
                 playerHealth = player.AddComponent<HealthSystem>();
-            playerHealth.OnTakeDamage.AddListener(dmg => PlaySound(playerHurtSound));
+            }
+            
+            // Configurar sonidos de daño para el jugador
+            playerHealth.OnTakeDamage.AddListener((damage) => {
+                PlayPlayerDamageSound();
+            });
         }
 
         GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
@@ -131,46 +141,64 @@ public class GameManager : MonoBehaviour
         {
             enemyController = enemy.GetComponent<EnemyController>();
             enemyHealth = enemy.GetComponent<HealthSystem>();
-            if (enemyHealth == null)
-                enemyHealth = enemy.AddComponent<HealthSystem>();
-            enemyHealth.OnTakeDamage.AddListener(dmg => PlaySound(enemyHurtSound));
 
+            if (enemyHealth == null)
+            {
+                enemyHealth = enemy.AddComponent<HealthSystem>();
+            }
+            
+            // Configurar sonidos de daño para el enemigo
+            enemyHealth.OnTakeDamage.AddListener((damage) => {
+                PlayEnemyDamageSound();
+            });
+            
+            // Configurar sonidos para acciones del enemigo
             if (enemyController != null)
             {
-                enemyController.OnEnemyAttack.AddListener(() => PlaySound(enemyAttackSound));
-                enemyController.OnEnemyHeal.AddListener(() => PlaySound(enemyHealSound));
+                enemyController.OnEnemyAttack.AddListener(() => PlayEnemyAttackSound());
+                enemyController.OnEnemyHeal.AddListener(() => PlayEnemyHealSound());
             }
         }
     }
 
     private void InitializeGameForScene()
     {
-        if (!isBattleScene) return;
-
-        currentTurn = TurnState.PlayerTurn;
-
-        if (playerHealth != null)
+        if (isBattleScene)
         {
-            playerHealth.SetMaxHealth(100);
-            playerHealth.LoadHealth(PlayerHealthKey, 100);
-            playerHealth.OnHealthChanged.AddListener(h => playerHealth.SaveHealth(PlayerHealthKey));
-            playerHealth.OnDeath.AddListener(OnPlayerDeath);
+            currentTurn = TurnState.PlayerTurn;
+
+            if (playerHealth != null)
+            {
+                playerHealth.SetMaxHealth(100);
+                playerHealth.LoadHealth(PlayerHealthKey, 100);
+                playerHealth.OnHealthChanged.AddListener((health) => {
+                    playerHealth.SaveHealth(PlayerHealthKey);
+                });
+                playerHealth.OnDeath.AddListener(OnPlayerDeath);
+            }
+
+            if (enemyHealth != null)
+            {
+                enemyHealth.SetMaxHealth(100);
+                enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
+            }
+
+            StartCoroutine(InitializeBattle());
         }
-
-        if (enemyHealth != null)
-            enemyHealth.OnDeath.AddListener(OnEnemyDefeated);
-
-        StartCoroutine(InitializeBattle());
     }
 
     private IEnumerator InitializeBattle()
     {
         yield return new WaitForEndOfFrame();
         ResetCardSystemForNewBattle();
-
+        
         // Fade in al inicio de la batalla
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeIn();
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeIn()
+            );
+        }
     }
 
     private void ResetCardSystemForNewBattle()
@@ -184,57 +212,79 @@ public class GameManager : MonoBehaviour
         currentTurn = TurnState.PlayerTurn;
 
         if (HandManager.Instance != null)
+        {
             HandManager.Instance.SetInteractable(true);
+        }
     }
 
     public void OnEnemyDefeated()
     {
         if (isTransitioning) return;
-
+        
         Debug.Log("Enemy defeated! Victory.");
-        PlaySound(victorySound);
+        PlayVictorySound();
+        
         CancelSelection();
-        HandManager.Instance?.RefreshHand();
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
+        
         StartCoroutine(VictoryRoutine());
     }
 
     private IEnumerator VictoryRoutine()
     {
-        string nextScene = SceneManager.GetActiveScene().name == "BattleScene" ? "Shop" : "Credits";
-
-        // Fade out → cargar → fade in
-        if (FadeManager.Instance != null)
+        isTransitioning = true;
+        
+        // Fade out usando SceneTransitionManager
+        if (SceneTransitionManager.Instance != null)
         {
-            FadeManager.Instance.FadeToScene(nextScene);
-            yield break;
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeOut()
+            );
         }
         else
         {
-            SceneManager.LoadScene(nextScene);
-            yield break;
+            // Implementación de respaldo
+            yield return new WaitForSeconds(1f);
         }
+        
+        // Cambiar a la escena de mapa
+
+        
+        isTransitioning = false;
     }
 
     private void OnPlayerDeath()
     {
         if (isTransitioning) return;
-
+        
         Debug.Log("Player defeated! Game Over.");
-        PlaySound(defeatSound);
+        PlayDefeatSound();
         StartCoroutine(DefeatRoutine());
     }
 
     private IEnumerator DefeatRoutine()
     {
         isTransitioning = true;
-
-        // Fade out usando FadeManager
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeOut();
+        
+        // Fade out usando SceneTransitionManager
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.FadeOut()
+            );
+        }
         else
+        {
+            // Implementación de respaldo
             yield return new WaitForSeconds(1f);
-
+        }
+        
+        // Cambiar al menú principal
         SceneManager.LoadScene("MainMenu");
+        
         isTransitioning = false;
     }
 
@@ -259,7 +309,9 @@ public class GameManager : MonoBehaviour
     public void StartTargetSelection(CardData card, CardDisplay display)
     {
         if (selectedCardDisplay != null && selectedCardDisplay != display)
+        {
             selectedCardDisplay.SetSelected(false);
+        }
 
         selectedCard = card;
         selectedCardDisplay = display;
@@ -325,18 +377,19 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteCardAction(CardData card)
     {
+        // Reproducir sonido según el tipo de carta
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
-                PlaySound(attackCardSound);
+                PlayAttackCardSound();
                 Card_Attack(card);
                 break;
             case CardData.CardType.Block:
-                PlaySound(blockCardSound);
+                PlayBlockCardSound();
                 Card_Block(card);
                 break;
             case CardData.CardType.Heal:
-                PlaySound(healCardSound);
+                PlayHealCardSound();
                 Card_Heal(card);
                 break;
         }
@@ -349,11 +402,19 @@ public class GameManager : MonoBehaviour
 
         void ApplyDamage()
         {
-            enemyHealth?.TakeDamage((int)finalDamage);
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage((int)finalDamage);
+                // Reproducir sonido de daño del enemigo en el momento exacto del impacto
+                PlayEnemyDamageSound();
+                // Reproducir sonido de ataque en el momento exacto del impacto
+                PlayAttackCardSound();
+            }
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
+        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
     }
 
@@ -364,12 +425,26 @@ public class GameManager : MonoBehaviour
 
         void ApplyBlock()
         {
-            enemyController?.ApplyAttackReduction(reductionMultiplier);
-            Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
+            if (enemyController != null)
+            {
+                enemyController.ApplyAttackReduction(reductionMultiplier);
+                Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
+            }
+            
+            // Activar el bloqueo del jugador
+            if (playerController != null)
+            {
+                playerController.ActivateBlock(reductionMultiplier);
+                Debug.Log($"Bloqueo del jugador activado con multiplicador: {reductionMultiplier}");
+            }
+            
+            // Reproducir sonido de bloqueo en el momento exacto de activación
+            PlayBlockCardSound();
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
+        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyBlock, CompleteTurn);
     }
 
@@ -379,11 +454,17 @@ public class GameManager : MonoBehaviour
 
         void ApplyHeal()
         {
-            playerHealth?.Heal((int)finalHeal);
+            if (playerHealth != null)
+            {
+                playerHealth.Heal((int)finalHeal);
+                // Reproducir sonido de curación en el momento exacto de aplicación
+                PlayHealCardSound();
+            }
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
+        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyHeal, CompleteTurn);
     }
 
@@ -397,9 +478,158 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
-        enemyController?.ResetAttackMultiplier();
+        if (enemyController != null)
+        {
+            enemyController.ResetAttackMultiplier();
+        }
+
+        // Reiniciar el bloqueo del jugador al terminar el turno del enemigo
+        if (playerController != null)
+        {
+            playerController.DeactivateBlock();
+        }
+
         currentTurn = TurnState.PlayerTurn;
         HandManager.Instance.SetInteractable(true);
+    }
+
+    /// <summary>
+    /// Se llama cuando el enemigo inicia su animación de ataque
+    /// Permite que el bloqueo del jugador se active simultáneamente
+    /// </summary>
+    public void OnEnemyAttackStart()
+    {
+        // Activar el bloqueo pendiente del jugador si tiene uno
+        if (playerController != null && playerController.HasBlockPending())
+        {
+            playerController.ActivatePendingBlock();
+        }
+        
+        // Activar la animación de bloqueo del jugador si tiene bloqueo activo
+        if (playerController != null && playerController.HasBlockActive())
+        {
+            playerController.PlayBlockAnimation();
+        }
+    }
+    
+    /// <summary>
+    /// Se llama cuando el enemigo aplica su ataque (en el punto de acción)
+    /// Permite reproducir el sonido de bloqueo en el momento exacto del impacto
+    /// </summary>
+    public void OnEnemyAttackApplied()
+    {
+        // Reproducir sonido de ataque del enemigo en el momento exacto del impacto
+        PlayEnemyAttackSound();
+        
+        // Reproducir sonido de bloqueo en el momento exacto del impacto
+        if (playerController != null && playerController.HasBlockActive())
+        {
+            PlayBlockHitSound();
+        }
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de bloqueo del jugador
+    /// </summary>
+    public void PlayBlockHitSound()
+    {
+        PlayBlockCardSound();
+        Debug.Log("¡Sonido de bloqueo ejecutado en el momento del impacto!");
+    }
+
+    /// <summary>
+    /// Permite reproducir la animación de recibir daño del jugador
+    /// Útil para cuando el jugador recibe daño mientras bloquea
+    /// </summary>
+    public void PlayPlayerDamageAnimation()
+    {
+        if (playerController != null)
+        {
+            playerController.PlayDamageAnimation();
+            // Reproducir sonido de daño del jugador usando el método centralizado
+            PlayPlayerDamageSound();
+        }
+    }
+    
+    /// <summary>
+    /// Permite reproducir el sonido de daño del enemigo
+    /// Útil para cuando el enemigo recibe daño
+    /// </summary>
+    public void PlayEnemyDamageSound()
+    {
+        PlaySound(enemyHurtSound);
+    }
+
+    /// <summary>
+    /// Permite reproducir el sonido de daño del enemigo desde el EnemyController
+    /// </summary>
+    public void PlayEnemyDamageSoundFromController()
+    {
+        PlaySound(enemyHurtSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de ataque del enemigo
+    /// </summary>
+    public void PlayEnemyAttackSound()
+    {
+        PlaySound(enemyAttackSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de curación del enemigo
+    /// </summary>
+    public void PlayEnemyHealSound()
+    {
+        PlaySound(enemyHealSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de daño del jugador
+    /// </summary>
+    public void PlayPlayerDamageSound()
+    {
+        PlaySound(playerHurtSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de victoria
+    /// </summary>
+    public void PlayVictorySound()
+    {
+        PlaySound(victorySound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de derrota
+    /// </summary>
+    public void PlayDefeatSound()
+    {
+        PlaySound(defeatSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de carta de ataque
+    /// </summary>
+    public void PlayAttackCardSound()
+    {
+        PlaySound(attackCardSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de carta de bloqueo
+    /// </summary>
+    public void PlayBlockCardSound()
+    {
+        PlaySound(blockCardSound);
+    }
+
+    /// <summary>
+    /// Reproduce el sonido de carta de curación
+    /// </summary>
+    public void PlayHealCardSound()
+    {
+        PlaySound(healCardSound);
     }
 
     public void ShuffleDeck()
@@ -407,7 +637,7 @@ public class GameManager : MonoBehaviour
         for (int i = availableDeck.Count - 1; i > 0; i--)
         {
             int randomIndex = Random.Range(0, i + 1);
-            var temp = availableDeck[i];
+            CardData temp = availableDeck[i];
             availableDeck[i] = availableDeck[randomIndex];
             availableDeck[randomIndex] = temp;
         }
@@ -416,6 +646,7 @@ public class GameManager : MonoBehaviour
     public void DrawNewHand()
     {
         currentHand.Clear();
+
         if (availableDeck.Count == 0)
         {
             availableDeck.AddRange(allCards);
@@ -423,12 +654,15 @@ public class GameManager : MonoBehaviour
         }
 
         int drawCount = Mathf.Min(4, availableDeck.Count);
-        var drawnCards = availableDeck.Take(drawCount).ToList();
+        List<CardData> drawnCards = availableDeck.Take(drawCount).ToList();
 
-        foreach (var card in drawnCards)
+        foreach (CardData card in drawnCards)
         {
-            currentHand.Add(card);
-            availableDeck.Remove(card);
+            if (card != null)
+            {
+                currentHand.Add(card);
+                availableDeck.Remove(card);
+            }
         }
 
         if (availableDeck.Count == 0)
@@ -437,35 +671,38 @@ public class GameManager : MonoBehaviour
             ShuffleDeck();
         }
 
-        HandManager.Instance?.RefreshHand();
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
     }
 
     void LoadCardUpgrades()
     {
-        foreach (var card in allCards)
+        foreach (CardData card in allCards)
         {
             card.individualBaseValueUpgrade = PlayerPrefs.GetFloat($"{card.cardName}_baseUpgrade", 0f);
-            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1f);
+            card.individualDamageMultiplier = PlayerPrefs.GetFloat($"{card.cardName}_damageMult", 1.0f);
         }
     }
 
     public void ResetGameState()
     {
-        damageMultiplier = 1f;
-        blockMultiplier = 1f;
-        healMultiplier = 1f;
+        damageMultiplier = 1.0f;
+        blockMultiplier = 1.0f;
+        healMultiplier = 1.0f;
 
-        foreach (var card in allCards)
+        foreach (CardData card in allCards)
         {
             card.individualBaseValueUpgrade = 0f;
-            card.individualDamageMultiplier = 1f;
+            card.individualDamageMultiplier = 1.0f;
             PlayerPrefs.SetFloat($"{card.cardName}_baseUpgrade", 0f);
-            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1f);
+            PlayerPrefs.SetFloat($"{card.cardName}_damageMult", 1.0f);
         }
 
         PlayerPrefs.Save();
         ResetCardSystemForNewBattle();
-        
+
         if (playerHealth != null)
         {
             playerHealth.SetMaxHealth(100);
@@ -473,9 +710,11 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    private void PlaySound(AudioClip clip, float volume = 1f)
+    private void PlaySound(AudioClip clip, float volume = 1.0f)
     {
         if (audioSource != null && clip != null)
+        {
             audioSource.PlayOneShot(clip, volume);
+        }
     }
 }

@@ -95,7 +95,7 @@ public class AudioManager : MonoBehaviour
                 PlayGameMusic();
                 ApplyShopEffect(false);
                 break;
-            case "Shop":
+            case "ShopScene":
                 if (backgroundMusic.clip == gameMusic)
                 {
                     ApplyShopEffect(true);

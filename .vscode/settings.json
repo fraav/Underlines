@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Underlines.sln"
+    "dotnet.defaultSolution": "Underlines.sln",
+    "dotnet.preferCSharpExtension": true
 }

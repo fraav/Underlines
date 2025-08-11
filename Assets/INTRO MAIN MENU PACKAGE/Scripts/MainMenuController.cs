@@ -133,29 +133,52 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator StartGameSequence()
     {
-        // Fade out
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeOut(1f);
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(
+                SceneTransitionManager.Instance.LoadSceneWithCleanup("BattleScene")
+            );
+        }
         else
-            yield return new WaitForSeconds(1f);
+        {
+            yield return SimpleFadeOut();
+            CleanupBattleObjectsFallback();
+            SceneManager.LoadScene("BattleScene");
+        }
         
-        // Cargar escena
-        SceneManager.LoadScene("BattleScene");
+        AudioManager.Instance.PlayGameMusic();
+    }
+
+    private void CleanupBattleObjectsFallback()
+    {
+        CardDisplay[] cards = FindObjectsOfType<CardDisplay>(true);
+        foreach (CardDisplay card in cards)
+        {
+            if (card != null) Destroy(card.gameObject);
+        }
+        
+        HandManager handManager = FindObjectOfType<HandManager>(true);
+        if (handManager != null) Destroy(handManager.gameObject);
     }
 
     public void OpenCredits()
     {
         AudioManager.Instance.PlayButtonClick();
-        StartCoroutine(CreditsSequence());
+        StartCoroutine(OpenCreditsSequence());
     }
 
-    private IEnumerator CreditsSequence()
+    private IEnumerator OpenCreditsSequence()
     {
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeOut(1f);
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(SceneTransitionManager.Instance.FadeOut());
+        }
         else
-            yield return new WaitForSeconds(1f);
-
+        {
+            yield return SimpleFadeOut();
+        }
+        
+        AudioManager.Instance.PlayCreditsMusic();
         SceneManager.LoadScene("Credits");
     }
 
@@ -167,37 +190,20 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator QuitSequence()
     {
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeOut(0.5f);
+        if (SceneTransitionManager.Instance != null)
+        {
+            yield return SceneTransitionManager.Instance.StartCoroutine(SceneTransitionManager.Instance.FadeOut());
+            SceneTransitionManager.Instance.TransitionToQuit();
+        }
         else
-            yield return new WaitForSeconds(0.5f);
-        
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #else
-        Application.Quit();
-        #endif
+        {
+            yield return SimpleFadeOut();
+            StartCoroutine(QuitApplicationFallback());
+        }
     }
     #endregion
 
-    #region Initialization
-    private IEnumerator StartupSequence()
-    {
-        yield return null;
-        
-        // Fade in inicial
-        if (FadeManager.Instance != null)
-            yield return FadeManager.Instance.FadeIn(1f);
-        else
-            yield return new WaitForSeconds(1f);
-        
-        if (glitchAnimator != null)
-        {
-            glitchAnimator.SetTrigger("Start");
-            yield return new WaitForSeconds(0.8f);
-        }
-    }
-
+    #region Social Button Setup
     private void SetupSocialButton()
     {
         socialButton.onClick.AddListener(OnSocialButtonClicked);
@@ -222,6 +228,78 @@ public class MainMenuController : MonoBehaviour
             TMP_Text tooltipText = socialTooltip.GetComponentInChildren<TMP_Text>();
             if (tooltipText != null) tooltipText.text = socialTooltipText;
         }
+    }
+    #endregion
+
+    #region Coroutines
+    private IEnumerator StartupSequence()
+    {
+        yield return null;
+        
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.fadeOnStart = true;
+            yield return SceneTransitionManager.Instance.StartCoroutine(SceneTransitionManager.Instance.FadeIn());
+        }
+        else
+        {
+            yield return SimpleFadeIn();
+        }
+        
+        if (glitchAnimator != null)
+        {
+            glitchAnimator.SetTrigger("Start");
+            yield return new WaitForSeconds(0.8f);
+        }
+    }
+
+    private IEnumerator SimpleFadeOut()
+    {
+        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.fadePanel != null)
+        {
+            Image fadePanel = SceneTransitionManager.Instance.fadePanel;
+            float timer = 0;
+            while (timer < 1f)
+            {
+                timer += Time.deltaTime;
+                fadePanel.color = new Color(0, 0, 0, timer);
+                yield return null;
+            }
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
+    private IEnumerator SimpleFadeIn()
+    {
+        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.fadePanel != null)
+        {
+            Image fadePanel = SceneTransitionManager.Instance.fadePanel;
+            float timer = 1f;
+            while (timer > 0)
+            {
+                timer -= Time.deltaTime;
+                fadePanel.color = new Color(0, 0, 0, timer);
+                yield return null;
+            }
+        }
+        else
+        {
+            yield return null;
+        }
+    }
+
+    private IEnumerator QuitApplicationFallback()
+    {
+        yield return new WaitForSeconds(0.3f);
+        
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
     #endregion
 }

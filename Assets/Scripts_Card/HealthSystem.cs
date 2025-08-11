@@ -24,7 +24,6 @@ public class HealthSystem : MonoBehaviour
     void Start()
     {
         CurrentHealth = MaxHealth;
-        OnHealthChanged.Invoke(CurrentHealth);  // esta linea
     }
 
     public void SetMaxHealth(int maxHealth)
