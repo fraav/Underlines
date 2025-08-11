@@ -101467,7 +101467,7 @@ MonoBehaviour:
     actionPointTime: 1
     animationDuration: 2
   blockAnimationTrigger: Block
-  damageAnimationTrigger: 
+  damageAnimationTrigger: T_Damage
   healthSystem: {fileID: 1313455313}
 --- !u!1 &1317165605
 GameObject:
