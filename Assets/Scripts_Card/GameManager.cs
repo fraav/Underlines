@@ -438,8 +438,7 @@ public class GameManager : MonoBehaviour
                 Debug.Log($"Bloqueo del jugador activado con multiplicador: {reductionMultiplier}");
             }
             
-            // Reproducir sonido de bloqueo en el momento exacto de activación
-            PlayBlockCardSound();
+            // NO reproducir sonido de bloqueo aquí - solo se reproducirá cuando se active el bloqueo
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
@@ -522,7 +521,7 @@ public class GameManager : MonoBehaviour
         // Reproducir sonido de ataque del enemigo en el momento exacto del impacto
         PlayEnemyAttackSound();
         
-        // Reproducir sonido de bloqueo en el momento exacto del impacto
+        // Reproducir sonido de bloqueo solo cuando realmente se activa el bloqueo
         if (playerController != null && playerController.HasBlockActive())
         {
             PlayBlockHitSound();
