@@ -483,7 +483,8 @@ public class GameManager : MonoBehaviour
             enemyController.ResetAttackMultiplier();
         }
 
-        // Reiniciar el bloqueo del jugador al terminar el turno del enemigo
+        // Desactivar el bloqueo del jugador al iniciar su turno
+        // Esto asegura que vuelva a su animación por defecto
         if (playerController != null)
         {
             playerController.DeactivateBlock();
@@ -525,6 +526,21 @@ public class GameManager : MonoBehaviour
         if (playerController != null && playerController.HasBlockActive())
         {
             PlayBlockHitSound();
+        }
+    }
+    
+    /// <summary>
+    /// Se llama cuando el enemigo termina su turno
+    /// Permite que el bloqueo del jugador se desactive automáticamente si no fue golpeado
+    /// </summary>
+    public void OnEnemyTurnEnd()
+    {
+        // El bloqueo se desactivará automáticamente por el temporizador en PlayerController
+        // Solo desactivar inmediatamente si el enemigo no atacó
+        if (playerController != null && playerController.HasBlockActive())
+        {
+            // El bloqueo se mantendrá activo por un tiempo antes de desactivarse automáticamente
+            Debug.Log("Turno del enemigo terminado. El bloqueo del jugador se desactivará automáticamente.");
         }
     }
 

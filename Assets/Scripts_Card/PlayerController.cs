@@ -24,9 +24,12 @@ public class PlayerController : MonoBehaviour
 
     [Header("Block System")]
     [SerializeField] private string blockAnimationTrigger = "Block";
+    [SerializeField] private string blockIdleAnimationTrigger = "BlockIdle";
+    [SerializeField] private float blockAutoDeactivateTime = 3.0f; // Tiempo antes de desactivar bloqueo automáticamente
     
     [Header("Damage Animations")]
     [SerializeField] private string damageAnimationTrigger = "TakeDamage";
+    [SerializeField] private string damageWhileBlockingAnimationTrigger = "TakeDamageWhileBlocking";
 
     public HealthSystem healthSystem;
     
@@ -34,6 +37,7 @@ public class PlayerController : MonoBehaviour
     private bool hasBlockActive = false;
     private bool hasBlockPending = false; // Nuevo: bloqueo pendiente para el siguiente turno
     private float blockReductionMultiplier = 1.0f;
+    private Coroutine blockAutoDeactivateCoroutine;
 
     void Start()
     {
@@ -123,6 +127,12 @@ public class PlayerController : MonoBehaviour
             hasBlockActive = true;
             hasBlockPending = false;
             Debug.Log($"Bloqueo activado para este ataque enemigo. Multiplicador: {blockReductionMultiplier}");
+            
+            // Iniciar animación de bloqueo activo
+            PlayBlockIdleAnimation();
+            
+            // Iniciar temporizador para desactivar bloqueo automáticamente
+            StartBlockAutoDeactivateTimer();
         }
     }
 
@@ -132,6 +142,13 @@ public class PlayerController : MonoBehaviour
         hasBlockActive = false;
         hasBlockPending = false;
         blockReductionMultiplier = 1.0f;
+        
+        // Detener animación de bloqueo
+        StopBlockIdleAnimation();
+        
+        // Detener temporizador de desactivación automática
+        StopBlockAutoDeactivateTimer();
+        
         Debug.Log("Bloqueo desactivado");
     }
 
@@ -162,11 +179,17 @@ public class PlayerController : MonoBehaviour
             GameManager.Instance.PlayPlayerDamageSound();
         }
         
-        // Desactivar bloqueo si está activo
+        // Reproducir animación de daño apropiada
         if (hasBlockActive)
         {
-            DeactivateBlock();
-            Debug.Log("Bloqueo desactivado después de recibir daño");
+            // Si está bloqueando, reproducir animación de daño mientras bloquea
+            PlayDamageWhileBlockingAnimation();
+            // El bloqueo se mantiene activo después de recibir daño
+        }
+        else
+        {
+            // Si no está bloqueando, reproducir animación de daño normal
+            PlayDamageAnimation();
         }
     }
 
@@ -182,6 +205,30 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
+    /// Reproduce la animación de bloqueo activo (idle)
+    /// </summary>
+    public void PlayBlockIdleAnimation()
+    {
+        if (animator != null && !string.IsNullOrEmpty(blockIdleAnimationTrigger))
+        {
+            animator.SetBool(blockIdleAnimationTrigger, true);
+        }
+
+        Debug.Log("¡Animación de bloqueo activo ejecutada!");
+    }
+    
+    /// <summary>
+    /// Detiene la animación de bloqueo activo
+    /// </summary>
+    public void StopBlockIdleAnimation()
+    {
+        if (animator != null && !string.IsNullOrEmpty(blockIdleAnimationTrigger))
+        {
+            animator.SetBool(blockIdleAnimationTrigger, false);
+        }
+    }
+    
+    /// <summary>
     /// Reproduce la animación de recibir daño del jugador
     /// Se puede llamar cuando el jugador recibe daño (especialmente mientras bloquea)
     /// </summary>
@@ -193,6 +240,55 @@ public class PlayerController : MonoBehaviour
         }
 
         Debug.Log("¡Animación de recibir daño ejecutada!");
+    }
+    
+    /// <summary>
+    /// Reproduce la animación de recibir daño mientras bloquea
+    /// </summary>
+    public void PlayDamageWhileBlockingAnimation()
+    {
+        if (animator != null && !string.IsNullOrEmpty(damageWhileBlockingAnimationTrigger))
+        {
+            animator.SetTrigger(damageWhileBlockingAnimationTrigger);
+        }
+
+        Debug.Log("¡Animación de recibir daño mientras bloquea ejecutada!");
+    }
+    
+    /// <summary>
+    /// Inicia el temporizador para desactivar el bloqueo automáticamente
+    /// </summary>
+    private void StartBlockAutoDeactivateTimer()
+    {
+        StopBlockAutoDeactivateTimer();
+        blockAutoDeactivateCoroutine = StartCoroutine(BlockAutoDeactivateTimer());
+    }
+    
+    /// <summary>
+    /// Detiene el temporizador de desactivación automática del bloqueo
+    /// </summary>
+    private void StopBlockAutoDeactivateTimer()
+    {
+        if (blockAutoDeactivateCoroutine != null)
+        {
+            StopCoroutine(blockAutoDeactivateCoroutine);
+            blockAutoDeactivateCoroutine = null;
+        }
+    }
+    
+    /// <summary>
+    /// Corrutina que desactiva el bloqueo automáticamente después de un tiempo
+    /// </summary>
+    private IEnumerator BlockAutoDeactivateTimer()
+    {
+        yield return new WaitForSeconds(blockAutoDeactivateTime);
+        
+        // Solo desactivar si el bloqueo sigue activo (no fue desactivado por daño)
+        if (hasBlockActive)
+        {
+            DeactivateBlock();
+            Debug.Log("Bloqueo desactivado automáticamente por tiempo");
+        }
     }
 
     public void SetHighlight(bool active)

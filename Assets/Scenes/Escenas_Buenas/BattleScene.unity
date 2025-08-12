@@ -39644,6 +39644,7 @@ MonoBehaviour:
   damageActionPointTime: 0.2
   damageSoundPointTime: 0.1
   syncDamageSoundWithAction: 1
+  damageAnimationDuration: 0.5
   healthSystem: {fileID: 520477874}
   OnEnemyAttack:
     m_PersistentCalls:
@@ -101466,8 +101467,15 @@ MonoBehaviour:
     animationTrigger: Attack
     actionPointTime: 1
     animationDuration: 2
+  - cardType: 1
+    animationTrigger: BlockIdle
+    actionPointTime: 1
+    animationDuration: 2
   blockAnimationTrigger: Block
+  blockIdleAnimationTrigger: BlockIdle
+  blockAutoDeactivateTime: 3
   damageAnimationTrigger: T_Damage
+  damageWhileBlockingAnimationTrigger: TakeDamageWhileBlocking
   healthSystem: {fileID: 1313455313}
 --- !u!1 &1317165605
 GameObject:

@@ -43,6 +43,8 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float damageSoundPointTime = 0.1f;
     [Tooltip("Si es true, el sonido se reproduce en el punto de acción. Si es false, se reproduce al inicio")]
     [SerializeField] private bool syncDamageSoundWithAction = true;
+    [Tooltip("Duración de la animación de daño")]
+    [SerializeField] private float damageAnimationDuration = 0.5f;
 
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
@@ -128,6 +130,12 @@ public class EnemyController : MonoBehaviour
 
         float remainingTime = action.duration - action.actionPointTime;
         if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
+
+        // Notificar al GameManager que el turno del enemigo ha terminado
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnEnemyTurnEnd();
+        }
 
         if (GameManager.Instance != null)
         {
@@ -247,6 +255,13 @@ public class EnemyController : MonoBehaviour
             {
                 GameManager.Instance.PlayEnemyDamageSoundFromController();
             }
+        }
+
+        // Esperar el resto de la animación de daño
+        float remainingDamageTime = damageAnimationDuration - damageSoundPointTime;
+        if (remainingDamageTime > 0)
+        {
+            yield return new WaitForSeconds(remainingDamageTime);
         }
 
         Debug.Log("¡Animación de recibir daño del enemigo ejecutada con sonido configurado!");
