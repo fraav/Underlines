@@ -29,6 +29,10 @@ public class GameManager : MonoBehaviour
     public HealthSystem playerHealth;
     public HealthSystem enemyHealth;
 
+    [Header("Target Selection Sprites")]
+    [SerializeField] private GameObject playerTargetSprite;
+    [SerializeField] private GameObject enemyTargetSprite;
+
     [Header("Scene Settings")]
     public bool isBattleScene = false;
 
@@ -292,6 +296,16 @@ public class GameManager : MonoBehaviour
     {
         if (currentTurn == TurnState.SelectingTarget)
         {
+            // Apagar todos los sprites de selección
+            if (playerTargetSprite != null)
+            {
+                playerTargetSprite.SetActive(false);
+            }
+            if (enemyTargetSprite != null)
+            {
+                enemyTargetSprite.SetActive(false);
+            }
+
             playerController?.SetHighlight(false);
             enemyController?.SetHighlight(false);
 
@@ -331,6 +345,16 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
+        // Encender el sprite de selección del objetivo válido
+        if (playerTargetSprite != null)
+        {
+            playerTargetSprite.SetActive(playerIsValidTarget);
+        }
+        if (enemyTargetSprite != null)
+        {
+            enemyTargetSprite.SetActive(enemyIsValidTarget);
+        }
+
         playerController?.SetHighlight(playerIsValidTarget);
         enemyController?.SetHighlight(enemyIsValidTarget);
     }
@@ -343,6 +367,16 @@ public class GameManager : MonoBehaviour
                       (target.CompareTag("Enemy") && enemyIsValidTarget);
 
         if (!isValid) return;
+
+        // Apagar todos los sprites de selección
+        if (playerTargetSprite != null)
+        {
+            playerTargetSprite.SetActive(false);
+        }
+        if (enemyTargetSprite != null)
+        {
+            enemyTargetSprite.SetActive(false);
+        }
 
         playerController?.SetHighlight(false);
         enemyController?.SetHighlight(false);
