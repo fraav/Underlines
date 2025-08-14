@@ -20067,8 +20067,8 @@ GameObject:
   - component: {fileID: 266629925}
   - component: {fileID: 266629924}
   m_Layer: 3
-  m_Name: Target
-  m_TagString: Untagged
+  m_Name: PlayerTargetSprite
+  m_TagString: TargetSprite
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -138118,8 +138118,8 @@ GameObject:
   - component: {fileID: 1800380523}
   - component: {fileID: 1800380524}
   m_Layer: 0
-  m_Name: Target_enem
-  m_TagString: Untagged
+  m_Name: EnemyTargetSprite
+  m_TagString: TargetSprite
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

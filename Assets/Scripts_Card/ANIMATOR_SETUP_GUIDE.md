@@ -132,3 +132,4 @@ Block Auto Deactivate Time: 3.0
 #### **Si las transiciones son bruscas:**
 - Aumentar `Transition Duration` a 0.2 o 0.3
 - Verificar que las animaciones tienen frames de transición suaves
+

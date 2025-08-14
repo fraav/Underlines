@@ -55,8 +55,7 @@ public class GameManager : MonoBehaviour
     private bool playerIsValidTarget;
     private bool enemyIsValidTarget;
     private const string PlayerHealthKey = "PlayerCurrentHealth";
-    
-    // Campos privados con propiedades públicas para acceso externo
+
     private CardData selectedCard;
     private CardDisplay selectedCardDisplay;
     public CardData SelectedCard => selectedCard;
@@ -86,7 +85,6 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Scene loaded: {scene.name}");
 
-        // Clear references when leaving battle scene
         if (!scene.name.Contains("Battle"))
         {
             CleanBattleReferences();
@@ -105,7 +103,6 @@ public class GameManager : MonoBehaviour
         selectedCardDisplay = null;
         currentTurn = TurnState.PlayerTurn;
 
-        // Clear current hand
         currentHand.Clear();
         availableDeck.Clear();
     }
@@ -123,6 +120,7 @@ public class GameManager : MonoBehaviour
 
     private void FindSceneReferences()
     {
+        // Buscar y asignar referencias del jugador
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -133,13 +131,13 @@ public class GameManager : MonoBehaviour
             {
                 playerHealth = player.AddComponent<HealthSystem>();
             }
-            
-            // Configurar sonidos de daño para el jugador
+
             playerHealth.OnTakeDamage.AddListener((damage) => {
                 PlayPlayerDamageSound();
             });
         }
 
+        // Buscar y asignar referencias del enemigo
         GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
         if (enemy != null)
         {
@@ -150,19 +148,66 @@ public class GameManager : MonoBehaviour
             {
                 enemyHealth = enemy.AddComponent<HealthSystem>();
             }
-            
-            // Configurar sonidos de daño para el enemigo
+
             enemyHealth.OnTakeDamage.AddListener((damage) => {
                 PlayEnemyDamageSound();
             });
-            
-            // Configurar sonidos para acciones del enemigo
+
             if (enemyController != null)
             {
                 enemyController.OnEnemyAttack.AddListener(() => PlayEnemyAttackSound());
                 enemyController.OnEnemyHeal.AddListener(() => PlayEnemyHealSound());
             }
         }
+
+        // Buscar y asignar sprites de selección de objetivo
+        FindTargetSprites();
+    }
+
+    private void FindTargetSprites()
+    {
+        // Buscar todos los objetos en la escena que podrían ser sprites de objetivo
+        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>(true);
+
+        foreach (GameObject obj in allObjects)
+        {
+            // Usar nombres específicos para identificar los sprites de objetivo
+            if (obj.name == "PlayerTargetSprite" || obj.name == "PlayerTarget")
+            {
+                playerTargetSprite = obj;
+                playerTargetSprite.SetActive(false);
+                Debug.Log("Player target sprite found: " + obj.name);
+            }
+            else if (obj.name == "EnemyTargetSprite" || obj.name == "EnemyTarget")
+            {
+                enemyTargetSprite = obj;
+                enemyTargetSprite.SetActive(false);
+                Debug.Log("Enemy target sprite found: " + obj.name);
+            }
+        }
+
+        // Si no se encontraron por nombre, buscar por tag
+        if (playerTargetSprite == null || enemyTargetSprite == null)
+        {
+            GameObject[] targetObjects = GameObject.FindGameObjectsWithTag("TargetSprite");
+            foreach (GameObject targetObj in targetObjects)
+            {
+                if (targetObj.transform.parent != null && targetObj.transform.parent.CompareTag("Player") && playerTargetSprite == null)
+                {
+                    playerTargetSprite = targetObj;
+                    playerTargetSprite.SetActive(false);
+                }
+                else if (targetObj.transform.parent != null && targetObj.transform.parent.CompareTag("Enemy") && enemyTargetSprite == null)
+                {
+                    enemyTargetSprite = targetObj;
+                    enemyTargetSprite.SetActive(false);
+                }
+            }
+        }
+
+        // Verificación final
+        if (playerTargetSprite == null) Debug.LogWarning("Player target sprite not found in scene");
+        if (enemyTargetSprite == null) Debug.LogWarning("Enemy target sprite not found in scene");
     }
 
     private void InitializeGameForScene()
@@ -195,8 +240,7 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         ResetCardSystemForNewBattle();
-        
-        // Fade in al inicio de la batalla
+
         if (SceneTransitionManager.Instance != null)
         {
             yield return SceneTransitionManager.Instance.StartCoroutine(
@@ -224,24 +268,23 @@ public class GameManager : MonoBehaviour
     public void OnEnemyDefeated()
     {
         if (isTransitioning) return;
-        
+
         Debug.Log("Enemy defeated! Victory.");
         PlayVictorySound();
-        
+
         CancelSelection();
         if (HandManager.Instance != null)
         {
             HandManager.Instance.RefreshHand();
         }
-        
+
         StartCoroutine(VictoryRoutine());
     }
 
     private IEnumerator VictoryRoutine()
     {
         isTransitioning = true;
-        
-        // Fade out usando SceneTransitionManager
+
         if (SceneTransitionManager.Instance != null)
         {
             yield return SceneTransitionManager.Instance.StartCoroutine(
@@ -250,20 +293,16 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Implementación de respaldo
             yield return new WaitForSeconds(1f);
         }
-        
-        // Cambiar a la escena de mapa
 
-        
         isTransitioning = false;
     }
 
     private void OnPlayerDeath()
     {
         if (isTransitioning) return;
-        
+
         Debug.Log("Player defeated! Game Over.");
         PlayDefeatSound();
         StartCoroutine(DefeatRoutine());
@@ -272,8 +311,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator DefeatRoutine()
     {
         isTransitioning = true;
-        
-        // Fade out usando SceneTransitionManager
+
         if (SceneTransitionManager.Instance != null)
         {
             yield return SceneTransitionManager.Instance.StartCoroutine(
@@ -282,13 +320,11 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Implementación de respaldo
             yield return new WaitForSeconds(1f);
         }
-        
-        // Cambiar al menú principal
+
         SceneManager.LoadScene("MainMenu");
-        
+
         isTransitioning = false;
     }
 
@@ -296,15 +332,8 @@ public class GameManager : MonoBehaviour
     {
         if (currentTurn == TurnState.SelectingTarget)
         {
-            // Apagar todos los sprites de selección
-            if (playerTargetSprite != null)
-            {
-                playerTargetSprite.SetActive(false);
-            }
-            if (enemyTargetSprite != null)
-            {
-                enemyTargetSprite.SetActive(false);
-            }
+            if (playerTargetSprite != null) playerTargetSprite.SetActive(false);
+            if (enemyTargetSprite != null) enemyTargetSprite.SetActive(false);
 
             playerController?.SetHighlight(false);
             enemyController?.SetHighlight(false);
@@ -345,15 +374,8 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        // Encender el sprite de selección del objetivo válido
-        if (playerTargetSprite != null)
-        {
-            playerTargetSprite.SetActive(playerIsValidTarget);
-        }
-        if (enemyTargetSprite != null)
-        {
-            enemyTargetSprite.SetActive(enemyIsValidTarget);
-        }
+        if (playerTargetSprite != null) playerTargetSprite.SetActive(playerIsValidTarget);
+        if (enemyTargetSprite != null) enemyTargetSprite.SetActive(enemyIsValidTarget);
 
         playerController?.SetHighlight(playerIsValidTarget);
         enemyController?.SetHighlight(enemyIsValidTarget);
@@ -368,15 +390,8 @@ public class GameManager : MonoBehaviour
 
         if (!isValid) return;
 
-        // Apagar todos los sprites de selección
-        if (playerTargetSprite != null)
-        {
-            playerTargetSprite.SetActive(false);
-        }
-        if (enemyTargetSprite != null)
-        {
-            enemyTargetSprite.SetActive(false);
-        }
+        if (playerTargetSprite != null) playerTargetSprite.SetActive(false);
+        if (enemyTargetSprite != null) enemyTargetSprite.SetActive(false);
 
         playerController?.SetHighlight(false);
         enemyController?.SetHighlight(false);
@@ -411,7 +426,6 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteCardAction(CardData card)
     {
-        // Reproducir sonido según el tipo de carta
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
@@ -439,16 +453,13 @@ public class GameManager : MonoBehaviour
             if (enemyHealth != null)
             {
                 enemyHealth.TakeDamage((int)finalDamage);
-                // Reproducir sonido de daño del enemigo en el momento exacto del impacto
                 PlayEnemyDamageSound();
-                // Reproducir sonido de ataque en el momento exacto del impacto
                 PlayAttackCardSound();
             }
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
-        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
     }
 
@@ -462,22 +473,16 @@ public class GameManager : MonoBehaviour
             if (enemyController != null)
             {
                 enemyController.ApplyAttackReduction(reductionMultiplier);
-                Debug.Log($"Bloqueo aplicado. Multiplicador de ataque enemigo reducido a: {reductionMultiplier}");
             }
-            
-            // Activar el bloqueo del jugador
+
             if (playerController != null)
             {
                 playerController.ActivateBlock(reductionMultiplier);
-                Debug.Log($"Bloqueo del jugador activado con multiplicador: {reductionMultiplier}");
             }
-            
-            // NO reproducir sonido de bloqueo aquí - solo se reproducirá cuando se active el bloqueo
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
-        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyBlock, CompleteTurn);
     }
 
@@ -490,14 +495,12 @@ public class GameManager : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.Heal((int)finalHeal);
-                // Reproducir sonido de curación en el momento exacto de aplicación
                 PlayHealCardSound();
             }
         }
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
-        // NO reproducir sonido aquí - se ejecutará en el punto de acción de la animación
         playerController.PlayCardAnimation(card, ApplyHeal, CompleteTurn);
     }
 
@@ -516,8 +519,6 @@ public class GameManager : MonoBehaviour
             enemyController.ResetAttackMultiplier();
         }
 
-        // Desactivar el bloqueo del jugador al iniciar su turno
-        // Esto asegura que vuelva a su animación por defecto
         if (playerController != null)
         {
             playerController.DeactivateBlock();
@@ -527,155 +528,96 @@ public class GameManager : MonoBehaviour
         HandManager.Instance.SetInteractable(true);
     }
 
-    /// <summary>
-    /// Se llama cuando el enemigo inicia su animación de ataque
-    /// Permite que el bloqueo del jugador se active simultáneamente
-    /// </summary>
     public void OnEnemyAttackStart()
     {
-        // Activar el bloqueo pendiente del jugador si tiene uno
         if (playerController != null && playerController.HasBlockPending())
         {
             playerController.ActivatePendingBlock();
         }
-        
-        // Activar la animación de bloqueo del jugador si tiene bloqueo activo
+
         if (playerController != null && playerController.HasBlockActive())
         {
             playerController.PlayBlockAnimation();
         }
     }
-    
-    /// <summary>
-    /// Se llama cuando el enemigo aplica su ataque (en el punto de acción)
-    /// Permite reproducir el sonido de bloqueo en el momento exacto del impacto
-    /// </summary>
+
     public void OnEnemyAttackApplied()
     {
-        // Reproducir sonido de ataque del enemigo en el momento exacto del impacto
         PlayEnemyAttackSound();
-        
-        // Reproducir sonido de bloqueo solo cuando realmente se activa el bloqueo
+
         if (playerController != null && playerController.HasBlockActive())
         {
             PlayBlockHitSound();
         }
     }
-    
-    /// <summary>
-    /// Se llama cuando el enemigo termina su turno
-    /// Permite que el bloqueo del jugador se desactive automáticamente si no fue golpeado
-    /// </summary>
+
     public void OnEnemyTurnEnd()
     {
-        // El bloqueo se desactivará automáticamente por el temporizador en PlayerController
-        // Solo desactivar inmediatamente si el enemigo no atacó
         if (playerController != null && playerController.HasBlockActive())
         {
-            // El bloqueo se mantendrá activo por un tiempo antes de desactivarse automáticamente
             Debug.Log("Turno del enemigo terminado. El bloqueo del jugador se desactivará automáticamente.");
         }
     }
 
-    /// <summary>
-    /// Reproduce el sonido de bloqueo del jugador
-    /// </summary>
     public void PlayBlockHitSound()
     {
         PlayBlockCardSound();
-        Debug.Log("¡Sonido de bloqueo ejecutado en el momento del impacto!");
     }
 
-    /// <summary>
-    /// Permite reproducir la animación de recibir daño del jugador
-    /// Útil para cuando el jugador recibe daño mientras bloquea
-    /// </summary>
     public void PlayPlayerDamageAnimation()
     {
         if (playerController != null)
         {
             playerController.PlayDamageAnimation();
-            // Reproducir sonido de daño del jugador usando el método centralizado
             PlayPlayerDamageSound();
         }
     }
-    
-    /// <summary>
-    /// Permite reproducir el sonido de daño del enemigo
-    /// Útil para cuando el enemigo recibe daño
-    /// </summary>
+
     public void PlayEnemyDamageSound()
     {
         PlaySound(enemyHurtSound);
     }
 
-    /// <summary>
-    /// Permite reproducir el sonido de daño del enemigo desde el EnemyController
-    /// </summary>
     public void PlayEnemyDamageSoundFromController()
     {
         PlaySound(enemyHurtSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de ataque del enemigo
-    /// </summary>
     public void PlayEnemyAttackSound()
     {
         PlaySound(enemyAttackSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de curación del enemigo
-    /// </summary>
     public void PlayEnemyHealSound()
     {
         PlaySound(enemyHealSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de daño del jugador
-    /// </summary>
     public void PlayPlayerDamageSound()
     {
         PlaySound(playerHurtSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de victoria
-    /// </summary>
     public void PlayVictorySound()
     {
         PlaySound(victorySound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de derrota
-    /// </summary>
     public void PlayDefeatSound()
     {
         PlaySound(defeatSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de carta de ataque
-    /// </summary>
     public void PlayAttackCardSound()
     {
         PlaySound(attackCardSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de carta de bloqueo
-    /// </summary>
     public void PlayBlockCardSound()
     {
         PlaySound(blockCardSound);
     }
 
-    /// <summary>
-    /// Reproduce el sonido de carta de curación
-    /// </summary>
     public void PlayHealCardSound()
     {
         PlaySound(healCardSound);
@@ -758,7 +700,7 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.DeleteKey(PlayerHealthKey);
         }
     }
-    
+
     private void PlaySound(AudioClip clip, float volume = 1.0f)
     {
         if (audioSource != null && clip != null)
