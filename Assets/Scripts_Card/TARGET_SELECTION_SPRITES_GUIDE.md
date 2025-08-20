@@ -134,4 +134,3 @@ Puedes tener varios sprites por objetivo:
 - **Carta de Curación** → Sprite del jugador se enciende
 - **Selección o Cancelación** → Todos los sprites se apagan
 - **Transiciones suaves** entre estados de selección
-

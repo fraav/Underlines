@@ -100,4 +100,3 @@ Se han implementado nuevas funcionalidades de animación para mejorar la experie
 - El sistema es retrocompatible con configuraciones anteriores
 - Los tiempos de animación son configurables desde el inspector
 - El sistema maneja automáticamente la limpieza de recursos y corrutinas
-
