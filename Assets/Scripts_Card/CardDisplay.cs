@@ -12,8 +12,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private GameObject descriptionPanel;
-    [SerializeField] private TMP_Text fullDescriptionText;
     [SerializeField] private GameObject selectionIndicator;
     [SerializeField] private float selectedScale = 1.1f;
 
@@ -102,14 +100,30 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
     private void ToggleDescription()
     {
-        if (descriptionPanel == null) return;
-        descriptionPanel.SetActive(!descriptionPanel.activeSelf);
-        if (descriptionPanel.activeSelf) transform.SetAsLastSibling();
+        if (CardInfoManager.Instance == null) return;
+        
+        if (CardInfoManager.Instance.IsPanelActive())
+        {
+            // Si el panel está activo, cerrarlo
+            CardInfoManager.Instance.HideCardInfo();
+        }
+        else
+        {
+            // Si el panel está cerrado, mostrar la información de esta carta
+            CardInfoManager.Instance.ShowCardInfo(currentCard);
+        }
     }
 
     public void DiscardCard()
     {
         if (isBeingDiscarded) return;
+        
+        // Cerrar el panel de información si está activo para esta carta
+        if (CardInfoManager.Instance != null && CardInfoManager.Instance.IsPanelActive())
+        {
+            CardInfoManager.Instance.HideCardInfo();
+        }
+        
         StartCoroutine(DiscardAnimation());
     }
 
@@ -117,7 +131,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     {
         isBeingDiscarded = true;
         canvasGroup.blocksRaycasts = false;
-        if (descriptionPanel != null) descriptionPanel.SetActive(false);
+        // No es necesario hacer nada aquí ya que el panel está centralizado
 
         float duration = 0.3f;
         float elapsed = 0f;
@@ -162,7 +176,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         if (icon != null && currentCard.icon != null) icon.sprite = currentCard.icon;
         if (titleText != null) titleText.text = currentCard.cardName;
         if (descriptionText != null) descriptionText.text = GetShortDescription();
-        if (fullDescriptionText != null) fullDescriptionText.text = GetFullDescription();
     }
 
     private string GetShortDescription()
