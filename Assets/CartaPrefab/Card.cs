@@ -27,17 +27,17 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Balanceo
     private float anguloBalanceo = 0f;
     private Vector2 posicionMouseAnterior;
-    public float sensibilidadBalanceo = 0.5f;
-    public float maxBalanceo = 12f;
-    public float amortiguacionBalanceo = 8f;
+    public float sensibilidadBalanceo = 1.0f; // Aumentado para mayor sensibilidad
+    public float maxBalanceo = 20f; // Aumentado para mayor rango
+    public float amortiguacionBalanceo = 5f; // Reducido para balanceo más persistente
 
     // Balanceo idle
-    public float oscilacionIdle = 2f;
-    public float frecuenciaIdle = 2f;
+    public float oscilacionIdle = 3f; // Aumentado para oscilación más visible
+    public float frecuenciaIdle = 1.5f; // Reducido para oscilación más lenta
     private float tiempoIdle = 0f;
     private bool movimientoReciente = false;
     private float tiempoSinMovimiento = 0f;
-    public float tiempoParaIdle = 0.2f;
+    public float tiempoParaIdle = 0.5f; // Aumentado para activar idle más rápido
 
     // Outline
     private Outline outline;
@@ -99,12 +99,16 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         }
         else
         {
+            // Durante el arrastre, usar el balanceo
             float anguloFinal = anguloBalanceo;
+            
+            // Si no hay movimiento reciente, agregar oscilación idle
             if (!movimientoReciente && tiempoSinMovimiento >= tiempoParaIdle)
             {
                 tiempoIdle += Time.deltaTime * frecuenciaIdle;
                 anguloFinal += Mathf.Sin(tiempoIdle) * oscilacionIdle;
             }
+            
             rotacionObjetivo = new Vector3(0f, 0f, anguloFinal);
         }
 
@@ -114,7 +118,11 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
                                  escalaOriginal;
 
         transform.localScale = Vector3.Lerp(transform.localScale, escalaObjetivo, Time.deltaTime * velocidadAnimacion);
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(rotacionObjetivo), Time.deltaTime * velocidadAnimacion);
+        
+        // Aplicar rotación
+        Quaternion nuevaRotacion = Quaternion.Lerp(transform.rotation, Quaternion.Euler(rotacionObjetivo), Time.deltaTime * velocidadAnimacion);
+        transform.rotation = nuevaRotacion;
+        
 
         // Posición
         if (!arrastrando)
@@ -123,14 +131,18 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         }
         else
         {
+            // Durante el arrastre, amortiguar el balanceo hacia cero
             anguloBalanceo = Mathf.Lerp(anguloBalanceo, 0f, Time.deltaTime * amortiguacionBalanceo);
 
+            // Actualizar tiempo sin movimiento
             if (!movimientoReciente)
                 tiempoSinMovimiento += Time.deltaTime;
             else
                 tiempoSinMovimiento = 0f;
 
+            // Resetear movimiento reciente para el siguiente frame
             movimientoReciente = false;
+            
         }
     }
 
@@ -184,11 +196,17 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         Vector2 delta = posicionCanvas - posicionMouseAnterior;
         posicionMouseAnterior = posicionCanvas;
 
+        // Calcular balanceo basado en el movimiento horizontal
         anguloBalanceo -= delta.x * sensibilidadBalanceo;
         anguloBalanceo = Mathf.Clamp(anguloBalanceo, -maxBalanceo, maxBalanceo);
 
+        // Detectar movimiento reciente
         if (Mathf.Abs(delta.x) > 0.01f)
+        {
             movimientoReciente = true;
+            tiempoSinMovimiento = 0f; // Resetear el tiempo sin movimiento
+        }
+        
 
         // Check for valid target using 3D detection
         CheckValidTarget3D(eventData.position);
@@ -315,6 +333,11 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     public void UpdateOriginalPosition(Vector3 newPosition)
     {
         posicionInicial = newPosition;
+    }
+
+    public bool IsBeingDragged()
+    {
+        return arrastrando;
     }
 
 }

@@ -147,13 +147,24 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         while (elapsed < duration)
         {
             rectTransform.anchoredPosition = Vector3.Lerp(startPosition, targetPosition, elapsed / duration);
-            rectTransform.rotation = Quaternion.Lerp(startRotation, targetRotation, elapsed / duration);
+            
+            // Solo aplicar rotación si la carta NO está siendo arrastrada
+            if (cardVisualEffects == null || !cardVisualEffects.IsBeingDragged())
+            {
+                rectTransform.rotation = Quaternion.Lerp(startRotation, targetRotation, elapsed / duration);
+            }
+            
             elapsed += Time.deltaTime;
             yield return null;
         }
 
         rectTransform.anchoredPosition = targetPosition;
-        rectTransform.rotation = targetRotation;
+        
+        // Solo aplicar rotación final si la carta NO está siendo arrastrada
+        if (cardVisualEffects == null || !cardVisualEffects.IsBeingDragged())
+        {
+            rectTransform.rotation = targetRotation;
+        }
     }
 
 
