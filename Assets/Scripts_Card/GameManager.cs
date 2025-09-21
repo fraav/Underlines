@@ -383,12 +383,29 @@ public class GameManager : MonoBehaviour
 
     public void SelectTarget(GameObject target)
     {
-        if (currentTurn != TurnState.SelectingTarget || selectedCard == null) return;
+        Debug.Log($"SelectTarget called with target: {target?.name}");
+        Debug.Log($"Current turn: {currentTurn}, Selected card: {selectedCard?.cardName}");
+        
+        if (currentTurn != TurnState.SelectingTarget || selectedCard == null) 
+        {
+            Debug.Log("SelectTarget failed: Invalid turn state or no selected card");
+            return;
+        }
 
         bool isValid = (target.CompareTag("Player") && playerIsValidTarget) ||
                       (target.CompareTag("Enemy") && enemyIsValidTarget);
 
-        if (!isValid) return;
+        Debug.Log($"Target validation - Player: {target.CompareTag("Player")}, Enemy: {target.CompareTag("Enemy")}");
+        Debug.Log($"Valid targets - Player: {playerIsValidTarget}, Enemy: {enemyIsValidTarget}");
+        Debug.Log($"Is valid: {isValid}");
+
+        if (!isValid) 
+        {
+            Debug.Log("SelectTarget failed: Invalid target");
+            return;
+        }
+
+        Debug.Log("SelectTarget: Valid target, executing card action");
 
         if (playerTargetSprite != null) playerTargetSprite.SetActive(false);
         if (enemyTargetSprite != null) enemyTargetSprite.SetActive(false);
@@ -426,17 +443,22 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteCardAction(CardData card)
     {
+        Debug.Log($"ExecuteCardAction called with card: {card.cardName}, type: {card.cardType}");
+        
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
+                Debug.Log("Executing Attack card");
                 PlayAttackCardSound();
                 Card_Attack(card);
                 break;
             case CardData.CardType.Block:
+                Debug.Log("Executing Block card");
                 PlayBlockCardSound();
                 Card_Block(card);
                 break;
             case CardData.CardType.Heal:
+                Debug.Log("Executing Heal card");
                 PlayHealCardSound();
                 Card_Heal(card);
                 break;
@@ -445,13 +467,19 @@ public class GameManager : MonoBehaviour
 
     public void Card_Attack(CardData card)
     {
+        Debug.Log($"Card_Attack called with damage: {card.baseValue}");
+        
         float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
                           damageMultiplier * card.individualDamageMultiplier;
 
+        Debug.Log($"Final damage calculated: {finalDamage}");
+
         void ApplyDamage()
         {
+            Debug.Log($"ApplyDamage called, enemyHealth: {enemyHealth != null}");
             if (enemyHealth != null)
             {
+                Debug.Log($"Applying {finalDamage} damage to enemy");
                 enemyHealth.TakeDamage((int)finalDamage);
                 PlayEnemyDamageSound();
                 PlayAttackCardSound();
@@ -460,6 +488,7 @@ public class GameManager : MonoBehaviour
 
         void CompleteTurn() => StartCoroutine(EndPlayerTurn());
 
+        Debug.Log($"Calling PlayCardAnimation on playerController: {playerController != null}");
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
     }
 

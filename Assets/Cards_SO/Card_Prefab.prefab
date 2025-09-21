@@ -287,6 +287,8 @@ GameObject:
   - component: {fileID: 1211322705352075692}
   - component: {fileID: 349237897856621831}
   - component: {fileID: 542989247735633103}
+  - component: {fileID: 386372994702524424}
+  - component: {fileID: 9209489620638740266}
   m_Layer: 5
   m_Name: Card_Prefab
   m_TagString: Untagged
@@ -464,6 +466,44 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &386372994702524424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2775043380357742957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b4380c7ec550dd43be5d0d43c228a8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inclinacionMax: 8
+  velocidadAnimacion: 15
+  sensibilidadBalanceo: 0.5
+  maxBalanceo: 12
+  amortiguacionBalanceo: 8
+  oscilacionIdle: 2
+  frecuenciaIdle: 2
+  tiempoParaIdle: 0.2
+  colorOutlineBase: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  colorOutlinePulso: {r: 1, g: 0, b: 0, a: 1}
+  velocidadPulso: 4
+--- !u!114 &9209489620638740266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2775043380357742957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 0
 --- !u!1 &4103790435664531959
 GameObject:
   m_ObjectHideFlags: 0

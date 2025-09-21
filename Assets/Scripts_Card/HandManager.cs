@@ -10,10 +10,11 @@ public class HandManager : MonoBehaviour
     [Header("Card Display Settings")]
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private Transform handContainer;
-    [SerializeField] private float cardSpacing = 150f;
-    [SerializeField] private float verticalOffset = -100f;
-    [SerializeField] private float maxArcHeight = 100f;
-    [SerializeField] private float fanAngle = 30f;
+    [SerializeField] private float cardSpacing = 120f;
+    [SerializeField] private float horizontalOffset = 200f; // Offset from right edge
+    [SerializeField] private float verticalOffset = 150f; // Offset from bottom edge
+    [SerializeField] private float maxArcHeight = 50f;
+    [SerializeField] private float fanAngle = 15f;
     [SerializeField] private float moveDuration = 0.3f;
 
     private List<GameObject> spawnedCards = new List<GameObject>();
@@ -90,8 +91,16 @@ public class HandManager : MonoBehaviour
         int cardCount = spawnedCards.Count;
         if (cardCount == 0) yield break;
 
+        // Get canvas size for positioning
+        Canvas canvas = handContainer.GetComponentInParent<Canvas>();
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        float canvasWidth = canvasRect.rect.width;
+        float canvasHeight = canvasRect.rect.height;
+
+        // Calculate positions for bottom-right corner
         float totalWidth = cardSpacing * (cardCount - 1);
-        float startX = -totalWidth / 2f;
+        float startX = (canvasWidth / 2f) - horizontalOffset - totalWidth; // Start from right edge
+        float baseY = (-canvasHeight / 2f) + verticalOffset; // Bottom edge
 
         for (int i = 0; i < cardCount; i++)
         {
@@ -100,12 +109,20 @@ public class HandManager : MonoBehaviour
 
             float t = cardCount > 1 ? i / (float)(cardCount - 1) : 0.5f;
             float x = startX + i * cardSpacing;
-            float y = verticalOffset + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
+            float y = baseY + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
             float rotation = Mathf.Lerp(-fanAngle, fanAngle, t);
 
             CardDisplay display = card.GetComponent<CardDisplay>();
             if (display != null)
             {
+                // Set position directly first
+                RectTransform cardRect = card.GetComponent<RectTransform>();
+                if (cardRect != null)
+                {
+                    cardRect.anchoredPosition = new Vector3(x, y, 0);
+                    cardRect.rotation = Quaternion.Euler(0, 0, rotation);
+                }
+                
                 display.MoveToFanPosition(
                     new Vector3(x, y, 0),
                     Quaternion.Euler(0, 0, rotation),

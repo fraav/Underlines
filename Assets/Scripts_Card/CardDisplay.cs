@@ -17,17 +17,23 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     [SerializeField] private GameObject selectionIndicator;
     [SerializeField] private float selectedScale = 1.1f;
 
-    private CardData currentCard;
+    public CardData currentCard;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
     private Coroutine moveCoroutine;
     private bool isBeingDiscarded = false;
+    
+    // Card visual effects reference
+    private Card cardVisualEffects;
 
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
         if (selectionIndicator != null) selectionIndicator.SetActive(false);
+        
+        // Get Card visual effects component
+        cardVisualEffects = GetComponent<Card>();
     }
 
     void Start()
@@ -55,7 +61,15 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
             selectionIndicator.SetActive(selected);
         }
 
-        transform.localScale = selected ? Vector3.one * selectedScale : Vector3.one;
+        // Use Card visual effects if available
+        if (cardVisualEffects != null)
+        {
+            cardVisualEffects.SetSelected(selected);
+        }
+        else
+        {
+            transform.localScale = selected ? Vector3.one * selectedScale : Vector3.one;
+        }
     }
 
     public void SetInteractableState(bool interactable)
@@ -71,34 +85,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     {
         if (isBeingDiscarded) return;
 
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            // Corrección: Usar propiedad pública SelectedCard
-            if (GameManager.Instance.currentTurn == GameManager.TurnState.SelectingTarget &&
-                GameManager.Instance.SelectedCard == currentCard)
-            {
-                GameManager.Instance.CancelSelection();
-                return;
-            }
-
-            SelectCard();
-        }
-        else if (eventData.button == PointerEventData.InputButton.Right)
+        if (eventData.button == PointerEventData.InputButton.Right)
         {
             ToggleDescription();
         }
     }
 
-    private void SelectCard()
-    {
-        if (GameManager.Instance == null ||
-            GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
-        {
-            return;
-        }
-
-        GameManager.Instance.StartTargetSelection(currentCard, this);
-    }
 
     private void ToggleDescription()
     {
@@ -106,6 +98,7 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         descriptionPanel.SetActive(!descriptionPanel.activeSelf);
         if (descriptionPanel.activeSelf) transform.SetAsLastSibling();
     }
+
 
     public void DiscardCard()
     {
@@ -137,25 +130,32 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     {
         if (moveCoroutine != null) StopCoroutine(moveCoroutine);
         moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
+        
+        // Update Card visual effects position
+        if (cardVisualEffects != null)
+        {
+            cardVisualEffects.UpdateOriginalPosition(targetPosition);
+        }
     }
 
     private IEnumerator SmoothMove(Vector3 targetPosition, Quaternion targetRotation, float duration)
     {
-        Vector3 startPosition = rectTransform.localPosition;
-        Quaternion startRotation = rectTransform.localRotation;
+        Vector3 startPosition = rectTransform.anchoredPosition;
+        Quaternion startRotation = rectTransform.rotation;
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            rectTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, elapsed / duration);
-            rectTransform.localRotation = Quaternion.Lerp(startRotation, targetRotation, elapsed / duration);
+            rectTransform.anchoredPosition = Vector3.Lerp(startPosition, targetPosition, elapsed / duration);
+            rectTransform.rotation = Quaternion.Lerp(startRotation, targetRotation, elapsed / duration);
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        rectTransform.localPosition = targetPosition;
-        rectTransform.localRotation = targetRotation;
+        rectTransform.anchoredPosition = targetPosition;
+        rectTransform.rotation = targetRotation;
     }
+
 
     private void UpdateCardDisplay()
     {

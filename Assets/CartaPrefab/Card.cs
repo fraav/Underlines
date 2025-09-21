@@ -72,10 +72,10 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     {
         // Pulso del outline si está seleccionada
         if (seleccionada && outline != null)
-{
-    float pulso = (Mathf.Sin(Time.time * velocidadPulso) + 1f) * 0.5f; // 0 a 1
-    outline.effectColor = Color.Lerp(colorOutlineBase, colorOutlinePulso, pulso);
-}
+        {
+            float pulso = (Mathf.Sin(Time.time * velocidadPulso) + 1f) * 0.5f; // 0 a 1
+            outline.effectColor = Color.Lerp(colorOutlineBase, colorOutlinePulso, pulso);
+        }
 
         if (!arrastrando)
         {
@@ -147,6 +147,14 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // Get CardData from CardDisplay
+        CardDisplay cardDisplay = GetComponent<CardDisplay>();
+        if (cardDisplay == null || GameManager.Instance == null || 
+            GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
+            return;
+
+        Debug.Log("OnBeginDrag called on Card");
+        
         arrastrando = true;
         seleccionada = true;
         if (outline != null)
@@ -159,6 +167,9 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouseAnterior);
         tiempoIdle = 0f;
         tiempoSinMovimiento = 0f;
+
+        // Start target selection
+        GameManager.Instance.StartTargetSelection(cardDisplay.currentCard, cardDisplay);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -178,13 +189,132 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
         if (Mathf.Abs(delta.x) > 0.01f)
             movimientoReciente = true;
+
+        // Check for valid target using 3D detection
+        CheckValidTarget3D(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        Debug.Log("OnEndDrag called on Card");
+        
         arrastrando = false;
         seleccionada = false;
         if (outline != null)
             outline.enabled = false;
+
+        // Check for valid target using 3D detection
+        GameObject target = GetTarget3D(eventData.position);
+        CardDisplay cardDisplay = GetComponent<CardDisplay>();
+        
+        if (target != null && cardDisplay != null && cardDisplay.currentCard != null)
+        {
+            bool isValidTarget = false;
+            bool isPlayerTarget = target.CompareTag("Player");
+            bool isEnemyTarget = target.CompareTag("Enemy");
+            
+            switch (cardDisplay.currentCard.cardType)
+            {
+                case CardData.CardType.Attack:
+                    isValidTarget = isEnemyTarget;
+                    break;
+                case CardData.CardType.Block:
+                case CardData.CardType.Heal:
+                    isValidTarget = isPlayerTarget;
+                    break;
+            }
+            
+            if (isValidTarget)
+            {
+                Debug.Log($"Card dropped on valid target: {target.name}");
+                GameManager.Instance.SelectTarget(target);
+                return;
+            }
+        }
+        
+        Debug.Log("Card dropped on invalid target, returning to hand");
+        GameManager.Instance.CancelSelection();
     }
+
+    private void CheckValidTarget3D(Vector2 screenPosition)
+    {
+        GameObject target = GetTarget3D(screenPosition);
+        CardDisplay cardDisplay = GetComponent<CardDisplay>();
+        
+        bool isValid = false;
+        if (target != null && cardDisplay != null && cardDisplay.currentCard != null)
+        {
+            bool isPlayerTarget = target.CompareTag("Player");
+            bool isEnemyTarget = target.CompareTag("Enemy");
+            
+            switch (cardDisplay.currentCard.cardType)
+            {
+                case CardData.CardType.Attack:
+                    isValid = isEnemyTarget;
+                    break;
+                case CardData.CardType.Block:
+                case CardData.CardType.Heal:
+                    isValid = isPlayerTarget;
+                    break;
+            }
+        }
+        
+        // Visual feedback
+        if (isValid)
+        {
+            GetComponent<CanvasGroup>().alpha = 1f;
+        }
+        else
+        {
+            GetComponent<CanvasGroup>().alpha = 0.7f;
+        }
+    }
+
+    private GameObject GetTarget3D(Vector2 screenPosition)
+    {
+        // Convert screen position to world ray
+        Camera camera = Camera.main;
+        if (camera == null) camera = FindObjectOfType<Camera>();
+        
+        if (camera == null) return null;
+        
+        Ray ray = camera.ScreenPointToRay(screenPosition);
+        RaycastHit hit;
+        
+        Debug.Log($"Raycasting from screen position: {screenPosition}");
+        
+        if (Physics.Raycast(ray, out hit))
+        {
+            GameObject hitObject = hit.collider.gameObject;
+            Debug.Log($"Hit object: {hitObject.name}, Tag: {hitObject.tag}");
+            
+            if (hitObject.CompareTag("Player") || hitObject.CompareTag("Enemy"))
+            {
+                Debug.Log($"Found valid target: {hitObject.name}");
+                return hitObject;
+            }
+        }
+        
+        Debug.Log("No valid target found");
+        return null;
+    }
+
+    // Métodos públicos para controlar efectos visuales desde CardDisplay
+    public void SetSelected(bool selected)
+    {
+        seleccionada = selected;
+        if (outline != null)
+            outline.enabled = selected;
+    }
+
+    public void SetHover(bool hover)
+    {
+        sobreMouse = hover;
+    }
+
+    public void UpdateOriginalPosition(Vector3 newPosition)
+    {
+        posicionInicial = newPosition;
+    }
+
 }
