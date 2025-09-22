@@ -151,6 +151,10 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Verificar si las interacciones están bloqueadas
+        if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked())
+            return;
+
         seleccionada = !seleccionada;
         if (outline != null)
             outline.enabled = seleccionada; // Mostrar u ocultar el outline
@@ -159,6 +163,10 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // Verificar si las interacciones están bloqueadas
+        if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked())
+            return;
+
         // Get CardData from CardDisplay
         CardDisplay cardDisplay = GetComponent<CardDisplay>();
         if (cardDisplay == null || GameManager.Instance == null || 

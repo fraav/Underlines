@@ -35,6 +35,9 @@ public class GameManager : MonoBehaviour
 
     [Header("Scene Settings")]
     public bool isBattleScene = false;
+    
+    [Header("Interaction Control")]
+    private bool interactionsBlocked = false;
 
     [Header("Audio Settings")]
     public AudioSource audioSource;
@@ -736,5 +739,17 @@ public class GameManager : MonoBehaviour
         {
             audioSource.PlayOneShot(clip, volume);
         }
+    }
+
+    // Métodos para controlar bloqueo de interacciones
+    public void SetInteractionBlocked(bool blocked)
+    {
+        interactionsBlocked = blocked;
+        Debug.Log($"Interacciones bloqueadas: {blocked}");
+    }
+
+    public bool AreInteractionsBlocked()
+    {
+        return interactionsBlocked;
     }
 }

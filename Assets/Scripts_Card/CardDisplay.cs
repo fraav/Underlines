@@ -87,16 +87,28 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         if (eventData.button == PointerEventData.InputButton.Right)
         {
-            ToggleDescription();
+            ShowCardInfoPanel();
         }
     }
 
 
-    private void ToggleDescription()
+    private void ShowCardInfoPanel()
     {
-        if (descriptionPanel == null) return;
-        descriptionPanel.SetActive(!descriptionPanel.activeSelf);
-        if (descriptionPanel.activeSelf) transform.SetAsLastSibling();
+        if (currentCard == null) return;
+
+        // Verificar si las interacciones están bloqueadas
+        if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked())
+            return;
+
+        // Mostrar el panel de información de la carta
+        if (CardInfoPanel.Instance != null)
+        {
+            CardInfoPanel.Instance.ShowCardInfo(currentCard);
+        }
+        else
+        {
+            Debug.LogWarning("CardInfoPanel.Instance no encontrado");
+        }
     }
 
 
