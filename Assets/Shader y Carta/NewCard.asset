@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96a0746ce4843254fbb0b867109c7d41, type: 3}
-  m_Name: Heal_1
+  m_Name: NewCard
   m_EditorClassIdentifier: 
-  cardType: 2
-  baseValue: 120
-  cardName: Heal_1
-  description: Cura
-  icon: {fileID: -1331169671, guid: 2e4ab3aff032e2141a03e1272c7e941b, type: 3}
+  cardType: 0
+  baseValue: 0
+  cardName: 
+  description: 
+  icon: {fileID: 0}
   shopIcon: {fileID: 0}
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
