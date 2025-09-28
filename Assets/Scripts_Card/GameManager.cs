@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public enum TurnState { PlayerTurn, EnemyTurn, SelectingTarget }
+    public enum TurnState { PlayerTurn, EnemyTurn, SelectingTarget, WaitingForDialogue }
     public TurnState currentTurn { get; private set; }
 
     [Header("Game Settings")]
@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Scene Settings")]
     public bool isBattleScene = false;
-    
+
     [Header("Interaction Control")]
     private bool interactionsBlocked = false;
 
@@ -54,6 +54,9 @@ public class GameManager : MonoBehaviour
     [Header("Transition Settings")]
     public float resultDisplayTime = 2f;
 
+    [Header("Dialogue System")]
+    public DialogueSystem dialogueSystem;
+
     private bool isTransitioning = false;
     private bool playerIsValidTarget;
     private bool enemyIsValidTarget;
@@ -63,6 +66,10 @@ public class GameManager : MonoBehaviour
     private CardDisplay selectedCardDisplay;
     public CardData SelectedCard => selectedCard;
     public CardDisplay SelectedCardDisplay => selectedCardDisplay;
+
+    // ►►► NUEVAS VARIABLES PARA CONTROL DE DIÁLOGOS DURANTE TURNOS ◄◄◄
+    private bool waitingForDialogue = false;
+    private System.Action afterDialogueCallback;
 
     void Awake()
     {
@@ -105,6 +112,8 @@ public class GameManager : MonoBehaviour
         selectedCard = null;
         selectedCardDisplay = null;
         currentTurn = TurnState.PlayerTurn;
+        waitingForDialogue = false;
+        afterDialogueCallback = null;
 
         currentHand.Clear();
         availableDeck.Clear();
@@ -161,6 +170,12 @@ public class GameManager : MonoBehaviour
                 enemyController.OnEnemyAttack.AddListener(() => PlayEnemyAttackSound());
                 enemyController.OnEnemyHeal.AddListener(() => PlayEnemyHealSound());
             }
+        }
+
+        // Buscar el sistema de diálogos
+        if (dialogueSystem == null)
+        {
+            dialogueSystem = FindObjectOfType<DialogueSystem>();
         }
 
         // Buscar y asignar sprites de selección de objetivo
@@ -268,6 +283,30 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // ►►► MÉTODO PARA ESPERAR DIÁLOGO ◄◄◄
+    private IEnumerator WaitForDialogue(System.Action callback)
+    {
+        waitingForDialogue = true;
+        currentTurn = TurnState.WaitingForDialogue;
+
+        // Bloquear interacciones durante el diálogo
+        SetInteractionBlocked(true);
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(false);
+        }
+
+        // Esperar a que termine el diálogo
+        yield return new WaitWhile(() => dialogueSystem != null && dialogueSystem.IsDialogueActive);
+
+        // Restaurar estado
+        waitingForDialogue = false;
+        SetInteractionBlocked(false);
+
+        // Ejecutar callback después del diálogo
+        callback?.Invoke();
+    }
+
     public void OnEnemyDefeated()
     {
         if (isTransitioning) return;
@@ -354,6 +393,8 @@ public class GameManager : MonoBehaviour
 
     public void StartTargetSelection(CardData card, CardDisplay display)
     {
+        if (AreInteractionsBlocked() || waitingForDialogue) return;
+
         if (selectedCardDisplay != null && selectedCardDisplay != display)
         {
             selectedCardDisplay.SetSelected(false);
@@ -386,10 +427,12 @@ public class GameManager : MonoBehaviour
 
     public void SelectTarget(GameObject target)
     {
+        if (AreInteractionsBlocked() || waitingForDialogue) return;
+
         Debug.Log($"SelectTarget called with target: {target?.name}");
         Debug.Log($"Current turn: {currentTurn}, Selected card: {selectedCard?.cardName}");
-        
-        if (currentTurn != TurnState.SelectingTarget || selectedCard == null) 
+
+        if (currentTurn != TurnState.SelectingTarget || selectedCard == null)
         {
             Debug.Log("SelectTarget failed: Invalid turn state or no selected card");
             return;
@@ -402,7 +445,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Valid targets - Player: {playerIsValidTarget}, Enemy: {enemyIsValidTarget}");
         Debug.Log($"Is valid: {isValid}");
 
-        if (!isValid) 
+        if (!isValid)
         {
             Debug.Log("SelectTarget failed: Invalid target");
             return;
@@ -447,7 +490,7 @@ public class GameManager : MonoBehaviour
     private void ExecuteCardAction(CardData card)
     {
         Debug.Log($"ExecuteCardAction called with card: {card.cardName}, type: {card.cardType}");
-        
+
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
@@ -471,7 +514,7 @@ public class GameManager : MonoBehaviour
     public void Card_Attack(CardData card)
     {
         Debug.Log($"Card_Attack called with damage: {card.baseValue}");
-        
+
         float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
                           damageMultiplier * card.individualDamageMultiplier;
 
@@ -489,7 +532,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
+        void CompleteTurn() => StartCoroutine(EndPlayerTurnAfterDialogue());
 
         Debug.Log($"Calling PlayCardAnimation on playerController: {playerController != null}");
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
@@ -513,7 +556,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
+        void CompleteTurn() => StartCoroutine(EndPlayerTurnAfterDialogue());
 
         playerController.PlayCardAnimation(card, ApplyBlock, CompleteTurn);
     }
@@ -531,17 +574,34 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        void CompleteTurn() => StartCoroutine(EndPlayerTurn());
+        void CompleteTurn() => StartCoroutine(EndPlayerTurnAfterDialogue());
 
         playerController.PlayCardAnimation(card, ApplyHeal, CompleteTurn);
     }
 
+    // ►►► MÉTODO MODIFICADO PARA ESPERAR DIÁLOGOS ◄◄◄
     public IEnumerator EndPlayerTurn()
     {
         currentTurn = TurnState.EnemyTurn;
         HandManager.Instance.SetInteractable(false);
         yield return new WaitForSeconds(0.5f);
         enemyController.StartEnemyTurn();
+    }
+
+    private IEnumerator EndPlayerTurnAfterDialogue()
+    {
+        // Si hay un diálogo activo, esperar a que termine
+        if (dialogueSystem != null && dialogueSystem.IsDialogueActive)
+        {
+            Debug.Log("Esperando a que termine el diálogo antes de cambiar turno...");
+            yield return StartCoroutine(WaitForDialogue(() => {
+                StartCoroutine(EndPlayerTurn());
+            }));
+        }
+        else
+        {
+            yield return StartCoroutine(EndPlayerTurn());
+        }
     }
 
     public void StartPlayerTurn()
@@ -750,6 +810,19 @@ public class GameManager : MonoBehaviour
 
     public bool AreInteractionsBlocked()
     {
-        return interactionsBlocked;
+        return interactionsBlocked || waitingForDialogue;
+    }
+
+    // ►►► MÉTODO PÚBLICO PARA FORZAR ESPERA DE DIÁLOGO ◄◄◄
+    public void WaitForDialogueCompletion(System.Action callback)
+    {
+        if (dialogueSystem != null && dialogueSystem.IsDialogueActive)
+        {
+            StartCoroutine(WaitForDialogue(callback));
+        }
+        else
+        {
+            callback?.Invoke();
+        }
     }
 }

@@ -46,6 +46,10 @@ public class EnemyController : MonoBehaviour
     [Tooltip("Duración de la animación de daño")]
     [SerializeField] private float damageAnimationDuration = 0.5f;
 
+    [Header("Dialogue Settings")]
+    public string lowHealthDialogue = "EnemyLowHealth";
+    private bool lowHealthTriggered = false;
+
     public HealthSystem healthSystem;
     private int lastActionIndex = -1;
     private bool isDead = false;
@@ -82,10 +86,29 @@ public class EnemyController : MonoBehaviour
         }
         healthSystem.SetMaxHealth(100);
         healthSystem.OnDeath.AddListener(OnDeath);
+        healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
+    }
 
-        if (GameManager.Instance != null)
+    private void OnTakeDamage(int damage)
+    {
+        if (isDead) return;
+        CheckLowHealth();
+    }
+
+    private void CheckLowHealth()
+    {
+        if (healthSystem != null && healthSystem.CurrentHealth <= healthSystem.MaxHealth / 2 && !lowHealthTriggered)
         {
-            GameManager.Instance.enemyHealth = healthSystem;
+            TriggerDialogue(lowHealthDialogue);
+            lowHealthTriggered = true;
+        }
+    }
+
+    private void TriggerDialogue(string dialogueName)
+    {
+        if (!string.IsNullOrEmpty(dialogueName) && DialogueSystem.Instance != null)
+        {
+            DialogueSystem.Instance.StartDialogue(dialogueName);
         }
     }
 
@@ -99,7 +122,6 @@ public class EnemyController : MonoBehaviour
     {
         EnemyAction action = SelectAction();
         
-        // Notificar al GameManager antes de iniciar la animación para activar bloqueo
         if (action.actionType == EnemyAction.ActionType.Damage && GameManager.Instance != null)
         {
             GameManager.Instance.OnEnemyAttackStart();
@@ -110,19 +132,15 @@ public class EnemyController : MonoBehaviour
             animator.Play(action.animationName);
         }
 
-        // Reproducir sonido al inicio si no está sincronizado con la acción
         if (!action.syncSoundWithAction)
         {
             PlayActionSound(action);
         }
 
-        // Esperar hasta el punto de acción para aplicar el efecto
         yield return new WaitForSeconds(action.actionPointTime);
         
-        // Aplicar el efecto en el momento exacto de la acción
         ApplyActionEffect(action);
         
-        // Reproducir sonido en el punto de acción si está sincronizado
         if (action.syncSoundWithAction)
         {
             PlayActionSound(action);
@@ -131,21 +149,13 @@ public class EnemyController : MonoBehaviour
         float remainingTime = action.duration - action.actionPointTime;
         if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
 
-        // Notificar al GameManager que el turno del enemigo ha terminado
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnEnemyTurnEnd();
-        }
-
-        if (GameManager.Instance != null)
-        {
             GameManager.Instance.StartPlayerTurn();
         }
     }
     
-    /// <summary>
-    /// Reproduce el sonido de la acción del enemigo
-    /// </summary>
     private void PlayActionSound(EnemyAction action)
     {
         switch (action.actionType)
@@ -174,20 +184,16 @@ public class EnemyController : MonoBehaviour
                 {
                     int finalDamage = Mathf.RoundToInt(action.value * currentAttackMultiplier);
                     
-                    // Verificar si el jugador tiene bloqueo activo
                     if (GameManager.Instance.playerController != null && 
                         GameManager.Instance.playerController.HasBlockActive())
                     {
                         float blockMultiplier = GameManager.Instance.playerController.GetBlockReductionMultiplier();
                         finalDamage = Mathf.RoundToInt(finalDamage * blockMultiplier);
-                        Debug.Log($"Jugador bloqueó el ataque! Daño reducido de {action.value * currentAttackMultiplier} a {finalDamage}");
-                        
-                        // Notificar al GameManager que el ataque fue aplicado (para sonido de bloqueo)
                         GameManager.Instance.OnEnemyAttackApplied();
                     }
                     
                     GameManager.Instance.playerHealth.TakeDamage(finalDamage);
-                    OnEnemyAttack.Invoke(); // Invocar evento de ataque
+                    OnEnemyAttack.Invoke();
                 }
                 break;
 
@@ -195,7 +201,7 @@ public class EnemyController : MonoBehaviour
                 if (healthSystem != null)
                 {
                     healthSystem.Heal(action.value);
-                    OnEnemyHeal.Invoke(); // Invocar evento de curación
+                    OnEnemyHeal.Invoke();
                 }
                 break;
         }
@@ -221,14 +227,10 @@ public class EnemyController : MonoBehaviour
         if (!isDead) 
         {
             healthSystem?.TakeDamage(damage);
-            // Reproducir animación de recibir daño y sincronizar el sonido
             StartCoroutine(PlayDamageAnimationWithSound());
         }
     }
     
-    /// <summary>
-    /// Reproduce la animación de recibir daño del enemigo con sonido sincronizado
-    /// </summary>
     private IEnumerator PlayDamageAnimationWithSound()
     {
         if (animator != null && !string.IsNullOrEmpty(damageAnimationTrigger))
@@ -236,7 +238,6 @@ public class EnemyController : MonoBehaviour
             animator.SetTrigger(damageAnimationTrigger);
         }
 
-        // Reproducir sonido al inicio si no está sincronizado con la acción
         if (!syncDamageSoundWithAction)
         {
             if (GameManager.Instance != null)
@@ -245,47 +246,36 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        // Esperar hasta el punto de acción si está sincronizado
         if (syncDamageSoundWithAction)
         {
             yield return new WaitForSeconds(damageSoundPointTime);
-            
-            // Reproducir sonido de daño del enemigo en el momento exacto configurado
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.PlayEnemyDamageSoundFromController();
             }
         }
 
-        // Esperar el resto de la animación de daño
         float remainingDamageTime = damageAnimationDuration - damageSoundPointTime;
         if (remainingDamageTime > 0)
         {
             yield return new WaitForSeconds(remainingDamageTime);
         }
-
-        Debug.Log("¡Animación de recibir daño del enemigo ejecutada con sonido configurado!");
         
-        // Asegurar que todos los caminos de código retornen un valor
         yield return null;
     }
     
-    /// <summary>
-    /// Reproduce la animación de recibir daño del enemigo (método público para llamadas externas)
-    /// </summary>
     public void PlayDamageAnimation()
     {
         if (animator != null && !string.IsNullOrEmpty(damageAnimationTrigger))
         {
             animator.SetTrigger(damageAnimationTrigger);
         }
-
-        Debug.Log("¡Animación de recibir daño del enemigo ejecutada!");
     }
 
     private void OnDeath()
     {
         isDead = true;
+        
         if (animator != null)
         {
             animator.SetTrigger("Die");
