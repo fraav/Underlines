@@ -511,6 +511,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void UpdateTargetSelection(GameObject target)
+    {
+        if (target.CompareTag("Player"))
+        {
+            playerIsValidTarget = true;
+        }
+    }
+
     public void Card_Attack(CardData card)
     {
         Debug.Log($"Card_Attack called with damage: {card.baseValue}");

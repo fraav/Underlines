@@ -49,7 +49,7 @@ public class DialogueSystem : MonoBehaviour
     
     [Header("Objects to Disable During Dialogue")]
     public GameObject[] objectsToDisable;
-    private List<GameObject> disabledObjects = new List<GameObject>();
+    private List<GameObject> objectsToReenable = new List<GameObject>();
     
     private Queue<DialogueLine> currentDialogueLines;
     private DialogueSequence currentSequence;
@@ -110,32 +110,36 @@ public class DialogueSystem : MonoBehaviour
         DisplayNextLine();
     }
     
-    // ►►► MÉTODO PARA DESACTIVAR OBJETOS ◄◄◄
+    // ►►► MÉTODO SIMPLIFICADO PARA DESACTIVAR OBJETOS ◄◄◄
     private void DisableObjects()
     {
-        disabledObjects.Clear();
+        objectsToReenable.Clear();
         
         foreach (GameObject obj in objectsToDisable)
         {
-            if (obj != null && obj.activeInHierarchy)
+            if (obj != null)
             {
-                disabledObjects.Add(obj);
+                // Guardar todos los objetos para reactivarlos después
+                objectsToReenable.Add(obj);
+                
+                // Desactivar el objeto (sin importar si ya estaba desactivado)
                 obj.SetActive(false);
             }
         }
     }
     
-    // ►►► MÉTODO PARA REACTIVAR OBJETOS ◄◄◄
+    // ►►► MÉTODO SIMPLIFICADO PARA REACTIVAR OBJETOS ◄◄◄
     private void EnableObjects()
     {
-        foreach (GameObject obj in disabledObjects)
+        foreach (GameObject obj in objectsToReenable)
         {
             if (obj != null)
             {
+                // ►►► ACTIVAR TODOS LOS OBJETOS ◄◄◄
                 obj.SetActive(true);
             }
         }
-        disabledObjects.Clear();
+        objectsToReenable.Clear();
     }
     
     public void DisplayNextLine()
@@ -215,7 +219,7 @@ public class DialogueSystem : MonoBehaviour
         isDialogueActive = false;
         dialogueCanvas.SetActive(false);
         
-        // ►►► REACTIVAR OBJETOS ◄◄◄
+        // ►►► REACTIVAR TODOS LOS OBJETOS ◄◄◄
         EnableObjects();
         
         currentSequence.onEndSequence?.Invoke();

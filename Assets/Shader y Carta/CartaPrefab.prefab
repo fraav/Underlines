@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 2473394470301580792}
   - component: {fileID: 1934635972720189541}
   - component: {fileID: 8890001387210375623}
+  - component: {fileID: 852826741107569429}
+  - component: {fileID: 4381823769852840786}
   m_Layer: 5
   m_Name: CartaPrefab
   m_TagString: Untagged
@@ -120,6 +122,38 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 0
+--- !u!225 &852826741107569429
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3060040328840382780}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &4381823769852840786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3060040328840382780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b10f9a87f13cab45b1c1f888a30616a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  icon: {fileID: 5718057239600633296}
+  titleText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  descriptionPanel: {fileID: 0}
+  fullDescriptionText: {fileID: 0}
+  selectionIndicator: {fileID: 0}
+  selectedScale: 1.1
+  currentCard: {fileID: 0}
 --- !u!1 &3828815076921792687
 GameObject:
   m_ObjectHideFlags: 0
@@ -185,7 +219,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1990123043, guid: 2e4ab3aff032e2141a03e1272c7e941b, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -335,7 +369,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1331169671, guid: 2e4ab3aff032e2141a03e1272c7e941b, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -485,7 +519,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -265653905, guid: 2e4ab3aff032e2141a03e1272c7e941b, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

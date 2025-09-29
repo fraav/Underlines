@@ -16,7 +16,8 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float maxArcHeight = 50f;
     [SerializeField] private float fanAngle = 15f;
     [SerializeField] private float moveDuration = 0.3f;
-
+    [SerializeField] private float startXPosition = 0f;
+    [SerializeField] private float startYPosition = 0f;
     private List<GameObject> spawnedCards = new List<GameObject>();
 
     void Awake()
@@ -55,7 +56,7 @@ public class HandManager : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.currentHand == null) return;
 
         CreateNewCards();
-        StartCoroutine(ArrangeCardsInFan());
+        StartCoroutine(ArrangeCardsInFan(true));
         UpdateInteractableState();
     }
 
@@ -84,7 +85,7 @@ public class HandManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ArrangeCardsInFan()
+    private IEnumerator ArrangeCardsInFan(bool repeat = false)
     {
         yield return new WaitForEndOfFrame();
 
@@ -99,8 +100,8 @@ public class HandManager : MonoBehaviour
 
         // Calculate positions for bottom-right corner
         float totalWidth = cardSpacing * (cardCount - 1);
-        float startX = (canvasWidth / 2f) - horizontalOffset - totalWidth; // Start from right edge
-        float baseY = (-canvasHeight / 2f) + verticalOffset; // Bottom edge
+        float startX = startXPosition; // Start from right edge
+        float baseY =  startYPosition;// Bottom edge
 
         for (int i = 0; i < cardCount; i++)
         {
@@ -129,6 +130,11 @@ public class HandManager : MonoBehaviour
                     moveDuration
                 );
             }
+        }
+        yield return null;;
+        if(repeat)
+        {
+            ArrangeCardsInFan(false);
         }
     }
 
@@ -159,5 +165,7 @@ public class HandManager : MonoBehaviour
                           GameManager.Instance.isBattleScene;
 
         SetInteractable(interactable);
+
     }
-}
+
+}    

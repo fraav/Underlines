@@ -19,7 +19,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     private RectTransform rect;
     private RectTransform canvasRect;
-    private Vector3 posicionInicial;
+    private Vector2 posicionInicial;
     private Canvas canvas;
 
     private Vector2 offsetDrag;
@@ -47,6 +47,8 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     private void Start()
     {
+
+        
         rect = GetComponent<RectTransform>();
         escalaOriginal = transform.localScale;
         posicionInicial = rect.anchoredPosition;
@@ -70,6 +72,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     private void Update()
     {
+        
         // Pulso del outline si está seleccionada
         if (seleccionada && outline != null)
         {
@@ -79,6 +82,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
         if (!arrastrando)
         {
+            
             // Rotación por hover
             if (sobreMouse)
             {
@@ -163,6 +167,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        
         // Verificar si las interacciones están bloqueadas
         if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked())
             return;
@@ -180,11 +185,16 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         if (outline != null)
             outline.enabled = true;
 
-        Vector2 mouseLocalPos;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, eventData.pressEventCamera, out mouseLocalPos);
-        offsetDrag = new Vector2(mouseLocalPos.x, rect.rect.height / 2);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out Vector2 posicionInicialAlterna);
+    
+        // Calcular el offset del mouse con respecto al centro del objeto
+        offsetDrag = posicionInicialAlterna - rect.anchoredPosition;
+        posicionMouseAnterior = posicionInicialAlterna;
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouseAnterior);
+        
+        
+        
         tiempoIdle = 0f;
         tiempoSinMovimiento = 0f;
 
@@ -192,33 +202,34 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         GameManager.Instance.StartTargetSelection(cardDisplay.currentCard, cardDisplay);
     }
 
-    public void OnDrag(PointerEventData eventData)
+
+public void OnDrag(PointerEventData eventData)
+{
+    if (canvas == null) return;
+
+    Vector2 posicionCanvas;
+    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionCanvas);
+
+    // Aplicar la posición manteniendo el offset inicial
+    rect.anchoredPosition = posicionCanvas - offsetDrag;
+
+    Vector2 delta = posicionCanvas - posicionMouseAnterior;
+    posicionMouseAnterior = posicionCanvas;
+
+    // Calcular balanceo basado en el movimiento horizontal
+    anguloBalanceo -= delta.x * sensibilidadBalanceo;
+    anguloBalanceo = Mathf.Clamp(anguloBalanceo, -maxBalanceo, maxBalanceo);
+
+    // Detectar movimiento reciente
+    if (Mathf.Abs(delta.x) > 0.01f)
     {
-        if (canvas == null) return;
-
-        Vector2 posicionCanvas;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionCanvas);
-
-        rect.anchoredPosition = posicionCanvas - offsetDrag;
-
-        Vector2 delta = posicionCanvas - posicionMouseAnterior;
-        posicionMouseAnterior = posicionCanvas;
-
-        // Calcular balanceo basado en el movimiento horizontal
-        anguloBalanceo -= delta.x * sensibilidadBalanceo;
-        anguloBalanceo = Mathf.Clamp(anguloBalanceo, -maxBalanceo, maxBalanceo);
-
-        // Detectar movimiento reciente
-        if (Mathf.Abs(delta.x) > 0.01f)
-        {
-            movimientoReciente = true;
-            tiempoSinMovimiento = 0f; // Resetear el tiempo sin movimiento
-        }
-        
-
-        // Check for valid target using 3D detection
-        CheckValidTarget3D(eventData.position);
+        movimientoReciente = true;
+        tiempoSinMovimiento = 0f; // Resetear el tiempo sin movimiento
     }
+    
+    // Check for valid target using 3D detection
+    CheckValidTarget3D(eventData.position);
+}
 
     public void OnEndDrag(PointerEventData eventData)
     {
@@ -340,6 +351,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     public void UpdateOriginalPosition(Vector3 newPosition)
     {
+        print("CALLED UPDATE ORIGINAL POSITION");
         posicionInicial = newPosition;
     }
 
