@@ -257,6 +257,7 @@ public void OnDrag(PointerEventData eventData)
                     break;
                 case CardData.CardType.Block:
                 case CardData.CardType.Heal:
+                case CardData.CardType.Assistance:
                     isValidTarget = isPlayerTarget;
                     break;
             }
@@ -291,6 +292,7 @@ public void OnDrag(PointerEventData eventData)
                     break;
                 case CardData.CardType.Block:
                 case CardData.CardType.Heal:
+                case CardData.CardType.Assistance:
                     isValid = isPlayerTarget;
                     break;
             }

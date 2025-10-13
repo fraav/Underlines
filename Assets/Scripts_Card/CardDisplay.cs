@@ -205,6 +205,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
             case CardData.CardType.Heal:
                 float healValue = upgradedValue * GameManager.Instance.healMultiplier;
                 return $"Heal: {healValue:F1}";
+            case CardData.CardType.Assistance:
+                return $"Effect: x{currentCard.effectMultiplier}";
             default:
                 return currentCard.description;
         }

@@ -289,6 +289,7 @@ GameObject:
   - component: {fileID: 542989247735633103}
   - component: {fileID: -1293773028763200845}
   - component: {fileID: -6183150660863904174}
+  - component: {fileID: 7653531143345343716}
   m_Layer: 5
   m_Name: Fondo
   m_TagString: Untagged
@@ -453,7 +454,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2775043380357742957}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 58a92ecabab6b4060b111e31d9a62802, type: 2}
   m_CullingMode: 0
@@ -505,6 +506,27 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 0
+--- !u!114 &7653531143345343716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2775043380357742957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f28425022aeb8f14b9da3e95a5e5a80b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardImage: {fileID: 138464545959870311}
+  cardNameText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  effectValueText: {fileID: 0}
+  backgroundImage: {fileID: 138464545959870311}
+  outline: {fileID: -6183150660863904174}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 1, g: 0.00000012715658, b: 0, a: 1}
+  hoverColor: {r: 0.5596056, g: 0, b: 1, a: 1}
 --- !u!1 &4103790435664531959
 GameObject:
   m_ObjectHideFlags: 0

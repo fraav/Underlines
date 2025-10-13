@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class HandManager : MonoBehaviour
 {
@@ -18,7 +19,8 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float moveDuration = 0.3f;
     [SerializeField] private float startXPosition = 0f;
     [SerializeField] private float startYPosition = 0f;
-    private List<GameObject> spawnedCards = new List<GameObject>();
+    [SerializeField] private Button confirmButton;
+    public List<GameObject> spawnedCards = new List<GameObject>();
 
     void Awake()
     {
@@ -35,6 +37,12 @@ public class HandManager : MonoBehaviour
             Debug.LogWarning($"Destruyendo HandManager en escena incorrecta: {sceneName}");
             Destroy(gameObject);
             return;
+        }
+        
+        // Configurar botón de confirmación
+        if (confirmButton != null)
+        {
+            confirmButton.onClick.AddListener(OnConfirmButtonClicked);
         }
         
         StartCoroutine(InitializeHand());
@@ -165,7 +173,25 @@ public class HandManager : MonoBehaviour
                           GameManager.Instance.isBattleScene;
 
         SetInteractable(interactable);
-
+        UpdateConfirmButton();
+    }
+    
+    private void UpdateConfirmButton()
+    {
+        if (confirmButton != null)
+        {
+            bool showButton = GameManager.Instance != null && 
+                            GameManager.Instance.currentTurn == GameManager.TurnState.SelectingAssistance;
+            confirmButton.gameObject.SetActive(showButton);
+        }
+    }
+    
+    private void OnConfirmButtonClicked()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ConfirmAssistanceSelection();
+        }
     }
 
 }    

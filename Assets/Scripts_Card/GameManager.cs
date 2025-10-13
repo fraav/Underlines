@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public enum TurnState { PlayerTurn, EnemyTurn, SelectingTarget, WaitingForDialogue }
+    public enum TurnState { PlayerTurn, EnemyTurn, SelectingTarget, WaitingForDialogue, SelectingAssistance, SelectingTrigger }
     public TurnState currentTurn { get; private set; }
 
     [Header("Game Settings")]
@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     public List<CardData> allCards = new List<CardData>();
     private List<CardData> availableDeck = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
+    public List<CardData> selectedAssistanceCards { get; private set; } = new List<CardData>();
 
     [Header("References")]
     public EnemyController enemyController;
@@ -56,6 +57,12 @@ public class GameManager : MonoBehaviour
 
     [Header("Dialogue System")]
     public DialogueSystem dialogueSystem;
+    
+    [Header("Trigger Buttons")]
+    public Button attackTriggerButton;
+    public Button blockTriggerButton;
+    public Button healTriggerButton;
+    public GameObject triggerButtonsPanel;
 
     private bool isTransitioning = false;
     private bool playerIsValidTarget;
@@ -70,6 +77,10 @@ public class GameManager : MonoBehaviour
     // ►►► NUEVAS VARIABLES PARA CONTROL DE DIÁLOGOS DURANTE TURNOS ◄◄◄
     private bool waitingForDialogue = false;
     private System.Action afterDialogueCallback;
+    
+    // ►►► NUEVAS VARIABLES PARA SISTEMA DE ASISTENCIA ◄◄◄
+    private bool assistancePhaseCompleted = false;
+    private CardData.CardType selectedTriggerType;
 
     void Awake()
     {
@@ -270,12 +281,18 @@ public class GameManager : MonoBehaviour
     private void ResetCardSystemForNewBattle()
     {
         currentHand.Clear();
+        selectedAssistanceCards.Clear();
+        
         availableDeck.Clear();
         availableDeck.AddRange(allCards);
+        
         ShuffleDeck();
-        DrawNewHand();
-
+        
+        assistancePhaseCompleted = false;
         currentTurn = TurnState.PlayerTurn;
+        
+        // Iniciar fase de asistencia
+        StartAssistancePhase();
 
         if (HandManager.Instance != null)
         {
@@ -413,6 +430,7 @@ public class GameManager : MonoBehaviour
                 break;
             case CardData.CardType.Block:
             case CardData.CardType.Heal:
+            case CardData.CardType.Assistance:
                 playerIsValidTarget = true;
                 enemyIsValidTarget = false;
                 break;
@@ -458,8 +476,18 @@ public class GameManager : MonoBehaviour
 
         playerController?.SetHighlight(false);
         enemyController?.SetHighlight(false);
-        RemoveCardFromHand(selectedCard);
-        ExecuteCardAction(selectedCard);
+        
+        // Si es carta de asistencia, seleccionarla para acumular efectos
+        if (selectedCard.cardType == CardData.CardType.Assistance)
+        {
+            SelectAssistanceCard(selectedCard);
+        }
+        else
+        {
+            // Para cartas normales, ejecutar acción inmediatamente
+            RemoveCardFromHand(selectedCard);
+            ExecuteCardAction(selectedCard);
+        }
 
         if (selectedCardDisplay != null)
         {
@@ -592,6 +620,13 @@ public class GameManager : MonoBehaviour
     {
         currentTurn = TurnState.EnemyTurn;
         HandManager.Instance.SetInteractable(false);
+        
+        // Ocultar botones de gatillo
+        ShowTriggerButtons(false);
+        
+        // Descartar cartas de asistencia restantes
+        DiscardRemainingAssistanceCards();
+        
         yield return new WaitForSeconds(0.5f);
         enemyController.StartEnemyTurn();
     }
@@ -624,8 +659,14 @@ public class GameManager : MonoBehaviour
             playerController.DeactivateBlock();
         }
 
+        // Iniciar el nuevo sistema de turno del jugador
         currentTurn = TurnState.PlayerTurn;
-        HandManager.Instance.SetInteractable(true);
+        StartAssistancePhase();
+        
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(true);
+        }
     }
 
     public void OnEnemyAttackStart()
@@ -767,6 +808,7 @@ public class GameManager : MonoBehaviour
             HandManager.Instance.RefreshHand();
         }
     }
+    
 
     void LoadCardUpgrades()
     {
@@ -831,6 +873,192 @@ public class GameManager : MonoBehaviour
         else
         {
             callback?.Invoke();
+        }
+    }
+    
+    // ►►► NUEVOS MÉTODOS PARA SISTEMA DE ASISTENCIA ◄◄◄
+    
+    private void StartAssistancePhase()
+    {
+        currentTurn = TurnState.SelectingAssistance;
+        DrawNewHand(); // Usar el método existente para robar 4 cartas
+        ShowTriggerButtons(false);
+        
+        Debug.Log("Iniciando fase de asistencia - Robar 4 cartas de asistencia");
+    }
+    
+    public void SelectAssistanceCard(CardData card)
+    {
+        if (selectedAssistanceCards.Contains(card))
+        {
+            selectedAssistanceCards.Remove(card);
+            Debug.Log($"Carta de asistencia deseleccionada: {card.cardName}");
+        }
+        else if (selectedAssistanceCards.Count < 4)
+        {
+            selectedAssistanceCards.Add(card);
+            Debug.Log($"Carta de asistencia seleccionada: {card.cardName} ({selectedAssistanceCards.Count}/4)");
+        }
+        else
+        {
+            Debug.Log("Ya tienes 4 cartas de asistencia seleccionadas");
+        }
+        
+        // Actualizar visuales de selección
+        UpdateCardSelectionVisuals();
+    }
+    
+    public void ConfirmAssistanceSelection()
+    {
+        if (currentTurn != TurnState.SelectingAssistance) return;
+        
+        assistancePhaseCompleted = true;
+        currentTurn = TurnState.SelectingTrigger;
+        ShowTriggerButtons(true);
+        
+        Debug.Log($"Fase de asistencia completada con {selectedAssistanceCards.Count} cartas seleccionadas");
+    }
+    
+    private void ShowTriggerButtons(bool show)
+    {
+        if (triggerButtonsPanel != null)
+        {
+            triggerButtonsPanel.SetActive(show);
+        }
+    }
+    
+    public void SelectTrigger(CardData.CardType triggerType)
+    {
+        if (currentTurn != TurnState.SelectingTrigger) return;
+        
+        selectedTriggerType = triggerType;
+        ExecuteTriggerAction(triggerType);
+    }
+    
+    private void ExecuteTriggerAction(CardData.CardType triggerType)
+    {
+        Debug.Log($"Ejecutando gatillo: {triggerType}");
+        
+        // Aplicar efectos acumulables de las cartas de asistencia
+        float totalMultiplier = 1.0f;
+        foreach (CardData assistanceCard in selectedAssistanceCards)
+        {
+            if (assistanceCard.cardType == CardData.CardType.Assistance)
+            {
+                if (assistanceCard.assistanceType == CardData.AssistanceType.DoubleEffect)
+                {
+                    totalMultiplier *= assistanceCard.effectMultiplier;
+                }
+            }
+        }
+        
+        // Crear una carta temporal para ejecutar la acción
+        CardData tempCard = ScriptableObject.CreateInstance<CardData>();
+        tempCard.cardType = triggerType;
+        tempCard.baseValue = 10; // Valor base para el gatillo
+        tempCard.cardName = triggerType.ToString() + " Gatillo";
+        
+        // Aplicar multiplicadores acumulables
+        switch (triggerType)
+        {
+            case CardData.CardType.Attack:
+                damageMultiplier *= totalMultiplier;
+                break;
+            case CardData.CardType.Block:
+                blockMultiplier *= totalMultiplier;
+                break;
+            case CardData.CardType.Heal:
+                healMultiplier *= totalMultiplier;
+                break;
+        }
+        
+        // Ejecutar la acción correspondiente
+        switch (triggerType)
+        {
+            case CardData.CardType.Attack:
+                Card_Attack(tempCard);
+                break;
+            case CardData.CardType.Block:
+                Card_Block(tempCard);
+                break;
+            case CardData.CardType.Heal:
+                Card_Heal(tempCard);
+                break;
+        }
+        
+        // Restaurar multiplicadores
+        damageMultiplier = 1.0f;
+        blockMultiplier = 1.0f;
+        healMultiplier = 1.0f;
+        
+        // Quitar cartas de asistencia seleccionadas de la mano
+        foreach (CardData assistanceCard in selectedAssistanceCards)
+        {
+            if (currentHand.Contains(assistanceCard))
+            {
+                currentHand.Remove(assistanceCard);
+                availableDeck.Add(assistanceCard);
+            }
+        }
+        
+        // Limpiar selección y terminar turno
+        DiscardRemainingAssistanceCards();
+        StartCoroutine(EndPlayerTurnAfterDialogue());
+    }
+    
+    private void DiscardRemainingAssistanceCards()
+    {
+        // Mover todas las cartas de la mano al descarte (mazo disponible)
+        foreach (CardData card in currentHand)
+        {
+            availableDeck.Add(card);
+        }
+        
+        // Limpiar las listas
+        currentHand.Clear();
+        selectedAssistanceCards.Clear();
+        
+        // Actualizar la mano visual
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
+        
+        Debug.Log("Todas las cartas descartadas al final del turno");
+    }
+    
+    // Métodos públicos para los botones de gatillo
+    public void OnAttackTriggerClicked()
+    {
+        SelectTrigger(CardData.CardType.Attack);
+    }
+    
+    public void OnBlockTriggerClicked()
+    {
+        SelectTrigger(CardData.CardType.Block);
+    }
+    
+    public void OnHealTriggerClicked()
+    {
+        SelectTrigger(CardData.CardType.Heal);
+    }
+    
+    private void UpdateCardSelectionVisuals()
+    {
+        if (HandManager.Instance != null)
+        {
+            foreach (GameObject cardObj in HandManager.Instance.spawnedCards)
+            {
+                if (cardObj != null)
+                {
+                    CardDisplay display = cardObj.GetComponent<CardDisplay>();
+                    if (display != null && display.currentCard != null)
+                    {
+                        bool isSelected = selectedAssistanceCards.Contains(display.currentCard);
+                        display.SetSelected(isSelected);
+                    }
+                }
+            }
         }
     }
 }
