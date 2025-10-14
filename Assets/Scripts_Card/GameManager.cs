@@ -258,13 +258,6 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         ResetCardSystemForNewBattle();
-
-        if (SceneTransitionManager.Instance != null)
-        {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeIn()
-            );
-        }
     }
 
     private void ResetCardSystemForNewBattle()
@@ -327,16 +320,11 @@ public class GameManager : MonoBehaviour
     {
         isTransitioning = true;
 
-        if (SceneTransitionManager.Instance != null)
-        {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeOut()
-            );
-        }
-        else
-        {
-            yield return new WaitForSeconds(1f);
-        }
+        // Solo mostrar resultado y esperar
+        yield return new WaitForSeconds(resultDisplayTime);
+
+        // Aquí se manejaría la victoria desde otro script
+        Debug.Log("Victoria completada - Manejar desde otro script");
 
         isTransitioning = false;
     }
@@ -354,18 +342,11 @@ public class GameManager : MonoBehaviour
     {
         isTransitioning = true;
 
-        if (SceneTransitionManager.Instance != null)
-        {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.FadeOut()
-            );
-        }
-        else
-        {
-            yield return new WaitForSeconds(1f);
-        }
+        // Solo mostrar resultado y esperar
+        yield return new WaitForSeconds(resultDisplayTime);
 
-        SceneManager.LoadScene("MainMenu");
+        // Aquí se manejaría la derrota desde otro script
+        Debug.Log("Derrota completada - Manejar desde otro script");
 
         isTransitioning = false;
     }

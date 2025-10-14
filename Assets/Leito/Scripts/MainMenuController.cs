@@ -133,11 +133,10 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator StartGameSequence()
     {
+        // ►►► CORREGIDO: Usar TransitionToScene en lugar de LoadSceneWithCleanup ◄◄◄
         if (SceneTransitionManager.Instance != null)
         {
-            yield return SceneTransitionManager.Instance.StartCoroutine(
-                SceneTransitionManager.Instance.LoadSceneWithCleanup("BattleScene")
-            );
+            SceneTransitionManager.Instance.TransitionToScene("BattleScene");
         }
         else
         {
@@ -151,6 +150,7 @@ public class MainMenuController : MonoBehaviour
 
     private void CleanupBattleObjectsFallback()
     {
+        // Solo limpiar si es necesario (fallback)
         CardDisplay[] cards = FindObjectsOfType<CardDisplay>(true);
         foreach (CardDisplay card in cards)
         {
@@ -238,7 +238,7 @@ public class MainMenuController : MonoBehaviour
         
         if (SceneTransitionManager.Instance != null)
         {
-            SceneTransitionManager.Instance.fadeOnStart = true;
+            // ►►► CORREGIDO: Usar FadeIn directamente ◄◄◄
             yield return SceneTransitionManager.Instance.StartCoroutine(SceneTransitionManager.Instance.FadeIn());
         }
         else
@@ -255,40 +255,14 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator SimpleFadeOut()
     {
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.fadePanel != null)
-        {
-            Image fadePanel = SceneTransitionManager.Instance.fadePanel;
-            float timer = 0;
-            while (timer < 1f)
-            {
-                timer += Time.deltaTime;
-                fadePanel.color = new Color(0, 0, 0, timer);
-                yield return null;
-            }
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
+        // Fallback simple si no hay SceneTransitionManager
+        yield return new WaitForSeconds(0.5f);
     }
 
     private IEnumerator SimpleFadeIn()
     {
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.fadePanel != null)
-        {
-            Image fadePanel = SceneTransitionManager.Instance.fadePanel;
-            float timer = 1f;
-            while (timer > 0)
-            {
-                timer -= Time.deltaTime;
-                fadePanel.color = new Color(0, 0, 0, timer);
-                yield return null;
-            }
-        }
-        else
-        {
-            yield return null;
-        }
+        // Fallback simple si no hay SceneTransitionManager
+        yield return null;
     }
 
     private IEnumerator QuitApplicationFallback()
