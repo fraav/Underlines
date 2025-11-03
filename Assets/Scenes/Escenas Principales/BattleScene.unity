@@ -68548,8 +68548,8 @@ MonoBehaviour:
   allCards:
   - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
   - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
-  - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
-  - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
+  - {fileID: 11400000, guid: 16a8bd9a9cc9f99478d67762ab05ab90, type: 2}
+  - {fileID: 11400000, guid: c8b60b1ca6469e04bbe575ad9db6af3d, type: 2}
   enemyController: {fileID: 520477873}
   playerController: {fileID: 1313455314}
   playerHealth: {fileID: 1313455313}
