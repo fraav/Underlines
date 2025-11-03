@@ -57,6 +57,14 @@ public class HandManager : MonoBehaviour
 
         CreateNewCards();
         StartCoroutine(ArrangeCardsInFan(true));
+        
+        // Actualizar estado de interacción después de un pequeño delay para asegurar que todo esté sincronizado
+        StartCoroutine(DelayedUpdateInteractableState());
+    }
+
+    private IEnumerator DelayedUpdateInteractableState()
+    {
+        yield return new WaitForEndOfFrame();
         UpdateInteractableState();
     }
 

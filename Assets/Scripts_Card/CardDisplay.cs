@@ -205,6 +205,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
             case CardData.CardType.Heal:
                 float healValue = upgradedValue * GameManager.Instance.healMultiplier;
                 return $"Heal: {healValue:F1}";
+            case CardData.CardType.Booster:
+                return GetBoosterDescription();
             default:
                 return currentCard.description;
         }
@@ -234,8 +236,50 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 return $"<b>{currentCard.cardName}</b>\n\n" +
                        $"{currentCard.description}\n\n" +
                        $"Heal: <color=#FFD700>{healValue:F1}</color>";
+            case CardData.CardType.Booster:
+                return $"<b>{currentCard.cardName}</b>\n\n" +
+                       $"{currentCard.description}\n\n" +
+                       $"Efecto: <color=#FFD700>{GetBoosterFullDescription()}</color>";
             default:
                 return currentCard.description;
+        }
+    }
+
+    private string GetBoosterDescription()
+    {
+        if (currentCard.cardType != CardData.CardType.Booster) return "";
+        
+        switch (currentCard.boosterEffectType)
+        {
+            case CardData.BoosterEffectType.DoubleAction:
+                return "Duplica acción";
+            case CardData.BoosterEffectType.IncreaseDamage:
+                return $"Daño +{currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.IncreaseBlock:
+                return $"Bloqueo +{currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.IncreaseHeal:
+                return $"Curación +{currentCard.boosterValue * 100}%";
+            default:
+                return currentCard.description;
+        }
+    }
+
+    private string GetBoosterFullDescription()
+    {
+        if (currentCard.cardType != CardData.CardType.Booster) return "";
+        
+        switch (currentCard.boosterEffectType)
+        {
+            case CardData.BoosterEffectType.DoubleAction:
+                return "Duplica la próxima acción ejecutada";
+            case CardData.BoosterEffectType.IncreaseDamage:
+                return $"Aumenta el daño en {currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.IncreaseBlock:
+                return $"Aumenta el bloqueo en {currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.IncreaseHeal:
+                return $"Aumenta la curación en {currentCard.boosterValue * 100}%";
+            default:
+                return "Efecto desconocido";
         }
     }
 }

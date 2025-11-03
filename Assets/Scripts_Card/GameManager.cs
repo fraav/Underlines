@@ -21,7 +21,11 @@ public class GameManager : MonoBehaviour
     [Header("Card System")]
     public List<CardData> allCards = new List<CardData>();
     private List<CardData> availableDeck = new List<CardData>();
+    private List<CardData> discardPile = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
+    
+    // Rastreo de cartas jugadas en el turno actual (para deshacer)
+    private List<CardData> playedCardsThisTurn = new List<CardData>();
 
     [Header("References")]
     public EnemyController enemyController;
@@ -117,6 +121,14 @@ public class GameManager : MonoBehaviour
 
         currentHand.Clear();
         availableDeck.Clear();
+        discardPile.Clear();
+        playedCardsThisTurn.Clear();
+
+        // Limpiar efectos del jugador
+        if (PlayerTurnEffects.Instance != null)
+        {
+            PlayerTurnEffects.Instance.ClearEffects();
+        }
     }
 
     private void CheckIfBattleScene()
@@ -264,9 +276,10 @@ public class GameManager : MonoBehaviour
     {
         currentHand.Clear();
         availableDeck.Clear();
+        discardPile.Clear();
+        playedCardsThisTurn.Clear();
         availableDeck.AddRange(allCards);
         ShuffleDeck();
-        DrawNewHand();
 
         currentTurn = TurnState.PlayerTurn;
 
@@ -274,6 +287,9 @@ public class GameManager : MonoBehaviour
         {
             HandManager.Instance.SetInteractable(true);
         }
+
+        // Robar 4 cartas al inicio del primer turno
+        DrawCardsForNewTurn();
     }
 
     // ►►► MÉTODO PARA ESPERAR DIÁLOGO ◄◄◄
@@ -386,17 +402,27 @@ public class GameManager : MonoBehaviour
         currentTurn = TurnState.SelectingTarget;
         selectedCardDisplay?.SetSelected(true);
 
-        switch (card.cardType)
+        // Todas las cartas potenciadoras (y las nuevas) tienen como objetivo válido al jugador
+        if (card.cardType == CardData.CardType.Booster)
         {
-            case CardData.CardType.Attack:
-                playerIsValidTarget = false;
-                enemyIsValidTarget = true;
-                break;
-            case CardData.CardType.Block:
-            case CardData.CardType.Heal:
-                playerIsValidTarget = true;
-                enemyIsValidTarget = false;
-                break;
+            playerIsValidTarget = true;
+            enemyIsValidTarget = false;
+        }
+        else
+        {
+            // Mantener compatibilidad con cartas antiguas si es necesario
+            switch (card.cardType)
+            {
+                case CardData.CardType.Attack:
+                    playerIsValidTarget = false;
+                    enemyIsValidTarget = true;
+                    break;
+                case CardData.CardType.Block:
+                case CardData.CardType.Heal:
+                    playerIsValidTarget = true;
+                    enemyIsValidTarget = false;
+                    break;
+            }
         }
 
         if (playerTargetSprite != null) playerTargetSprite.SetActive(playerIsValidTarget);
@@ -439,17 +465,33 @@ public class GameManager : MonoBehaviour
 
         playerController?.SetHighlight(false);
         enemyController?.SetHighlight(false);
+        
+        // Guardar referencia de la carta antes de ejecutar
+        CardData cardToExecute = selectedCard;
+        
         RemoveCardFromHand(selectedCard);
-        ExecuteCardAction(selectedCard);
 
+        // Limpiar selección antes de ejecutar para permitir nuevas selecciones
         if (selectedCardDisplay != null)
         {
             selectedCardDisplay.SetSelected(false);
             selectedCardDisplay = null;
         }
 
-        currentTurn = TurnState.PlayerTurn;
         selectedCard = null;
+        currentTurn = TurnState.PlayerTurn;
+
+        // Ejecutar la acción de la carta
+        // Para cartas Booster, esto NO termina el turno
+        ExecuteCardAction(cardToExecute);
+
+        // Asegurarse de que las cartas sigan siendo interactuables
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(true);
+        }
+
+        Debug.Log("[GameManager] Carta ejecutada. Estado del turno: PlayerTurn. Puedes seguir jugando cartas.");
     }
 
     private void RemoveCardFromHand(CardData card)
@@ -457,39 +499,110 @@ public class GameManager : MonoBehaviour
         if (currentHand.Contains(card))
         {
             currentHand.Remove(card);
-            availableDeck.Add(card);
+            // Agregar a la lista de cartas jugadas este turno (para poder deshacer)
+            playedCardsThisTurn.Add(card);
+            
+            Debug.Log($"[GameManager] Carta removida de la mano: {card.cardName}. Cartas jugadas este turno: {playedCardsThisTurn.Count}");
+            
             HandManager.Instance.RefreshHand();
+        }
+    }
 
-            if (currentHand.Count == 0)
+    /// <summary>
+    /// Deshace las cartas potenciadoras jugadas este turno, devolviéndolas a la mano
+    /// </summary>
+    public void UndoPlayedBoosterCards()
+    {
+        Debug.Log($"[GameManager] Deshaciendo {playedCardsThisTurn.Count} cartas jugadas...");
+
+        // Devolver solo las cartas potenciadoras a la mano
+        List<CardData> cardsToReturn = new List<CardData>();
+        
+        foreach (CardData card in playedCardsThisTurn)
+        {
+            if (card != null && card.cardType == CardData.CardType.Booster)
             {
-                ShuffleDeck();
-                DrawNewHand();
+                if (!currentHand.Contains(card))
+                {
+                    currentHand.Add(card);
+                    cardsToReturn.Add(card);
+                }
             }
         }
+
+        // Limpiar la lista de cartas jugadas
+        playedCardsThisTurn.Clear();
+
+        // Limpiar efectos acumulados
+        if (PlayerTurnEffects.Instance != null)
+        {
+            PlayerTurnEffects.Instance.ClearEffects();
+        }
+
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
+
+        Debug.Log($"[GameManager] {cardsToReturn.Count} cartas devueltas a la mano");
     }
 
     private void ExecuteCardAction(CardData card)
     {
-        Debug.Log($"ExecuteCardAction called with card: {card.cardName}, type: {card.cardType}");
+        Debug.Log($"[GameManager] ExecuteCardAction called with card: {card.cardName}, type: {card.cardType}");
+
+        // Las cartas antiguas (Attack, Block, Heal) NO deberían ejecutarse directamente
+        // porque ahora se usan los botones de acción. Pero mantenemos compatibilidad.
+        // IMPORTANTE: Solo las cartas Booster se pueden jugar arrastrándolas.
+        // Las cartas Attack, Block, Heal deben eliminarse del mazo o ignorarse.
 
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
-                Debug.Log("Executing Attack card");
-                PlayAttackCardSound();
-                Card_Attack(card);
+                Debug.LogWarning("[GameManager] Carta de Ataque jugada directamente. Debería usarse el botón de acción.");
+                // No ejecutar automáticamente, estas cartas ya no se usan así
                 break;
             case CardData.CardType.Block:
-                Debug.Log("Executing Block card");
-                PlayBlockCardSound();
-                Card_Block(card);
+                Debug.LogWarning("[GameManager] Carta de Bloqueo jugada directamente. Debería usarse el botón de acción.");
+                // No ejecutar automáticamente, estas cartas ya no se usan así
                 break;
             case CardData.CardType.Heal:
-                Debug.Log("Executing Heal card");
-                PlayHealCardSound();
-                Card_Heal(card);
+                Debug.LogWarning("[GameManager] Carta de Curación jugada directamente. Debería usarse el botón de acción.");
+                // No ejecutar automáticamente, estas cartas ya no se usan así
+                break;
+            case CardData.CardType.Booster:
+                Debug.Log("[GameManager] Executing Booster card");
+                Card_Booster(card);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Ejecuta una carta potenciadora (Booster)
+    /// </summary>
+    private void Card_Booster(CardData card)
+    {
+        Debug.Log($"[GameManager] Card_Booster called with: {card.cardName}, effect: {card.boosterEffectType}");
+
+        // Agregar el efecto a los efectos acumulados
+        if (PlayerTurnEffects.Instance != null)
+        {
+            PlayerTurnEffects.Instance.AddEffect(card);
+            Debug.Log($"[GameManager] Efecto agregado: {card.boosterEffectType}");
+        }
+
+        // Reproducir sonido de carta
+        PlayAttackCardSound(); // Usar sonido de ataque como placeholder
+
+        // Actualizar display de efectos
+        if (EffectsDisplayUI.Instance != null)
+        {
+            EffectsDisplayUI.Instance.RefreshDisplay();
+        }
+
+        // IMPORTANTE: Las cartas potenciadoras NO terminan el turno
+        // El jugador puede seguir jugando más cartas hasta presionar un botón de acción
+        Debug.Log("[GameManager] Carta potenciadora jugada. El turno continúa, puedes jugar más cartas.");
     }
 
     public void UpdateTargetSelection(GameObject target)
@@ -571,10 +684,41 @@ public class GameManager : MonoBehaviour
     // ►►► MÉTODO MODIFICADO PARA ESPERAR DIÁLOGOS ◄◄◄
     public IEnumerator EndPlayerTurn()
     {
+        Debug.Log("[GameManager] EndPlayerTurn iniciado...");
+
+        // Limpiar efectos del turno (se consumen al ejecutar acciones)
+        if (PlayerTurnEffects.Instance != null)
+        {
+            PlayerTurnEffects.Instance.ClearEffects();
+        }
+
+        // Descartar todas las cartas de la mano
+        DiscardAllHandCards();
+
+        // Limpiar cartas jugadas del turno
+        playedCardsThisTurn.Clear();
+
         currentTurn = TurnState.EnemyTurn;
-        HandManager.Instance.SetInteractable(false);
+        
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(false);
+        }
+
+        // Actualizar visibilidad de botones de acción
+        if (ActionButtonsController.Instance != null)
+        {
+            ActionButtonsController.Instance.UpdateButtonsVisibility();
+        }
+
         yield return new WaitForSeconds(0.5f);
-        enemyController.StartEnemyTurn();
+        
+        if (enemyController != null)
+        {
+            enemyController.StartEnemyTurn();
+        }
+
+        Debug.Log("[GameManager] Turno del jugador finalizado, iniciando turno del enemigo");
     }
 
     private IEnumerator EndPlayerTurnAfterDialogue()
@@ -595,6 +739,8 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
+        Debug.Log("[GameManager] Iniciando turno del jugador...");
+
         if (enemyController != null)
         {
             enemyController.ResetAttackMultiplier();
@@ -605,8 +751,108 @@ public class GameManager : MonoBehaviour
             playerController.DeactivateBlock();
         }
 
+        // Limpiar efectos del turno anterior
+        if (PlayerTurnEffects.Instance != null)
+        {
+            PlayerTurnEffects.Instance.ClearEffects();
+        }
+
+        // Limpiar cartas jugadas del turno anterior
+        playedCardsThisTurn.Clear();
+
+        // Descartar todas las cartas de la mano del turno anterior
+        DiscardAllHandCards();
+
+        // Robar 4 cartas nuevas para este turno
+        DrawCardsForNewTurn();
+
         currentTurn = TurnState.PlayerTurn;
-        HandManager.Instance.SetInteractable(true);
+        
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.SetInteractable(true);
+        }
+
+        // Actualizar visibilidad de botones de acción
+        if (ActionButtonsController.Instance != null)
+        {
+            ActionButtonsController.Instance.UpdateButtonsVisibility();
+        }
+
+        Debug.Log($"[GameManager] Turno del jugador iniciado. Cartas en mano: {currentHand.Count}");
+    }
+
+    /// <summary>
+    /// Roba 4 cartas para el inicio de un nuevo turno del jugador
+    /// </summary>
+    private void DrawCardsForNewTurn()
+    {
+        Debug.Log("[GameManager] Robando 4 cartas para nuevo turno...");
+
+        // Si el mazo disponible está vacío, barajar el descarte
+        if (availableDeck.Count == 0)
+        {
+            Debug.Log("[GameManager] Mazo vacío, barajando descartes...");
+            availableDeck.AddRange(discardPile);
+            discardPile.Clear();
+            ShuffleDeck();
+        }
+
+        // Robar 4 cartas
+        int drawCount = Mathf.Min(4, availableDeck.Count);
+        List<CardData> drawnCards = new List<CardData>();
+
+        for (int i = 0; i < drawCount; i++)
+        {
+            if (availableDeck.Count == 0)
+            {
+                // Si se acaban las cartas, barajar descartes
+                availableDeck.AddRange(discardPile);
+                discardPile.Clear();
+                ShuffleDeck();
+            }
+
+            if (availableDeck.Count > 0)
+            {
+                CardData card = availableDeck[0];
+                availableDeck.RemoveAt(0);
+                drawnCards.Add(card);
+                currentHand.Add(card);
+                Debug.Log($"[GameManager] Robada carta: {card.cardName}");
+            }
+        }
+
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
+
+        Debug.Log($"[GameManager] Robo completado. Cartas en mano: {currentHand.Count}");
+    }
+
+    /// <summary>
+    /// Descarta todas las cartas de la mano al final del turno
+    /// </summary>
+    public void DiscardAllHandCards()
+    {
+        Debug.Log($"[GameManager] Descartando {currentHand.Count} cartas de la mano...");
+
+        foreach (CardData card in currentHand)
+        {
+            if (card != null)
+            {
+                discardPile.Add(card);
+            }
+        }
+
+        currentHand.Clear();
+
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.RefreshHand();
+        }
+
+        Debug.Log($"[GameManager] Descarte completado. Cartas en pila de descarte: {discardPile.Count}");
     }
 
     public void OnEnemyAttackStart()
@@ -715,38 +961,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Método mantenido para compatibilidad, pero ahora DrawCardsForNewTurn es el método principal
     public void DrawNewHand()
     {
-        currentHand.Clear();
-
-        if (availableDeck.Count == 0)
-        {
-            availableDeck.AddRange(allCards);
-            ShuffleDeck();
-        }
-
-        int drawCount = Mathf.Min(4, availableDeck.Count);
-        List<CardData> drawnCards = availableDeck.Take(drawCount).ToList();
-
-        foreach (CardData card in drawnCards)
-        {
-            if (card != null)
-            {
-                currentHand.Add(card);
-                availableDeck.Remove(card);
-            }
-        }
-
-        if (availableDeck.Count == 0)
-        {
-            availableDeck.AddRange(allCards);
-            ShuffleDeck();
-        }
-
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.RefreshHand();
-        }
+        Debug.LogWarning("[GameManager] DrawNewHand llamado (método legacy). Usar DrawCardsForNewTurn en su lugar.");
+        DrawCardsForNewTurn();
     }
 
     void LoadCardUpgrades()

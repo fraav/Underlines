@@ -111,6 +111,14 @@ public class PlayerController : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Obtiene el array de animaciones de cartas (para uso en otros scripts)
+    /// </summary>
+    public CardAnimation[] GetCardAnimations()
+    {
+        return cardAnimations;
+    }
+
     // Método para activar el bloqueo (ahora solo lo marca como pendiente)
     public void ActivateBlock(float reductionMultiplier)
     {
