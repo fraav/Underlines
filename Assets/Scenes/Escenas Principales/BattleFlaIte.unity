@@ -10584,21 +10584,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actions:
   - actionType: 0
-    animationName: Cap1
+    animationName: CAP1
     duration: 3
     actionPointTime: 0.5
     value: 30
     soundPointTime: 0.5
     syncSoundWithAction: 1
   - actionType: 0
-    animationName: Cap2
-    duration: 3
-    actionPointTime: 0.5
-    value: 50
-    soundPointTime: 0.5
-    syncSoundWithAction: 1
-  - actionType: 1
-    animationName: Cap3
+    animationName: CAP2
     duration: 3
     actionPointTime: 0.5
     value: 50

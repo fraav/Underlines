@@ -296,7 +296,7 @@ public class EnemyController : MonoBehaviour
             GameManager.Instance.OnEnemyDefeated();
         }
 
-        Destroy(gameObject, 2f);
+       // Destroy(gameObject, 2f);
     }
 
     private void HandleReward(int amount)
