@@ -68732,7 +68732,7 @@ MonoBehaviour:
   healMultiplier: 1
   allCards:
   - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
-  - {fileID: 11400000, guid: 3cfe09d9613065f4db798a7a8377e227, type: 2}
+  - {fileID: 11400000, guid: d46e7dbfb9de0e34484fe79bb2dea0e1, type: 2}
   - {fileID: 11400000, guid: 16a8bd9a9cc9f99478d67762ab05ab90, type: 2}
   - {fileID: 11400000, guid: c8b60b1ca6469e04bbe575ad9db6af3d, type: 2}
   enemyController: {fileID: 520477873}
@@ -79474,7 +79474,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!320 &1073532916
 PlayableDirector:
   m_ObjectHideFlags: 0
