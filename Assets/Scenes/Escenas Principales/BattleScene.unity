@@ -65173,11 +65173,6 @@ MonoBehaviour:
   cardPrefab: {fileID: 3060040327483675434}
   handContainer: {fileID: 258743362}
   cardSpacing: 220
-  horizontalOffset: 200
-  verticalOffset: 150
-  maxArcHeight: 50
-  fanAngle: 15
-  moveDuration: 0.3
   startXPosition: -180
   startYPosition: -200
 --- !u!4 &867720230
@@ -79479,7 +79474,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!320 &1073532916
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -79529,6 +79524,14 @@ PlayableDirector:
     value: {fileID: 1108483661}
   - key: {fileID: -2777138961619608586, guid: 53e4333cd19402f42a7a1248016de4b0, type: 2}
     value: {fileID: 151651653}
+  - key: {fileID: -4069218119639636207, guid: 53e4333cd19402f42a7a1248016de4b0, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 6889473802687921780, guid: 53e4333cd19402f42a7a1248016de4b0, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 1826780900083009669, guid: 53e4333cd19402f42a7a1248016de4b0, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -5593373736248134320, guid: 53e4333cd19402f42a7a1248016de4b0, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References: []
 --- !u!4 &1073532917

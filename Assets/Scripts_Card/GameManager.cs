@@ -140,6 +140,43 @@ public class GameManager : MonoBehaviour
     void InitializeGame()
     {
         LoadCardUpgrades();
+        LoadPurchasedCards();
+    }
+
+    /// <summary>
+    /// Carga las cartas compradas que deben estar en el deck permanente
+    /// </summary>
+    private void LoadPurchasedCards()
+    {
+        // Las cartas compradas ya están en allCards, pero podemos verificar si hay cartas guardadas
+        // que necesiten ser añadidas al deck
+        Debug.Log("[GameManager] Cartas en el deck permanente: " + allCards.Count);
+    }
+
+    /// <summary>
+    /// Añade una carta al deck permanente del jugador
+    /// </summary>
+    public void AddCardToPermanentDeck(CardData card)
+    {
+        if (card == null)
+        {
+            Debug.LogWarning("[GameManager] Intento de añadir carta nula al deck");
+            return;
+        }
+
+        if (!allCards.Contains(card))
+        {
+            allCards.Add(card);
+            Debug.Log($"[GameManager] ✓ Carta {card.cardName} añadida al deck permanente");
+            
+            // Guardar el estado
+            PlayerPrefs.SetInt($"CardInDeck_{card.cardName}", 1);
+            PlayerPrefs.Save();
+        }
+        else
+        {
+            Debug.LogWarning($"[GameManager] La carta {card.cardName} ya está en el deck permanente");
+        }
     }
 
     private void FindSceneReferences()
@@ -281,15 +318,21 @@ public class GameManager : MonoBehaviour
         availableDeck.AddRange(allCards);
         ShuffleDeck();
 
-        currentTurn = TurnState.PlayerTurn;
+        // CRÍTICO: Desbloquear interacciones antes de establecer el turno
+        SetInteractionBlocked(false);
+        waitingForDialogue = false;
 
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.SetInteractable(true);
-        }
+        // CRÍTICO: Establecer el turno ANTES de robar cartas
+        currentTurn = TurnState.PlayerTurn;
 
         // Robar 4 cartas al inicio del primer turno
         DrawCardsForNewTurn();
+
+        // CRÍTICO: Forzar actualización del estado después de robar cartas
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.UpdateInteractableState();
+        }
     }
 
     // ►►► MÉTODO PARA ESPERAR DIÁLOGO ◄◄◄
@@ -509,42 +552,67 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Deshace las cartas potenciadoras jugadas este turno, devolviéndolas a la mano
+    /// Deshace todas las cartas potenciadoras jugadas este turno, devolviéndolas a la mano
     /// </summary>
     public void UndoPlayedBoosterCards()
     {
-        Debug.Log($"[GameManager] Deshaciendo {playedCardsThisTurn.Count} cartas jugadas...");
+        if (currentTurn != TurnState.PlayerTurn)
+        {
+            Debug.LogWarning("[GameManager] No se puede deshacer: no es el turno del jugador");
+            return;
+        }
 
-        // Devolver solo las cartas potenciadoras a la mano
+        Debug.Log($"[GameManager] ===== DESHACIENDO TODAS LAS ACCIONES DE POTENCIACIÓN DEL TURNO =====");
+        Debug.Log($"[GameManager] Cartas jugadas este turno: {playedCardsThisTurn.Count}");
+
+        // Devolver TODAS las cartas potenciadoras jugadas este turno a la mano
         List<CardData> cardsToReturn = new List<CardData>();
         
         foreach (CardData card in playedCardsThisTurn)
         {
             if (card != null && card.cardType == CardData.CardType.Booster)
             {
+                // Verificar que la carta no esté ya en la mano
                 if (!currentHand.Contains(card))
                 {
                     currentHand.Add(card);
                     cardsToReturn.Add(card);
+                    Debug.Log($"[GameManager] ✓ Carta devuelta a la mano: {card.cardName} ({card.boosterEffectType})");
+                }
+                else
+                {
+                    Debug.LogWarning($"[GameManager] La carta {card.cardName} ya está en la mano, omitiendo");
                 }
             }
         }
 
-        // Limpiar la lista de cartas jugadas
+        // Limpiar la lista de cartas jugadas este turno
+        int cardsCleared = playedCardsThisTurn.Count;
         playedCardsThisTurn.Clear();
+        Debug.Log($"[GameManager] Lista de cartas jugadas limpiada ({cardsCleared} cartas)");
 
-        // Limpiar efectos acumulados
+        // Limpiar TODOS los efectos acumulados del turno
         if (PlayerTurnEffects.Instance != null)
         {
+            int effectsCleared = PlayerTurnEffects.Instance.GetActiveEffects().Count;
             PlayerTurnEffects.Instance.ClearEffects();
+            Debug.Log($"[GameManager] Efectos acumulados limpiados ({effectsCleared} efectos)");
         }
 
+        // Actualizar la mano visualmente
         if (HandManager.Instance != null)
         {
             HandManager.Instance.RefreshHand();
+            Debug.Log("[GameManager] Mano actualizada visualmente");
         }
 
-        Debug.Log($"[GameManager] {cardsToReturn.Count} cartas devueltas a la mano");
+        // Actualizar el display de efectos
+        if (EffectsDisplayUI.Instance != null)
+        {
+            EffectsDisplayUI.Instance.RefreshDisplay();
+        }
+
+        Debug.Log($"[GameManager] ===== DESHACER COMPLETADO: {cardsToReturn.Count} cartas devueltas a la mano =====");
     }
 
     private void ExecuteCardAction(CardData card)
@@ -684,7 +752,10 @@ public class GameManager : MonoBehaviour
     // ►►► MÉTODO MODIFICADO PARA ESPERAR DIÁLOGOS ◄◄◄
     public IEnumerator EndPlayerTurn()
     {
-        Debug.Log("[GameManager] EndPlayerTurn iniciado...");
+        Debug.Log("[GameManager] ===== FINALIZANDO TURNO DEL JUGADOR =====");
+
+        // CRÍTICO: Bloquear interacciones al finalizar el turno
+        SetInteractionBlocked(true);
 
         // Limpiar efectos del turno (se consumen al ejecutar acciones)
         if (PlayerTurnEffects.Instance != null)
@@ -698,11 +769,13 @@ public class GameManager : MonoBehaviour
         // Limpiar cartas jugadas del turno
         playedCardsThisTurn.Clear();
 
+        // CRÍTICO: Cambiar el turno ANTES de desactivar interacciones
         currentTurn = TurnState.EnemyTurn;
         
         if (HandManager.Instance != null)
         {
             HandManager.Instance.SetInteractable(false);
+            Debug.Log("[GameManager] HandManager.SetInteractable(false) llamado");
         }
 
         // Actualizar visibilidad de botones de acción
@@ -718,7 +791,7 @@ public class GameManager : MonoBehaviour
             enemyController.StartEnemyTurn();
         }
 
-        Debug.Log("[GameManager] Turno del jugador finalizado, iniciando turno del enemigo");
+        Debug.Log("[GameManager] ===== TURNO DEL JUGADOR FINALIZADO =====");
     }
 
     private IEnumerator EndPlayerTurnAfterDialogue()
@@ -739,7 +812,11 @@ public class GameManager : MonoBehaviour
 
     public void StartPlayerTurn()
     {
-        Debug.Log("[GameManager] Iniciando turno del jugador...");
+        Debug.Log("[GameManager] ===== INICIANDO TURNO DEL JUGADOR =====");
+
+        // CRÍTICO: Desbloquear interacciones PRIMERO antes de cualquier otra operación
+        SetInteractionBlocked(false);
+        waitingForDialogue = false;
 
         if (enemyController != null)
         {
@@ -763,14 +840,19 @@ public class GameManager : MonoBehaviour
         // Descartar todas las cartas de la mano del turno anterior
         DiscardAllHandCards();
 
-        // Robar 4 cartas nuevas para este turno
-        DrawCardsForNewTurn();
-
+        // CRÍTICO: Establecer el turno ANTES de robar cartas
+        // Esto asegura que RefreshHand() vea el turno correcto
         currentTurn = TurnState.PlayerTurn;
+
+        // Robar 4 cartas nuevas para este turno (RefreshHand se llama dentro de DrawCardsForNewTurn)
+        DrawCardsForNewTurn();
         
+        // CRÍTICO: Forzar actualización del estado de interacción después de robar cartas
+        // RefreshHand ya llama a UpdateInteractableState, pero lo forzamos aquí también para asegurar
         if (HandManager.Instance != null)
         {
-            HandManager.Instance.SetInteractable(true);
+            HandManager.Instance.UpdateInteractableState();
+            Debug.Log("[GameManager] HandManager.UpdateInteractableState() llamado después de robar cartas");
         }
 
         // Actualizar visibilidad de botones de acción
@@ -779,7 +861,11 @@ public class GameManager : MonoBehaviour
             ActionButtonsController.Instance.UpdateButtonsVisibility();
         }
 
-        Debug.Log($"[GameManager] Turno del jugador iniciado. Cartas en mano: {currentHand.Count}");
+        // Verificación final del estado
+        Debug.Log($"[GameManager] ===== TURNO DEL JUGADOR INICIADO =====");
+        Debug.Log($"[GameManager] Cartas en mano: {currentHand.Count}");
+        Debug.Log($"[GameManager] Interacciones bloqueadas: {AreInteractionsBlocked()}");
+        Debug.Log($"[GameManager] Estado del turno: {currentTurn}");
     }
 
     /// <summary>
@@ -787,29 +873,27 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void DrawCardsForNewTurn()
     {
-        Debug.Log("[GameManager] Robando 4 cartas para nuevo turno...");
+        Debug.Log("[GameManager] ===== INICIANDO ROBAR CARTAS PARA NUEVO TURNO =====");
+        Debug.Log($"[GameManager] Cartas en mazo principal: {availableDeck.Count}");
+        Debug.Log($"[GameManager] Cartas en pila de descartes: {discardPile.Count}");
 
-        // Si el mazo disponible está vacío, barajar el descarte
-        if (availableDeck.Count == 0)
-        {
-            Debug.Log("[GameManager] Mazo vacío, barajando descartes...");
-            availableDeck.AddRange(discardPile);
-            discardPile.Clear();
-            ShuffleDeck();
-        }
+        // Verificar y reciclar el mazo si es necesario ANTES de robar
+        EnsureDeckHasCards();
 
         // Robar 4 cartas
-        int drawCount = Mathf.Min(4, availableDeck.Count);
+        int targetDrawCount = 4;
+        int drawCount = Mathf.Min(targetDrawCount, availableDeck.Count);
         List<CardData> drawnCards = new List<CardData>();
 
-        for (int i = 0; i < drawCount; i++)
+        Debug.Log($"[GameManager] Intentando robar {drawCount} cartas...");
+
+        for (int i = 0; i < targetDrawCount; i++)
         {
+            // Verificar si necesitamos reciclar el mazo antes de cada robo
             if (availableDeck.Count == 0)
             {
-                // Si se acaban las cartas, barajar descartes
-                availableDeck.AddRange(discardPile);
-                discardPile.Clear();
-                ShuffleDeck();
+                Debug.Log("[GameManager] Mazo agotado durante el robo, reciclando descartes...");
+                RecycleDiscardPile();
             }
 
             if (availableDeck.Count > 0)
@@ -818,7 +902,12 @@ public class GameManager : MonoBehaviour
                 availableDeck.RemoveAt(0);
                 drawnCards.Add(card);
                 currentHand.Add(card);
-                Debug.Log($"[GameManager] Robada carta: {card.cardName}");
+                Debug.Log($"[GameManager] ✓ Carta robada ({i + 1}/{targetDrawCount}): {card.cardName}");
+            }
+            else
+            {
+                Debug.LogWarning($"[GameManager] No hay más cartas disponibles para robar. Robadas: {drawnCards.Count}/{targetDrawCount}");
+                break;
             }
         }
 
@@ -827,7 +916,51 @@ public class GameManager : MonoBehaviour
             HandManager.Instance.RefreshHand();
         }
 
-        Debug.Log($"[GameManager] Robo completado. Cartas en mano: {currentHand.Count}");
+        Debug.Log($"[GameManager] ===== ROBAR COMPLETADO =====");
+        Debug.Log($"[GameManager] Cartas robadas: {drawnCards.Count}");
+        Debug.Log($"[GameManager] Cartas en mano: {currentHand.Count}");
+        Debug.Log($"[GameManager] Cartas restantes en mazo: {availableDeck.Count}");
+        Debug.Log($"[GameManager] Cartas en pila de descartes: {discardPile.Count}");
+    }
+
+    /// <summary>
+    /// Asegura que el mazo tenga cartas disponibles, reciclando el descarte si es necesario
+    /// </summary>
+    private void EnsureDeckHasCards()
+    {
+        if (availableDeck.Count == 0 && discardPile.Count > 0)
+        {
+            Debug.Log("[GameManager] Mazo principal vacío, reciclando pila de descartes...");
+            RecycleDiscardPile();
+        }
+        else if (availableDeck.Count == 0 && discardPile.Count == 0)
+        {
+            Debug.LogWarning("[GameManager] ¡ADVERTENCIA: No hay cartas disponibles en el mazo ni en los descartes!");
+        }
+    }
+
+    /// <summary>
+    /// Recicla la pila de descartes al mazo principal y la baraja
+    /// </summary>
+    private void RecycleDiscardPile()
+    {
+        if (discardPile.Count == 0)
+        {
+            Debug.LogWarning("[GameManager] No hay cartas en la pila de descartes para reciclar");
+            return;
+        }
+
+        int cardsToRecycle = discardPile.Count;
+        Debug.Log($"[GameManager] Reciclando {cardsToRecycle} cartas de la pila de descartes al mazo principal...");
+
+        // Mover todas las cartas del descarte al mazo
+        availableDeck.AddRange(discardPile);
+        discardPile.Clear();
+
+        // Barajar el mazo reciclado
+        ShuffleDeck();
+
+        Debug.Log($"[GameManager] ✓ Reciclado completado: {availableDeck.Count} cartas ahora en el mazo principal");
     }
 
     /// <summary>
@@ -1013,12 +1146,19 @@ public class GameManager : MonoBehaviour
     public void SetInteractionBlocked(bool blocked)
     {
         interactionsBlocked = blocked;
-        Debug.Log($"Interacciones bloqueadas: {blocked}");
+        Debug.Log($"[GameManager] SetInteractionBlocked({blocked}) - interactionsBlocked: {interactionsBlocked}, waitingForDialogue: {waitingForDialogue}");
+        
+        // CRÍTICO: Actualizar el estado de las cartas cuando cambia el bloqueo
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.UpdateInteractableState();
+        }
     }
 
     public bool AreInteractionsBlocked()
     {
-        return interactionsBlocked || waitingForDialogue;
+        bool blocked = interactionsBlocked || waitingForDialogue;
+        return blocked;
     }
 
     // ►►► MÉTODO PÚBLICO PARA FORZAR ESPERA DE DIÁLOGO ◄◄◄

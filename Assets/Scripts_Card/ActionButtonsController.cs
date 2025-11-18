@@ -40,6 +40,70 @@ public class ActionButtonsController : MonoBehaviour
     {
         SetupButtons();
         UpdateButtonsVisibility();
+        LoadUpgrades();
+    }
+
+    /// <summary>
+    /// Carga las mejoras guardadas de los botones de acción
+    /// </summary>
+    private void LoadUpgrades()
+    {
+        baseAttackValue += (int)PlayerPrefs.GetFloat("ActionButton_Attack_Upgrade", 0f);
+        baseBlockValue += (int)PlayerPrefs.GetFloat("ActionButton_Block_Upgrade", 0f);
+        baseHealValue += (int)PlayerPrefs.GetFloat("ActionButton_Heal_Upgrade", 0f);
+
+        Debug.Log($"[ActionButtonsController] Mejoras cargadas - Ataque: {baseAttackValue}, Bloqueo: {baseBlockValue}, Curación: {baseHealValue}");
+    }
+
+    /// <summary>
+    /// Mejora el valor base de ataque
+    /// </summary>
+    public void UpgradeBaseAttackValue(float amount)
+    {
+        baseAttackValue += (int)amount;
+        Debug.Log($"[ActionButtonsController] Valor base de ataque mejorado: {baseAttackValue}");
+    }
+
+    /// <summary>
+    /// Mejora el valor base de bloqueo
+    /// </summary>
+    public void UpgradeBaseBlockValue(float amount)
+    {
+        baseBlockValue += (int)amount;
+        Debug.Log($"[ActionButtonsController] Valor base de bloqueo mejorado: {baseBlockValue}");
+    }
+
+    /// <summary>
+    /// Mejora el valor base de curación
+    /// </summary>
+    public void UpgradeBaseHealValue(float amount)
+    {
+        baseHealValue += (int)amount;
+        Debug.Log($"[ActionButtonsController] Valor base de curación mejorado: {baseHealValue}");
+    }
+
+    /// <summary>
+    /// Obtiene el valor base de ataque
+    /// </summary>
+    public float GetBaseAttackValue()
+    {
+        return baseAttackValue;
+    }
+
+    /// <summary>
+    /// Obtiene el valor base de bloqueo
+    /// </summary>
+    public float GetBaseBlockValue()
+    {
+        return baseBlockValue;
+    }
+
+    /// <summary>
+    /// Obtiene el valor base de curación
+    /// </summary>
+    public float GetBaseHealValue()
+    {
+        return baseHealValue;
     }
 
     private void SetupButtons()
@@ -195,33 +259,23 @@ public class ActionButtonsController : MonoBehaviour
         Debug.Log("[ActionButtonsController] Iniciando ejecución de bloqueo...");
 
         // Obtener efectos acumulados
-        int doubleActionCount = 0;
+        // IMPORTANTE: El bloqueo NO se duplica con DoubleAction, solo se potencia con IncreaseBlock
         float blockMultiplier = 1.0f;
 
         if (PlayerTurnEffects.Instance != null)
         {
-            doubleActionCount = PlayerTurnEffects.Instance.GetDoubleActionCount();
             blockMultiplier = PlayerTurnEffects.Instance.GetBlockMultiplier();
+            Debug.Log($"[ActionButtonsController] Efectos de bloqueo: Multiplicador={blockMultiplier:F2}x (DoubleAction NO afecta bloqueo)");
         }
 
         float finalBlockValue = baseBlockValue * blockMultiplier;
         float reductionMultiplier = 1f - (finalBlockValue / 100f);
 
         Debug.Log($"[ActionButtonsController] Bloqueo calculado: {finalBlockValue}% (Reducción: {reductionMultiplier})");
+        Debug.Log($"[ActionButtonsController] NOTA: El bloqueo se ejecuta UNA SOLA VEZ (no se duplica con DoubleAction)");
 
-        int blockCount = 1 + doubleActionCount;
-        
-        for (int i = 0; i < blockCount; i++)
-        {
-            Debug.Log($"[ActionButtonsController] Ejecutando bloqueo {i + 1} de {blockCount}");
-            
-            yield return StartCoroutine(PerformBlockAnimation(reductionMultiplier));
-            
-            if (i < blockCount - 1)
-            {
-                yield return new WaitForSeconds(0.3f);
-            }
-        }
+        // El bloqueo siempre se ejecuta una sola vez, independientemente de DoubleAction
+        yield return StartCoroutine(PerformBlockAnimation(reductionMultiplier));
 
         yield return StartCoroutine(EndPlayerTurnAfterActions());
     }
@@ -453,6 +507,12 @@ public class ActionButtonsController : MonoBehaviour
         }
 
         Debug.Log("[ActionButtonsController] Finalizando turno del jugador...");
+
+        // CRÍTICO: Asegurar que las interacciones estén bloqueadas antes de finalizar
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetInteractionBlocked(true);
+        }
 
         // Consumir todos los efectos acumulados
         if (PlayerTurnEffects.Instance != null)

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI; // Para usar Outline e Image
@@ -128,11 +129,25 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         transform.rotation = nuevaRotacion;
         
 
-        // Posición
-        if (!arrastrando)
+        // Posición - CRÍTICO: NO tocar la posición durante el arrastre
+        // Solo ajustar la posición cuando la carta NO está siendo arrastrada y está lejos de su posición inicial
+        if (!arrastrando && rect != null)
         {
-            rect.anchoredPosition = Vector3.Lerp(rect.anchoredPosition, posicionInicial, Time.deltaTime * velocidadAnimacion);
+            // Asegurar que la posición inicial esté sincronizada solo si es necesario
+            if (posicionInicial == Vector2.zero && rect.anchoredPosition != Vector2.zero)
+            {
+                posicionInicial = rect.anchoredPosition;
+            }
+            
+            // Solo hacer Lerp si la carta está significativamente lejos de su posición inicial
+            // Esto evita que se fuerce constantemente la posición y permite el arrastre
+            float distanceToInitial = Vector2.Distance(rect.anchoredPosition, posicionInicial);
+            if (distanceToInitial > 5f) // Solo si está a más de 5 pixels de distancia (aumentado para evitar interferencias)
+            {
+                rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, posicionInicial, Time.deltaTime * velocidadAnimacion);
+            }
         }
+        // Durante el arrastre, NO tocar rect.anchoredPosition aquí - OnDrag lo maneja completamente
         else
         {
             // Durante el arrastre, amortiguar el balanceo hacia cero
@@ -162,38 +177,85 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         seleccionada = !seleccionada;
         if (outline != null)
             outline.enabled = seleccionada; // Mostrar u ocultar el outline
-        Debug.Log("Carta seleccionada: " + name);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        
-        // Verificar si las interacciones están bloqueadas
+        // CRÍTICO: Verificar si las interacciones están bloqueadas PRIMERO
         if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked())
+        {
+            Debug.LogWarning($"[Card] OnBeginDrag bloqueado - AreInteractionsBlocked: true");
             return;
+        }
 
         // Get CardData from CardDisplay
         CardDisplay cardDisplay = GetComponent<CardDisplay>();
-        if (cardDisplay == null || GameManager.Instance == null || 
-            GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
+        if (cardDisplay == null)
+        {
+            Debug.LogWarning("[Card] OnBeginDrag - CardDisplay es null");
             return;
+        }
 
-        Debug.Log("OnBeginDrag called on Card");
-        
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[Card] OnBeginDrag - GameManager.Instance es null");
+            return;
+        }
+
+        if (GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
+        {
+            Debug.LogWarning($"[Card] OnBeginDrag - No es turno del jugador. Turno actual: {GameManager.Instance.currentTurn}");
+            return;
+        }
+
+        // Asegurar que tenemos las referencias necesarias
+        if (rect == null)
+        {
+            rect = GetComponent<RectTransform>();
+        }
+
+        if (canvas == null)
+        {
+            canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                canvasRect = canvas.GetComponent<RectTransform>();
+            }
+        }
+
+        if (rect == null || canvasRect == null)
+        {
+            Debug.LogError("[Card] No se pueden obtener referencias necesarias para el arrastre");
+            return;
+        }
+
+        // IMPORTANTE: Sincronizar la posición inicial con la posición actual antes de comenzar el arrastre
+        // Esto asegura que después de refrescar la mano, la posición inicial esté correcta
+        if (posicionInicial == Vector2.zero || Vector2.Distance(posicionInicial, rect.anchoredPosition) > 0.1f)
+        {
+            posicionInicial = rect.anchoredPosition;
+        }
+
+        // CRÍTICO: Establecer arrastrando = true ANTES de cualquier otra operación
+        // Esto previene que Update() interfiera con la posición
         arrastrando = true;
         seleccionada = true;
         if (outline != null)
             outline.enabled = true;
 
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out Vector2 posicionInicialAlterna);
+        // Obtener la posición del mouse en coordenadas del canvas
+        Vector2 posicionMouse;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouse))
+        {
+            Debug.LogWarning("[Card] No se pudo convertir la posición del mouse a coordenadas del canvas");
+            arrastrando = false; // Resetear el estado si falla
+            return;
+        }
     
-        // Calcular el offset del mouse con respecto al centro del objeto
-        offsetDrag = posicionInicialAlterna - rect.anchoredPosition;
-        posicionMouseAnterior = posicionInicialAlterna;
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouseAnterior);
-        
-        
+        // Calcular el offset del mouse con respecto al centro de la carta
+        // Usar la posición actual del rect, no la posición inicial guardada
+        offsetDrag = posicionMouse - rect.anchoredPosition;
+        posicionMouseAnterior = posicionMouse;
         
         tiempoIdle = 0f;
         tiempoSinMovimiento = 0f;
@@ -205,13 +267,24 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
 public void OnDrag(PointerEventData eventData)
 {
-    if (canvas == null) return;
+    // CRÍTICO: Verificar que estamos arrastrando antes de continuar
+    if (!arrastrando) return;
+    
+    if (canvas == null || rect == null || canvasRect == null)
+    {
+        return;
+    }
 
     Vector2 posicionCanvas;
-    RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionCanvas);
+    if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionCanvas))
+    {
+        return;
+    }
 
-    // Aplicar la posición manteniendo el offset inicial
-    rect.anchoredPosition = posicionCanvas - offsetDrag;
+    // CRÍTICO: Aplicar la posición DIRECTAMENTE sin ninguna interferencia
+    // Esta es la ÚNICA función que debe modificar rect.anchoredPosition durante el arrastre
+    Vector2 nuevaPosicion = posicionCanvas - offsetDrag;
+    rect.anchoredPosition = nuevaPosicion;
 
     Vector2 delta = posicionCanvas - posicionMouseAnterior;
     posicionMouseAnterior = posicionCanvas;
@@ -224,18 +297,18 @@ public void OnDrag(PointerEventData eventData)
     if (Mathf.Abs(delta.x) > 0.01f)
     {
         movimientoReciente = true;
-        tiempoSinMovimiento = 0f; // Resetear el tiempo sin movimiento
+        tiempoSinMovimiento = 0f;
     }
     
-    // Check for valid target using 3D detection
+    // Check for valid target using 3D detection (sin logs)
     CheckValidTarget3D(eventData.position);
 }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("OnEndDrag called on Card");
+        // CRÍTICO: NO cambiar arrastrando = false hasta después de verificar el target
+        // Esto previene que Update() interfiera antes de que se complete la acción
         
-        arrastrando = false;
         seleccionada = false;
         if (outline != null)
             outline.enabled = false;
@@ -264,13 +337,27 @@ public void OnDrag(PointerEventData eventData)
             
             if (isValidTarget)
             {
-                Debug.Log($"Card dropped on valid target: {target.name}");
+                // Solo cambiar arrastrando después de confirmar que hay un target válido
+                arrastrando = false;
                 GameManager.Instance.SelectTarget(target);
                 return;
             }
         }
         
-        Debug.Log("Card dropped on invalid target, returning to hand");
+        // Si no hay target válido, asegurar que la posición inicial esté actualizada
+        if (rect != null && posicionInicial != Vector2.zero)
+        {
+            // La carta regresará a su posición inicial en el Update
+        }
+        else if (rect != null)
+        {
+            // Si no hay posición inicial guardada, usar la posición actual
+            posicionInicial = rect.anchoredPosition;
+        }
+        
+        // CRÍTICO: Cambiar arrastrando = false al final, después de todas las operaciones
+        arrastrando = false;
+        
         GameManager.Instance.CancelSelection();
     }
 
@@ -320,21 +407,16 @@ public void OnDrag(PointerEventData eventData)
         Ray ray = camera.ScreenPointToRay(screenPosition);
         RaycastHit hit;
         
-        Debug.Log($"Raycasting from screen position: {screenPosition}");
-        
         if (Physics.Raycast(ray, out hit))
         {
             GameObject hitObject = hit.collider.gameObject;
-            Debug.Log($"Hit object: {hitObject.name}, Tag: {hitObject.tag}");
             
             if (hitObject.CompareTag("Player") || hitObject.CompareTag("Enemy"))
             {
-                Debug.Log($"Found valid target: {hitObject.name}");
                 return hitObject;
             }
         }
         
-        Debug.Log("No valid target found");
         return null;
     }
 
@@ -353,8 +435,30 @@ public void OnDrag(PointerEventData eventData)
 
     public void UpdateOriginalPosition(Vector3 newPosition)
     {
-        print("CALLED UPDATE ORIGINAL POSITION");
+        // Convertir Vector3 a Vector2 para mantener consistencia
+        Vector2 newPos2D = new Vector2(newPosition.x, newPosition.y);
+        UpdateOriginalPosition(newPos2D);
+    }
+
+    /// <summary>
+    /// Actualiza la posición original de la carta (sobrecarga para Vector2)
+    /// </summary>
+    public void UpdateOriginalPosition(Vector2 newPosition)
+    {
+        // CRÍTICO: NO actualizar la posición original si la carta está siendo arrastrada
+        // Esto previene que se sobrescriba la posición durante el arrastre
+        if (arrastrando) return;
+        
+        if (rect == null)
+        {
+            rect = GetComponent<RectTransform>();
+        }
+
+        // Actualizar la posición inicial
         posicionInicial = newPosition;
+        
+        // IMPORTANTE: NO forzar la posición del RectTransform aquí
+        // Solo actualizar la posición inicial guardada
     }
 
     public bool IsBeingDragged()

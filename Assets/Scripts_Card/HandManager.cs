@@ -11,11 +11,6 @@ public class HandManager : MonoBehaviour
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private Transform handContainer;
     [SerializeField] private float cardSpacing = 120f;
-    [SerializeField] private float horizontalOffset = 200f; // Offset from right edge
-    [SerializeField] private float verticalOffset = 150f; // Offset from bottom edge
-    [SerializeField] private float maxArcHeight = 50f;
-    [SerializeField] private float fanAngle = 15f;
-    [SerializeField] private float moveDuration = 0.3f;
     [SerializeField] private float startXPosition = 0f;
     [SerializeField] private float startYPosition = 0f;
     private List<GameObject> spawnedCards = new List<GameObject>();
@@ -56,15 +51,17 @@ public class HandManager : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.currentHand == null) return;
 
         CreateNewCards();
-        StartCoroutine(ArrangeCardsInFan(true));
+        ArrangeCards();
         
-        // Actualizar estado de interacción después de un pequeño delay para asegurar que todo esté sincronizado
+        // CRÍTICO: Actualizar estado de interacción inmediatamente y con delay para asegurar sincronización
+        UpdateInteractableState();
         StartCoroutine(DelayedUpdateInteractableState());
     }
 
     private IEnumerator DelayedUpdateInteractableState()
     {
         yield return new WaitForEndOfFrame();
+        yield return new WaitForSeconds(0.1f); // Pequeño delay adicional para asegurar sincronización
         UpdateInteractableState();
     }
 
@@ -93,61 +90,54 @@ public class HandManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ArrangeCardsInFan(bool repeat = false)
+    /// <summary>
+    /// Organiza las cartas en una línea horizontal simple sin animaciones que interfieran
+    /// </summary>
+    private void ArrangeCards()
     {
-        yield return new WaitForEndOfFrame();
-
         int cardCount = spawnedCards.Count;
-        if (cardCount == 0) yield break;
+        if (cardCount == 0) return;
 
-        // Get canvas size for positioning
-        Canvas canvas = handContainer.GetComponentInParent<Canvas>();
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        float canvasWidth = canvasRect.rect.width;
-        float canvasHeight = canvasRect.rect.height;
-
-        // Calculate positions for bottom-right corner
-        float totalWidth = cardSpacing * (cardCount - 1);
-        float startX = startXPosition; // Start from right edge
-        float baseY =  startYPosition;// Bottom edge
+        // Calcular posiciones simples en línea horizontal
+        float startX = startXPosition;
+        float baseY = startYPosition;
 
         for (int i = 0; i < cardCount; i++)
         {
             GameObject card = spawnedCards[i];
             if (card == null) continue;
 
-            float t = cardCount > 1 ? i / (float)(cardCount - 1) : 0.5f;
-            float x = startX + i * cardSpacing;
-            float y = baseY + maxArcHeight * (1f - Mathf.Pow(2f * t - 1f, 2));
-            float rotation = Mathf.Lerp(-fanAngle, fanAngle, t);
-
-            CardDisplay display = card.GetComponent<CardDisplay>();
-            if (display != null)
+            // CRÍTICO: Verificar si la carta está siendo arrastrada antes de moverla
+            Card cardComponent = card.GetComponent<Card>();
+            if (cardComponent != null && cardComponent.IsBeingDragged())
             {
-                // Set position directly first
-                RectTransform cardRect = card.GetComponent<RectTransform>();
-                if (cardRect != null)
-                {
-                    cardRect.anchoredPosition = new Vector3(x, y, 0);
-                    cardRect.rotation = Quaternion.Euler(0, 0, rotation);
-                }
-                
-                display.MoveToFanPosition(
-                    new Vector3(x, y, 0),
-                    Quaternion.Euler(0, 0, rotation),
-                    moveDuration
-                );
+                // NO mover ni actualizar la posición de cartas que están siendo arrastradas
+                continue;
             }
-        }
-        yield return null;;
-        if(repeat)
-        {
-            ArrangeCardsInFan(false);
+
+            float x = startX + i * cardSpacing;
+            float y = baseY;
+            Vector2 targetPos = new Vector2(x, y);
+
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            if (cardRect != null)
+            {
+                // Posicionar directamente sin animaciones
+                cardRect.anchoredPosition = targetPos;
+                cardRect.rotation = Quaternion.identity;
+            }
+
+            // Actualizar la posición original en el componente Card para que el arrastre funcione correctamente
+            if (cardComponent != null)
+            {
+                cardComponent.UpdateOriginalPosition(targetPos);
+            }
         }
     }
 
     public void SetInteractable(bool interactable)
     {
+        int cardsUpdated = 0;
         foreach (GameObject cardObj in spawnedCards)
         {
             if (cardObj != null)
@@ -156,6 +146,7 @@ public class HandManager : MonoBehaviour
                 if (display != null)
                 {
                     display.SetInteractableState(interactable);
+                    cardsUpdated++;
 
                     if (!interactable && display == GameManager.Instance?.SelectedCardDisplay)
                     {
@@ -164,16 +155,28 @@ public class HandManager : MonoBehaviour
                 }
             }
         }
+        Debug.Log($"[HandManager] SetInteractable({interactable}) - {cardsUpdated} cartas actualizadas");
     }
 
-    private void UpdateInteractableState()
+    /// <summary>
+    /// Actualiza el estado de interacción de todas las cartas basado en el estado actual del juego
+    /// </summary>
+    public void UpdateInteractableState()
     {
-        bool interactable = GameManager.Instance != null &&
-                          GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn &&
-                          GameManager.Instance.isBattleScene;
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[HandManager] GameManager.Instance es null en UpdateInteractableState");
+            SetInteractable(false);
+            return;
+        }
+
+        bool interactable = GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn &&
+                          GameManager.Instance.isBattleScene &&
+                          !GameManager.Instance.AreInteractionsBlocked();
+
+        Debug.Log($"[HandManager] UpdateInteractableState - Interactable: {interactable}, Turn: {GameManager.Instance.currentTurn}, Blocked: {GameManager.Instance.AreInteractionsBlocked()}, BattleScene: {GameManager.Instance.isBattleScene}");
 
         SetInteractable(interactable);
-
     }
 
 }    

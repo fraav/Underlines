@@ -20,7 +20,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     public CardData currentCard;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
-    private Coroutine moveCoroutine;
     private bool isBeingDiscarded = false;
     
     // Card visual effects reference
@@ -51,7 +50,21 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
     {
         currentCard = card;
         UpdateCardDisplay();
-        SetInteractableState(true);
+        
+        // CRÍTICO: Establecer el estado de interacción basado en el estado actual del juego
+        // Esto asegura que las cartas se creen con el estado correcto desde el inicio
+        if (GameManager.Instance != null)
+        {
+            bool shouldBeInteractable = GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn &&
+                                      GameManager.Instance.isBattleScene &&
+                                      !GameManager.Instance.AreInteractionsBlocked();
+            SetInteractableState(shouldBeInteractable);
+        }
+        else
+        {
+            // Fallback si GameManager no está disponible
+            SetInteractableState(true);
+        }
     }
 
     public void SetSelected(bool selected)
@@ -78,6 +91,13 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         {
             canvasGroup.alpha = interactable ? 1f : 0.6f;
             canvasGroup.blocksRaycasts = interactable;
+            canvasGroup.interactable = interactable;
+            
+            Debug.Log($"[CardDisplay] SetInteractableState({interactable}) para carta {currentCard?.cardName} - blocksRaycasts: {canvasGroup.blocksRaycasts}, interactable: {canvasGroup.interactable}");
+        }
+        else
+        {
+            Debug.LogWarning($"[CardDisplay] CanvasGroup es null para carta {currentCard?.cardName}");
         }
     }
 
@@ -137,48 +157,6 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         Destroy(gameObject);
     }
-
-    public void MoveToFanPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)
-    {
-        if (moveCoroutine != null) StopCoroutine(moveCoroutine);
-        moveCoroutine = StartCoroutine(SmoothMove(targetPosition, targetRotation, duration));
-        
-        // Update Card visual effects position
-        if (cardVisualEffects != null)
-        {
-            cardVisualEffects.UpdateOriginalPosition(targetPosition);
-        }
-    }
-
-    private IEnumerator SmoothMove(Vector3 targetPosition, Quaternion targetRotation, float duration)
-    {
-        Vector3 startPosition = rectTransform.anchoredPosition;
-        Quaternion startRotation = rectTransform.rotation;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            rectTransform.anchoredPosition = Vector3.Lerp(startPosition, targetPosition, elapsed / duration);
-            
-            // Solo aplicar rotación si la carta NO está siendo arrastrada
-            if (cardVisualEffects == null || !cardVisualEffects.IsBeingDragged())
-            {
-                rectTransform.rotation = Quaternion.Lerp(startRotation, targetRotation, elapsed / duration);
-            }
-            
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        rectTransform.anchoredPosition = targetPosition;
-        
-        // Solo aplicar rotación final si la carta NO está siendo arrastrada
-        if (cardVisualEffects == null || !cardVisualEffects.IsBeingDragged())
-        {
-            rectTransform.rotation = targetRotation;
-        }
-    }
-
 
     private void UpdateCardDisplay()
     {

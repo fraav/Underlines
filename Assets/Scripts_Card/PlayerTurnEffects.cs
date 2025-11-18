@@ -59,13 +59,44 @@ public class PlayerTurnEffects : MonoBehaviour
     /// </summary>
     public void AddEffect(CardData card)
     {
+        if (card == null)
+        {
+            Debug.LogWarning("[PlayerTurnEffects] Intento de añadir efecto con carta nula");
+            return;
+        }
+
         if (card.cardType == CardData.CardType.Booster)
         {
             ActiveEffect effect = new ActiveEffect(card);
             activeEffects.Add(effect);
-            Debug.Log($"[PlayerTurnEffects] Efecto añadido: {card.cardName} - {effect.GetEffectDescription()}");
+            
+            Debug.Log($"[PlayerTurnEffects] ✓ Efecto añadido: {card.cardName} - {effect.GetEffectDescription()}");
             Debug.Log($"[PlayerTurnEffects] Total de efectos activos: {activeEffects.Count}");
+            
+            // Mostrar resumen de efectos acumulados
+            LogEffectsSummary();
         }
+        else
+        {
+            Debug.LogWarning($"[PlayerTurnEffects] Intento de añadir efecto de carta no potenciadora: {card.cardType}");
+        }
+    }
+
+    /// <summary>
+    /// Muestra un resumen de todos los efectos acumulados en la consola
+    /// </summary>
+    private void LogEffectsSummary()
+    {
+        int doubleActionCount = GetDoubleActionCount();
+        float damageMult = GetDamageMultiplier();
+        float blockMult = GetBlockMultiplier();
+        float healMult = GetHealMultiplier();
+        
+        Debug.Log($"[PlayerTurnEffects] Resumen de efectos acumulados:");
+        Debug.Log($"  - Duplicaciones de acción: {doubleActionCount}");
+        Debug.Log($"  - Multiplicador de daño: {damageMult:F2}x");
+        Debug.Log($"  - Multiplicador de bloqueo: {blockMult:F2}x");
+        Debug.Log($"  - Multiplicador de curación: {healMult:F2}x");
     }
 
     /// <summary>
@@ -98,6 +129,12 @@ public class PlayerTurnEffects : MonoBehaviour
                 count++;
             }
         }
+        
+        if (count > 0)
+        {
+            Debug.Log($"[PlayerTurnEffects] Efectos de duplicación activos: {count} (la acción se ejecutará {count + 1} vez/veces)");
+        }
+        
         return count;
     }
 
@@ -107,13 +144,22 @@ public class PlayerTurnEffects : MonoBehaviour
     public float GetDamageMultiplier()
     {
         float multiplier = 1.0f;
+        int effectCount = 0;
+        
         foreach (var effect in activeEffects)
         {
             if (effect.effectType == CardData.BoosterEffectType.IncreaseDamage)
             {
                 multiplier += effect.value;
+                effectCount++;
             }
         }
+        
+        if (effectCount > 0)
+        {
+            Debug.Log($"[PlayerTurnEffects] Multiplicador de daño calculado: {multiplier:F2}x (base: 1.0 + {effectCount} efecto(s))");
+        }
+        
         return multiplier;
     }
 
@@ -123,13 +169,22 @@ public class PlayerTurnEffects : MonoBehaviour
     public float GetBlockMultiplier()
     {
         float multiplier = 1.0f;
+        int effectCount = 0;
+        
         foreach (var effect in activeEffects)
         {
             if (effect.effectType == CardData.BoosterEffectType.IncreaseBlock)
             {
                 multiplier += effect.value;
+                effectCount++;
             }
         }
+        
+        if (effectCount > 0)
+        {
+            Debug.Log($"[PlayerTurnEffects] Multiplicador de bloqueo calculado: {multiplier:F2}x (base: 1.0 + {effectCount} efecto(s))");
+        }
+        
         return multiplier;
     }
 
@@ -139,13 +194,22 @@ public class PlayerTurnEffects : MonoBehaviour
     public float GetHealMultiplier()
     {
         float multiplier = 1.0f;
+        int effectCount = 0;
+        
         foreach (var effect in activeEffects)
         {
             if (effect.effectType == CardData.BoosterEffectType.IncreaseHeal)
             {
                 multiplier += effect.value;
+                effectCount++;
             }
         }
+        
+        if (effectCount > 0)
+        {
+            Debug.Log($"[PlayerTurnEffects] Multiplicador de curación calculado: {multiplier:F2}x (base: 1.0 + {effectCount} efecto(s))");
+        }
+        
         return multiplier;
     }
 
@@ -191,4 +255,7 @@ public class PlayerTurnEffects : MonoBehaviour
         return sb.ToString();
     }
 }
+
+
+
 

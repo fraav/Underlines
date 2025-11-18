@@ -230,15 +230,16 @@ public class CardInfoPanel : MonoBehaviour
     {
         Debug.Log("Desbloqueando todas las interacciones");
 
-        // Desbloquear interacciones de cartas
-        if (HandManager.Instance != null)
-            HandManager.Instance.SetInteractable(true);
-
-        // Desbloquear interacciones del GameManager
+        // Desbloquear interacciones del GameManager PRIMERO
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SetInteractionBlocked(false);
         }
+
+        // CRÍTICO: Usar UpdateInteractableState() en lugar de SetInteractable(true)
+        // Esto asegura que el estado se base en el turno actual y no en un valor hardcodeado
+        if (HandManager.Instance != null)
+            HandManager.Instance.UpdateInteractableState();
 
         // Desbloquear raycast del canvas del panel
         if (canvasGroup != null)
