@@ -19,7 +19,7 @@ public class DialogueTrigger : MonoBehaviour
     
     private void OnTriggerEnter(Collider other)
     {
-        if (triggerOnCollision && other.CompareTag("Player"))
+        if (triggerOnCollision && other != null && other.CompareTag("Player"))
         {
             TriggerDialogue();
         }
@@ -35,13 +35,21 @@ public class DialogueTrigger : MonoBehaviour
     
     public void TriggerDialogue()
     {
-        if (dialogueSystem != null)
+        if (string.IsNullOrEmpty(dialogueSequenceName))
         {
-            dialogueSystem.StartDialogue(dialogueSequenceName);
+            Debug.LogError("[DialogueTrigger] dialogueSequenceName is null or empty!");
+            return;
         }
-        else if (DialogueSystem.Instance != null)
+        
+        // Usar el DialogueSystem asignado por Inspector; si está vacío, intentar buscar uno en la escena
+        DialogueSystem targetSystem = dialogueSystem != null ? dialogueSystem : FindObjectOfType<DialogueSystem>();
+        
+        if (targetSystem == null)
         {
-            DialogueSystem.Instance.StartDialogue(dialogueSequenceName);
+            Debug.LogError($"[DialogueTrigger] No DialogueSystem found for sequence '{dialogueSequenceName}'!");
+            return;
         }
+        
+        targetSystem.StartDialogue(dialogueSequenceName);
     }
 }

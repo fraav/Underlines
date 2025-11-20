@@ -22,6 +22,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject highlightEffect;
     [SerializeField] private CardAnimation[] cardAnimations;
 
+    [Header("Objects Hidden During Card Animations")]
+    [SerializeField] private GameObject[] objectsToDisableDuringCardAnimation;
+
     [Header("Block System")]
     [SerializeField] private string blockAnimationTrigger = "Block";
     [SerializeField] private string blockIdleAnimationTrigger = "BlockIdle";
@@ -64,7 +67,7 @@ public class PlayerController : MonoBehaviour
         CardAnimation animation = GetAnimationForCard(card.cardType);
         if (animation != null)
         {
-            StartCoroutine(PerformCardAnimation(animation, onAction, onComplete));
+            StartCoroutine(PerformCardAnimation(card, animation, onAction, onComplete));
         }
         else
         {
@@ -74,23 +77,75 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private IEnumerator PerformCardAnimation(CardAnimation animation, System.Action onAction, System.Action onComplete)
+    private IEnumerator PerformCardAnimation(CardData card, CardAnimation baseAnimation, System.Action onAction, System.Action onComplete)
     {
-        if (animator != null && !string.IsNullOrEmpty(animation.animationTrigger))
+        // Determinar trigger y tiempos usando primero los valores personalizados de la carta (si existen)
+        string triggerToUse = baseAnimation.animationTrigger;
+        if (card != null && !string.IsNullOrEmpty(card.customAnimationTrigger))
         {
-            animator.SetTrigger(animation.animationTrigger);
+            triggerToUse = card.customAnimationTrigger;
+        }
+
+        float actionPointTime = baseAnimation.actionPointTime;
+        if (card != null && card.customActionPointTime > 0f)
+        {
+            actionPointTime = card.customActionPointTime;
+        }
+
+        float animationDuration = baseAnimation.animationDuration;
+        if (card != null && card.customAnimationDuration > 0f)
+        {
+            animationDuration = card.customAnimationDuration;
+        }
+
+        // Desactivar objetos configurados mientras dura la animación
+        if (objectsToDisableDuringCardAnimation != null)
+        {
+            for (int i = 0; i < objectsToDisableDuringCardAnimation.Length; i++)
+            {
+                GameObject obj = objectsToDisableDuringCardAnimation[i];
+                if (obj != null)
+                {
+                    obj.SetActive(false);
+                }
+            }
+        }
+
+        // Lanzar la animación del jugador
+        if (animator != null && !string.IsNullOrEmpty(triggerToUse))
+        {
+            animator.SetTrigger(triggerToUse);
+        }
+
+        // Reproducir sonido específico de la carta si existe
+        if (card != null && card.cardSound != null && GameManager.Instance != null && GameManager.Instance.audioSource != null)
+        {
+            GameManager.Instance.audioSource.PlayOneShot(card.cardSound);
         }
 
         // Esperar hasta el punto de acción de la animación
-        yield return new WaitForSeconds(animation.actionPointTime);
+        yield return new WaitForSeconds(actionPointTime);
         
         onAction?.Invoke();
 
         // Esperar el resto de la animación
-        float remainingTime = animation.animationDuration - animation.actionPointTime;
+        float remainingTime = animationDuration - actionPointTime;
         if (remainingTime > 0)
         {
             yield return new WaitForSeconds(remainingTime);
+        }
+
+        // Reactivar objetos tras completar la animación
+        if (objectsToDisableDuringCardAnimation != null)
+        {
+            for (int i = 0; i < objectsToDisableDuringCardAnimation.Length; i++)
+            {
+                GameObject obj = objectsToDisableDuringCardAnimation[i];
+                if (obj != null)
+                {
+                    obj.SetActive(true);
+                }
+            }
         }
 
         onComplete?.Invoke();

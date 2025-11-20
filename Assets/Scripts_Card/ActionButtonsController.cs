@@ -493,20 +493,26 @@ public class ActionButtonsController : MonoBehaviour
 
     private IEnumerator EndPlayerTurnAfterActions()
     {
+        Debug.Log("[ActionButtonsController] >>> Inicio EndPlayerTurnAfterActions");
         Debug.Log("[ActionButtonsController] Esperando a que terminen todos los efectos y animaciones...");
         
         // Esperar un momento adicional para asegurar que todas las animaciones terminen
         yield return new WaitForSeconds(0.5f);
 
         // Esperar diálogos si los hay
-        if (GameManager.Instance != null && GameManager.Instance.dialogueSystem != null && 
-            GameManager.Instance.dialogueSystem.IsDialogueActive)
+        if (GameManager.Instance != null && GameManager.Instance.dialogueSystem != null)
         {
-            Debug.Log("[ActionButtonsController] Esperando a que termine el diálogo...");
-            yield return new WaitWhile(() => GameManager.Instance.dialogueSystem.IsDialogueActive);
+            Debug.Log($"[ActionButtonsController] Estado diálogo antes de esperar - IsDialogueActive={GameManager.Instance.dialogueSystem.IsDialogueActive}");
+
+            if (GameManager.Instance.dialogueSystem.IsDialogueActive)
+            {
+                Debug.Log("[ActionButtonsController] Esperando a que termine el diálogo desde EndPlayerTurnAfterActions...");
+                yield return new WaitWhile(() => GameManager.Instance.dialogueSystem.IsDialogueActive);
+                Debug.Log("[ActionButtonsController] Diálogo terminado, continuando fin de turno");
+            }
         }
 
-        Debug.Log("[ActionButtonsController] Finalizando turno del jugador...");
+        Debug.Log("[ActionButtonsController] Finalizando turno del jugador (llamando a GameManager.EndPlayerTurn)...");
 
         // CRÍTICO: Asegurar que las interacciones estén bloqueadas antes de finalizar
         if (GameManager.Instance != null)
@@ -529,10 +535,13 @@ public class ActionButtonsController : MonoBehaviour
         // Cambiar al turno del enemigo
         if (GameManager.Instance != null)
         {
+            Debug.Log("[ActionButtonsController] Llamando a GameManager.EndPlayerTurn desde EndPlayerTurnAfterActions");
             yield return StartCoroutine(GameManager.Instance.EndPlayerTurn());
+            Debug.Log("[ActionButtonsController] GameManager.EndPlayerTurn ha terminado");
         }
 
         isProcessingAction = false;
+        Debug.Log("[ActionButtonsController] <<< Fin EndPlayerTurnAfterActions");
     }
 }
 

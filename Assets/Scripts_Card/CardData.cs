@@ -15,6 +15,19 @@ public class CardData : ScriptableObject
     // Sprite específico para la tienda
     public Sprite shopIcon;
 
+    [Header("Card Animation & Audio Settings")]
+    [Tooltip("Trigger de animación específico para esta carta (opcional). Si se deja vacío, se usará la animación por tipo de carta en PlayerController.")]
+    public string customAnimationTrigger = "";
+
+    [Tooltip("Tiempo desde el inicio de la animación hasta el punto de acción (si se deja en 0, se usa el valor por defecto de PlayerController).")]
+    public float customActionPointTime = 0f;
+
+    [Tooltip("Duración total de la animación (si se deja en 0, se usa el valor por defecto de PlayerController).")]
+    public float customAnimationDuration = 0f;
+
+    [Tooltip("Sonido específico que se reproducirá al jugar esta carta.")]
+    public AudioClip cardSound;
+
     // Campos para mejoras individuales
     public float individualBaseValueUpgrade = 0f;
     public float individualDamageMultiplier = 1.0f;

@@ -46,8 +46,15 @@ public class EnemyController : MonoBehaviour
     [Tooltip("Duración de la animación de daño")]
     [SerializeField] private float damageAnimationDuration = 0.5f;
 
+    [Header("Health Settings")]
+    [Tooltip("Vida máxima del enemigo")]
+    [SerializeField] private int maxHealth = 100;
+
     [Header("Dialogue Settings")]
     public string lowHealthDialogue = "EnemyLowHealth";
+    [Range(0.01f, 1f)]
+    [Tooltip("Porcentaje de vida (0-1) a partir del cual se dispara el diálogo de vida baja. El rango efectivo es entre 1 de vida y este porcentaje.")]
+    public float lowHealthThreshold = 0.5f;
     private bool lowHealthTriggered = false;
 
     public HealthSystem healthSystem;
@@ -84,21 +91,35 @@ public class EnemyController : MonoBehaviour
                 healthSystem = gameObject.AddComponent<HealthSystem>();
             }
         }
-        healthSystem.SetMaxHealth(100);
+        // Configurar la vida máxima desde el valor editable en el Inspector
+        healthSystem.SetMaxHealth(maxHealth);
         healthSystem.OnDeath.AddListener(OnDeath);
-        healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
+        // Escuchar el evento de daño para reaccionar cuando el enemigo reciba daño desde cualquier fuente
+        healthSystem.OnTakeDamage.AddListener(OnHealthSystemDamaged);
     }
 
-    private void OnTakeDamage(int damage)
+    // Callback del HealthSystem cuando el enemigo recibe daño
+    private void OnHealthSystemDamaged(int damage)
     {
         if (isDead) return;
-        CheckLowHealth();
+        // Reproducir animación de daño + comprobar vida baja al final de la animación
+        StartCoroutine(PlayDamageAnimationWithSound());
     }
 
     private void CheckLowHealth()
     {
-        if (healthSystem != null && healthSystem.CurrentHealth <= healthSystem.MaxHealth / 2 && !lowHealthTriggered)
+        // Solo disparar el diálogo de vida baja si el enemigo sigue vivo
+        if (healthSystem == null)
+            return;
+
+        Debug.Log($"[LowHealthDebug] CheckLowHealth - Current: {healthSystem.CurrentHealth}, Max: {healthSystem.MaxHealth}, Threshold(%): {lowHealthThreshold}, Triggered: {lowHealthTriggered}, DialogueName: {lowHealthDialogue}");
+
+        if (healthSystem.CurrentHealth > 0 &&
+            healthSystem.CurrentHealth <= healthSystem.MaxHealth * lowHealthThreshold &&
+            !lowHealthTriggered &&
+            !string.IsNullOrEmpty(lowHealthDialogue))
         {
+            Debug.Log("[LowHealthDebug] Condition met, triggering low health dialogue");
             TriggerDialogue(lowHealthDialogue);
             lowHealthTriggered = true;
         }
@@ -106,9 +127,20 @@ public class EnemyController : MonoBehaviour
 
     private void TriggerDialogue(string dialogueName)
     {
-        if (!string.IsNullOrEmpty(dialogueName) && DialogueSystem.Instance != null)
+        DialogueSystem dialogueSystem = null;
+        if (GameManager.Instance != null)
         {
-            DialogueSystem.Instance.StartDialogue(dialogueName);
+            dialogueSystem = GameManager.Instance.dialogueSystem;
+        }
+
+        Debug.Log($"[LowHealthDebug] TriggerDialogue called with '{dialogueName}', dialogueSystem != null: {dialogueSystem != null}");
+
+        if (!string.IsNullOrEmpty(dialogueName) && dialogueSystem != null)
+        {
+            Debug.Log($"[LowHealthDebug] Starting dialogue '{dialogueName}' from EnemyController");
+            // Solo iniciar el diálogo. El flujo de combate (ActionButtonsController / GameManager)
+            // ya espera diálogos activos cuando corresponde.
+            dialogueSystem.StartDialogue(dialogueName);
         }
     }
 
@@ -226,8 +258,9 @@ public class EnemyController : MonoBehaviour
     {
         if (!isDead) 
         {
+            // El HealthSystem notificará el daño a través de OnTakeDamage y
+            // OnHealthSystemDamaged se encargará de la animación y el chequeo de vida baja.
             healthSystem?.TakeDamage(damage);
-            StartCoroutine(PlayDamageAnimationWithSound());
         }
     }
     
@@ -246,21 +279,18 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        if (syncDamageSoundWithAction)
-        {
-            yield return new WaitForSeconds(damageSoundPointTime);
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.PlayEnemyDamageSoundFromController();
-            }
-        }
-
         float remainingDamageTime = damageAnimationDuration - damageSoundPointTime;
         if (remainingDamageTime > 0)
         {
             yield return new WaitForSeconds(remainingDamageTime);
         }
-        
+
+        // Una vez terminada la animación de daño, comprobar vida baja
+        if (!isDead)
+        {
+            CheckLowHealth();
+        }
+
         yield return null;
     }
     

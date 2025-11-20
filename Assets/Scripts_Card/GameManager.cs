@@ -698,7 +698,6 @@ public class GameManager : MonoBehaviour
                 Debug.Log($"Applying {finalDamage} damage to enemy");
                 enemyHealth.TakeDamage((int)finalDamage);
                 PlayEnemyDamageSound();
-                PlayAttackCardSound();
             }
         }
 
@@ -706,29 +705,6 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"Calling PlayCardAnimation on playerController: {playerController != null}");
         playerController.PlayCardAnimation(card, ApplyDamage, CompleteTurn);
-    }
-
-    public void Card_Block(CardData card)
-    {
-        float blockValue = (card.baseValue + card.individualBaseValueUpgrade) * blockMultiplier;
-        float reductionMultiplier = 1f - (blockValue / 100f);
-
-        void ApplyBlock()
-        {
-            if (enemyController != null)
-            {
-                enemyController.ApplyAttackReduction(reductionMultiplier);
-            }
-
-            if (playerController != null)
-            {
-                playerController.ActivateBlock(reductionMultiplier);
-            }
-        }
-
-        void CompleteTurn() => StartCoroutine(EndPlayerTurnAfterDialogue());
-
-        playerController.PlayCardAnimation(card, ApplyBlock, CompleteTurn);
     }
 
     public void Card_Heal(CardData card)
@@ -740,7 +716,6 @@ public class GameManager : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.Heal((int)finalHeal);
-                PlayHealCardSound();
             }
         }
 
@@ -1016,6 +991,14 @@ public class GameManager : MonoBehaviour
         if (playerController != null && playerController.HasBlockActive())
         {
             Debug.Log("Turno del enemigo terminado. El bloqueo del jugador se desactivará automáticamente.");
+        }
+
+        // Cuando termina el turno del enemigo, reactivar los objetos que el sistema de diálogo
+        // desactivó (HUD, paneles, etc.). De esta forma, permanecen ocultos durante todo el turno
+        // del enemigo y solo reaparecen al final.
+        if (dialogueSystem != null)
+        {
+            dialogueSystem.ReactivateDialogueObjects();
         }
     }
 

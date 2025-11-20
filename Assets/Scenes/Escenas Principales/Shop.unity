@@ -5675,7 +5675,9 @@ MonoBehaviour:
   damageSoundPointTime: 0.1
   syncDamageSoundWithAction: 1
   damageAnimationDuration: 0.5
+  maxHealth: 100
   lowHealthDialogue: EnemyLowHealth
+  lowHealthThreshold: 0.5
   healthSystem: {fileID: 0}
   OnEnemyAttack:
     m_PersistentCalls:
@@ -41207,7 +41209,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.7372549}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -54635,11 +54637,6 @@ MonoBehaviour:
   cardPrefab: {fileID: 2775043380357742957, guid: 0acd4fe23a0e2ee419e1a7234b0cda98, type: 3}
   handContainer: {fileID: 1827635136}
   cardSpacing: 220
-  horizontalOffset: 200
-  verticalOffset: 30
-  maxArcHeight: 30
-  fanAngle: -20
-  moveDuration: 0.3
   startXPosition: 0
   startYPosition: 0
 --- !u!4 &1460460142
@@ -70700,6 +70697,7 @@ GameObject:
   - component: {fileID: 1860400794}
   - component: {fileID: 1860400793}
   - component: {fileID: 1860400797}
+  - component: {fileID: 1860400799}
   m_Layer: 5
   m_Name: Compra_Ataque+
   m_TagString: Untagged
@@ -70771,7 +70769,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1860400797}
+      - m_Target: {fileID: 1860400799}
         m_TargetAssemblyTypeName: ShopItem, Assembly-CSharp
         m_MethodName: AttemptPurchase
         m_Mode: 1
@@ -70843,7 +70841,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1860400791}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2781e96cf2e9e03469343bdcc96545d4, type: 3}
   m_Name: 
@@ -70862,7 +70860,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1860400791}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5912b0fd85c5f1c4baec03ad9a2e8c61, type: 3}
   m_Name: 
@@ -70870,6 +70868,29 @@ MonoBehaviour:
   rotationSpeed: 90
   scaleUpSize: 1.2
   scaleSpeed: 5
+--- !u!114 &1860400799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860400791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7848624953242a042983e4b00d34b052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemPrice: 0
+  itemID: 
+  consumable: 1
+  buttonType: 0
+  baseValueUpgradeAmount: 5
+  unlimitedPurchases: 1
+  buttonNameText: {fileID: 0}
+  currentValueText: {fileID: 0}
+  upgradeAmountText: {fileID: 0}
+  priceText: {fileID: 0}
+  buttonIcon: {fileID: 0}
 --- !u!1 &1861702647
 GameObject:
   m_ObjectHideFlags: 0

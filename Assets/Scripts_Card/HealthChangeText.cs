@@ -39,9 +39,7 @@ public class HealthChangeText : MonoBehaviour
     public void ShowText(int amount, Color color, string prefix)
     {
         if (textComponent == null) return;
-        
-        Debug.Log($"HealthChangeText: Mostrando texto {prefix}{amount}");
-        
+
         // Configurar el texto
         textComponent.text = $"{prefix}{amount}";
         textComponent.color = color;
@@ -64,8 +62,6 @@ public class HealthChangeText : MonoBehaviour
             Debug.LogError("HealthChangeText: Manager es null!");
             yield break;
         }
-
-        Debug.Log("HealthChangeText: Iniciando animación");
         
         // Obtener parámetros del manager
         float lifetime = manager.GetTextLifetime();
@@ -79,8 +75,6 @@ public class HealthChangeText : MonoBehaviour
         // Fase 1: Aparecer y flotar
         float elapsedTime = 0f;
         float floatDuration = lifetime - fadeTime;
-        
-        Debug.Log($"HealthChangeText: Fase 1 - Flotando por {floatDuration} segundos");
         
         while (elapsedTime < floatDuration)
         {
@@ -100,8 +94,6 @@ public class HealthChangeText : MonoBehaviour
             yield return null;
         }
         
-        Debug.Log("HealthChangeText: Fase 1 completada, iniciando desvanecimiento");
-        
         // Fase 2: Desvanecer en la posición final
         float fadeElapsed = 0f;
         while (fadeElapsed < fadeTime)
@@ -112,18 +104,14 @@ public class HealthChangeText : MonoBehaviour
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = alpha;
-                Debug.Log($"HealthChangeText: Alpha = {alpha}");
             }
             else if (textComponent != null)
             {
                 textComponent.alpha = alpha;
-                Debug.Log($"HealthChangeText: Text Alpha = {alpha}");
             }
                 
             yield return null;
         }
-        
-        Debug.Log("HealthChangeText: Desvanecimiento completado, devolviendo al pool");
         
         // Ocultar completamente
         if (canvasGroup != null)
@@ -146,7 +134,6 @@ public class HealthChangeText : MonoBehaviour
     {
         if (animationCoroutine != null)
         {
-            Debug.Log("HealthChangeText: Deteniendo animación");
             StopCoroutine(animationCoroutine);
             animationCoroutine = null;
         }
