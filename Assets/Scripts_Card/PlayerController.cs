@@ -29,13 +29,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private string blockAnimationTrigger = "Block";
     [SerializeField] private string blockIdleAnimationTrigger = "BlockIdle";
     [SerializeField] private float blockAutoDeactivateTime = 3.0f; // Tiempo antes de desactivar bloqueo automáticamente
-    
+
     [Header("Damage Animations")]
     [SerializeField] private string damageAnimationTrigger = "TakeDamage";
     [SerializeField] private string damageWhileBlockingAnimationTrigger = "TakeDamageWhileBlocking";
 
+    [Header("Death Object")]
+    [SerializeField] private GameObject objectToActivateOnDeath; // Solo este campo nuevo
+
     public HealthSystem healthSystem;
-    
+
     // Sistema de bloqueo
     private bool hasBlockActive = false;
     private bool hasBlockPending = false; // Nuevo: bloqueo pendiente para el siguiente turno
@@ -44,6 +47,25 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        void Start()
+        {
+            if (healthSystem == null)
+            {
+                healthSystem = GetComponent<HealthSystem>();
+                if (healthSystem == null)
+                {
+                    healthSystem = gameObject.AddComponent<HealthSystem>();
+                    healthSystem.SetMaxHealth(100);
+                }
+            }
+
+            // Suscribirse a los eventos de daño Y muerte
+            if (healthSystem != null)
+            {
+                healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
+                healthSystem.OnDeath.AddListener(OnDeath); // ← ¡ESTA LÍNEA FALTA!
+            }
+        }
         if (healthSystem == null)
         {
             healthSystem = GetComponent<HealthSystem>();
@@ -53,11 +75,12 @@ public class PlayerController : MonoBehaviour
                 healthSystem.SetMaxHealth(100);
             }
         }
-        
+
         // Suscribirse al evento de daño para detectar cuando se activa el bloqueo
         if (healthSystem != null)
         {
             healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
+            healthSystem.OnDeath.AddListener(OnDeath); // Suscribirse a la muerte
         }
     }
 
@@ -125,7 +148,7 @@ public class PlayerController : MonoBehaviour
 
         // Esperar hasta el punto de acción de la animación
         yield return new WaitForSeconds(actionPointTime);
-        
+
         onAction?.Invoke();
 
         // Esperar el resto de la animación
@@ -154,7 +177,7 @@ public class PlayerController : MonoBehaviour
     private CardAnimation GetAnimationForCard(CardData.CardType cardType)
     {
         if (cardAnimations == null) return null;
-        
+
         foreach (CardAnimation animation in cardAnimations)
         {
             if (animation != null && animation.cardType == cardType)
@@ -162,7 +185,7 @@ public class PlayerController : MonoBehaviour
                 return animation;
             }
         }
-        
+
         return null;
     }
 
@@ -190,10 +213,10 @@ public class PlayerController : MonoBehaviour
             hasBlockActive = true;
             hasBlockPending = false;
             Debug.Log($"Bloqueo activado para este ataque enemigo. Multiplicador: {blockReductionMultiplier}");
-            
+
             // Iniciar animación de bloqueo activo
             PlayBlockIdleAnimation();
-            
+
             // Iniciar temporizador para desactivar bloqueo automáticamente
             StartBlockAutoDeactivateTimer();
         }
@@ -205,13 +228,13 @@ public class PlayerController : MonoBehaviour
         hasBlockActive = false;
         hasBlockPending = false;
         blockReductionMultiplier = 1.0f;
-        
+
         // Detener animación de bloqueo
         StopBlockIdleAnimation();
-        
+
         // Detener temporizador de desactivación automática
         StopBlockAutoDeactivateTimer();
-        
+
         Debug.Log("Bloqueo desactivado");
     }
 
@@ -241,7 +264,7 @@ public class PlayerController : MonoBehaviour
         {
             GameManager.Instance.PlayPlayerDamageSound();
         }
-        
+
         // Reproducir animación de daño apropiada
         if (hasBlockActive)
         {
@@ -256,6 +279,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Método llamado cuando el jugador muere
+    /// </summary>
+    private void OnDeath()
+    {
+        // Activar el objeto en la jerarquía cuando el jugador muere
+        if (objectToActivateOnDeath != null)
+        {
+            objectToActivateOnDeath.SetActive(true);
+            Debug.Log("Objeto de muerte activado: " + objectToActivateOnDeath.name);
+        }
+    }
+
     // Método para reproducir la animación de bloqueo
     public void PlayBlockAnimation()
     {
@@ -266,7 +302,7 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("¡Animación de bloqueo ejecutada!");
     }
-    
+
     /// <summary>
     /// Reproduce la animación de bloqueo activo (idle)
     /// </summary>
@@ -279,7 +315,7 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("¡Animación de bloqueo activo ejecutada!");
     }
-    
+
     /// <summary>
     /// Detiene la animación de bloqueo activo
     /// </summary>
@@ -290,7 +326,7 @@ public class PlayerController : MonoBehaviour
             animator.SetBool(blockIdleAnimationTrigger, false);
         }
     }
-    
+
     /// <summary>
     /// Reproduce la animación de recibir daño del jugador
     /// Se puede llamar cuando el jugador recibe daño (especialmente mientras bloquea)
@@ -304,7 +340,7 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("¡Animación de recibir daño ejecutada!");
     }
-    
+
     /// <summary>
     /// Reproduce la animación de recibir daño mientras bloquea
     /// </summary>
@@ -317,7 +353,7 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("¡Animación de recibir daño mientras bloquea ejecutada!");
     }
-    
+
     /// <summary>
     /// Inicia el temporizador para desactivar el bloqueo automáticamente
     /// </summary>
@@ -326,7 +362,7 @@ public class PlayerController : MonoBehaviour
         StopBlockAutoDeactivateTimer();
         blockAutoDeactivateCoroutine = StartCoroutine(BlockAutoDeactivateTimer());
     }
-    
+
     /// <summary>
     /// Detiene el temporizador de desactivación automática del bloqueo
     /// </summary>
@@ -338,14 +374,14 @@ public class PlayerController : MonoBehaviour
             blockAutoDeactivateCoroutine = null;
         }
     }
-    
+
     /// <summary>
     /// Corrutina que desactiva el bloqueo automáticamente después de un tiempo
     /// </summary>
     private IEnumerator BlockAutoDeactivateTimer()
     {
         yield return new WaitForSeconds(blockAutoDeactivateTime);
-        
+
         // Solo desactivar si el bloqueo sigue activo (no fue desactivado por daño)
         if (hasBlockActive)
         {
