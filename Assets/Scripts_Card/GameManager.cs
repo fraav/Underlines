@@ -619,29 +619,167 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"[GameManager] ExecuteCardAction called with card: {card.cardName}, type: {card.cardType}");
 
-        // Las cartas antiguas (Attack, Block, Heal) NO deberían ejecutarse directamente
-        // porque ahora se usan los botones de acción. Pero mantenemos compatibilidad.
-        // IMPORTANTE: Solo las cartas Booster se pueden jugar arrastrándolas.
-        // Las cartas Attack, Block, Heal deben eliminarse del mazo o ignorarse.
+        // ►►► MODIFICADO: Pasar el target apropiado
+        GameObject target = GetAppropriateTarget(card);
+        PlayCardEffects(card, target);
 
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
                 Debug.LogWarning("[GameManager] Carta de Ataque jugada directamente. Debería usarse el botón de acción.");
-                // No ejecutar automáticamente, estas cartas ya no se usan así
                 break;
             case CardData.CardType.Block:
                 Debug.LogWarning("[GameManager] Carta de Bloqueo jugada directamente. Debería usarse el botón de acción.");
-                // No ejecutar automáticamente, estas cartas ya no se usan así
                 break;
             case CardData.CardType.Heal:
                 Debug.LogWarning("[GameManager] Carta de Curación jugada directamente. Debería usarse el botón de acción.");
-                // No ejecutar automáticamente, estas cartas ya no se usan así
                 break;
             case CardData.CardType.Booster:
                 Debug.Log("[GameManager] Executing Booster card");
                 Card_Booster(card);
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el target apropiado para la carta basado en su tipo
+    /// </summary>
+    private GameObject GetAppropriateTarget(CardData card)
+    {
+        switch (card.cardType)
+        {
+            case CardData.CardType.Attack:
+                return enemyHealth?.gameObject;
+            case CardData.CardType.Block:
+            case CardData.CardType.Heal:
+            case CardData.CardType.Booster:
+                return playerHealth?.gameObject;
+            default:
+                return null;
+        }
+    }
+
+    // ►►► NUEVO MÉTODO: Reproduce el sonido específico de una carta y activa su objeto de animación
+    public void PlayCardEffects(CardData card, GameObject target = null)
+    {
+        if (card == null) return;
+        
+        // Reproducir sonido específico de la carta
+        PlayCardSound(card);
+        
+        // Activar objeto de animación (prefab o objeto en escena)
+        ActivateCardAnimationObject(card, target);
+    }
+
+    // ►►► NUEVO MÉTODO: Reproduce el sonido específico de la carta
+    private void PlayCardSound(CardData card)
+    {
+        if (card.cardSound != null)
+        {
+            AudioSource.PlayClipAtPoint(card.cardSound, Camera.main.transform.position);
+            Debug.Log($"[GameManager] Sonido de carta reproducido: {card.cardName}");
+        }
+        else
+        {
+            // Sonido por defecto según el tipo de carta
+            switch (card.cardType)
+            {
+                case CardData.CardType.Attack:
+                    PlayAttackCardSound();
+                    break;
+                case CardData.CardType.Block:
+                    PlayBlockCardSound();
+                    break;
+                case CardData.CardType.Heal:
+                    PlayHealCardSound();
+                    break;
+                case CardData.CardType.Booster:
+                    PlayAttackCardSound(); // Usar sonido de ataque como placeholder para booster
+                    break;
+            }
+        }
+    }
+
+    // ►►► NUEVO MÉTODO: Activa el objeto de animación de la carta (prefab o objeto en escena)
+    private void ActivateCardAnimationObject(CardData card, GameObject target = null)
+    {
+        // Prioridad: Prefab sobre objeto en escena
+        if (card.animationPrefab != null)
+        {
+            SpawnAnimationPrefab(card, target);
+        }
+        else if (!string.IsNullOrEmpty(card.nombreObjetoEnEscenaAActivar))
+        {
+            // Sistema antiguo - activar objeto en escena
+            GameObject animationObject = card.GetObjetoAActivar();
+            if (animationObject != null)
+            {
+                StartCoroutine(ActivateObjectForTime(animationObject, card.animationObjectActiveTime));
+                Debug.Log($"[GameManager] Objeto en escena activado: {card.nombreObjetoEnEscenaAActivar} por {card.animationObjectActiveTime} segundos");
+            }
+        }
+        else
+        {
+            Debug.Log($"[GameManager] No hay objeto o prefab configurado para activar en la carta: {card.cardName}");
+        }
+    }
+
+    // ►►► NUEVO MÉTODO: Instancia y activa un prefab de animación
+    private void SpawnAnimationPrefab(CardData card, GameObject target = null)
+    {
+        if (card.animationPrefab == null)
+        {
+            Debug.LogWarning($"[GameManager] No hay prefab asignado para la carta: {card.cardName}");
+            return;
+        }
+
+        // Determinar la posición de spawn
+        Vector3 spawnPosition = card.prefabSpawnPosition;
+        Transform parent = null;
+
+        if (target != null && card.attachToTarget)
+        {
+            // Si hay target y está configurado para attach, usar como parent
+            parent = target.transform;
+            if (spawnPosition == Vector3.zero)
+            {
+                spawnPosition = Vector3.zero; // Posición local del parent
+            }
+        }
+
+        // Instanciar el prefab
+        GameObject animationInstance = Instantiate(card.animationPrefab, spawnPosition, Quaternion.identity, parent);
+        
+        if (animationInstance != null)
+        {
+            // Si no hay parent y la posición es cero, intentar posicionar en el target
+            if (parent == null && spawnPosition == Vector3.zero && target != null)
+            {
+                animationInstance.transform.position = target.transform.position;
+            }
+
+            // Configurar para destrucción automática después del tiempo
+            StartCoroutine(DestroyAfterTime(animationInstance, card.animationObjectActiveTime));
+            
+            Debug.Log($"[GameManager] Prefab instanciado: {card.animationPrefab.name} por {card.animationObjectActiveTime} segundos");
+        }
+        else
+        {
+            Debug.LogWarning($"[GameManager] No se pudo instanciar el prefab: {card.animationPrefab.name}");
+        }
+    }
+
+    // ►►► NUEVO MÉTODO: Destruye un objeto después de un tiempo específico
+    private IEnumerator DestroyAfterTime(GameObject obj, float time)
+    {
+        if (obj == null) yield break;
+        
+        yield return new WaitForSeconds(time);
+        
+        if (obj != null)
+        {
+            Destroy(obj);
+            Debug.Log($"[GameManager] Prefab destruido: {obj.name}");
         }
     }
 
@@ -652,15 +790,14 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"[GameManager] Card_Booster called with: {card.cardName}, effect: {card.boosterEffectType}");
 
+        // Los efectos de sonido y objeto ya se reprodujeron en ExecuteCardAction
+        
         // Agregar el efecto a los efectos acumulados
         if (PlayerTurnEffects.Instance != null)
         {
             PlayerTurnEffects.Instance.AddEffect(card);
             Debug.Log($"[GameManager] Efecto agregado: {card.boosterEffectType}");
         }
-
-        // Reproducir sonido de carta
-        PlayAttackCardSound(); // Usar sonido de ataque como placeholder
 
         // Actualizar display de efectos
         if (EffectsDisplayUI.Instance != null)
@@ -669,7 +806,6 @@ public class GameManager : MonoBehaviour
         }
 
         // IMPORTANTE: Las cartas potenciadoras NO terminan el turno
-        // El jugador puede seguir jugando más cartas hasta presionar un botón de acción
         Debug.Log("[GameManager] Carta potenciadora jugada. El turno continúa, puedes jugar más cartas.");
     }
 
@@ -684,6 +820,9 @@ public class GameManager : MonoBehaviour
     public void Card_Attack(CardData card)
     {
         Debug.Log($"Card_Attack called with damage: {card.baseValue}");
+
+        // ►►► MODIFICADO: Pasar el enemigo como target
+        PlayCardEffects(card, enemyHealth?.gameObject);
 
         float finalDamage = (card.baseValue + card.individualBaseValueUpgrade) *
                           damageMultiplier * card.individualDamageMultiplier;
@@ -709,6 +848,9 @@ public class GameManager : MonoBehaviour
 
     public void Card_Heal(CardData card)
     {
+        // ►►► MODIFICADO: Pasar el jugador como target
+        PlayCardEffects(card, playerHealth?.gameObject);
+
         float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
 
         void ApplyHeal()
@@ -1155,5 +1297,22 @@ public class GameManager : MonoBehaviour
         {
             callback?.Invoke();
         }
+    }
+
+    // ►►► MÉTODO EXISTENTE: Corrutina para activar un objeto por un tiempo específico
+    private IEnumerator ActivateObjectForTime(GameObject obj, float activeTime)
+    {
+        if (obj == null) yield break;
+        
+        // Activar el objeto
+        obj.SetActive(true);
+        
+        // Esperar el tiempo especificado
+        yield return new WaitForSeconds(activeTime);
+        
+        // Desactivar el objeto
+        obj.SetActive(false);
+        
+        Debug.Log($"[GameManager] Objeto desactivado: {obj.name}");
     }
 }

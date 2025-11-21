@@ -35,11 +35,7 @@ public class CreditsController : MonoBehaviour
 
     void SetupAudio()
     {
-        // Detener música de fondo si existe
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.backgroundMusic.Stop();
-        }
+        // La gestión de música de fondo ha sido eliminada
     }
 
     void InitializeSkipPrompt()
@@ -155,12 +151,6 @@ public class CreditsController : MonoBehaviour
 
     IEnumerator ReturnToMainMenu()
     {
-        // Reanudar música de fondo si existe
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayMenuMusic();
-        }
-        
         // Cargar escena principal
         yield return new WaitForEndOfFrame();
         SceneManager.LoadScene("2_MainMenu");

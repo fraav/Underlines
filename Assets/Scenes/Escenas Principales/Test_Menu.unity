@@ -505,6 +505,8 @@ MonoBehaviour:
   playerController: {fileID: 0}
   playerHealth: {fileID: 0}
   enemyHealth: {fileID: 0}
+  playerTargetSprite: {fileID: 0}
+  enemyTargetSprite: {fileID: 0}
   isBattleScene: 0
   audioSource: {fileID: 0}
   attackCardSound: {fileID: 0}
@@ -517,6 +519,7 @@ MonoBehaviour:
   enemyAttackSound: {fileID: 0}
   enemyHealSound: {fileID: 0}
   resultDisplayTime: 2
+  dialogueSystem: {fileID: 0}
 --- !u!4 &1132603630
 Transform:
   m_ObjectHideFlags: 0
@@ -636,7 +639,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: BattleScene
+          m_StringArgument: 2_MainMenu
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1149513080

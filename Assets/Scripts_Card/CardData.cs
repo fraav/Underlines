@@ -28,13 +28,16 @@ public class CardData : ScriptableObject
     [Tooltip("Sonido específico que se reproducirá al jugar esta carta.")]
     public AudioClip cardSound;
 
+    [Tooltip("Tiempo que el objeto de animación estará activo (segundos)")]
+    public float animationObjectActiveTime = 2.0f;
+
     // Campos para mejoras individuales
     public float individualBaseValueUpgrade = 0f;
     public float individualDamageMultiplier = 1.0f;
 
     // Para cartas potenciadoras (Booster)
     public enum BoosterEffectType { 
-        DoubleAction,      // Duplica la acción siguiente
+        DoubleAction,       // Duplica la acción siguiente
         IncreaseDamage,    // Aumenta el daño
         IncreaseBlock,     // Aumenta el bloqueo
         IncreaseHeal       // Aumenta la curación
@@ -44,10 +47,21 @@ public class CardData : ScriptableObject
     public BoosterEffectType boosterEffectType = BoosterEffectType.DoubleAction;
     public float boosterValue = 1.0f; // Valor del potenciador
 
-    // ========== PARÁMETROS PARA FUTURAS EXPANSIONES ==========
-    // Estos parámetros no afectan el funcionamiento actual del sistema
-    // Solo están disponibles para futuras expansiones de contenido
+    [Header("Objeto en Escena")]
+    [Tooltip("Nombre exacto del objeto en la escena que se activará al jugar esta carta")]
+    public string nombreObjetoEnEscenaAActivar = "";
 
+    [Header("Animation Prefab")]
+    [Tooltip("Prefab de la animación que se instanciará al jugar esta carta (alternativa al objeto en escena)")]
+    public GameObject animationPrefab;
+
+    [Tooltip("Posición donde se instanciará el prefab (si se deja en cero, se usará la posición del objetivo)")]
+    public Vector3 prefabSpawnPosition = Vector3.zero;
+
+    [Tooltip("Si es true, el prefab se instanciará como hijo del objetivo")]
+    public bool attachToTarget = false;
+
+    // ========== PARÁMETROS PARA FUTURAS EXPANSIONES ==========
     [Header("Expansion Parameters - No afectan el sistema actual")]
     [Tooltip("Activar para habilitar efectos personalizados adicionales")]
     public bool enableCustomEffects = false;
@@ -112,37 +126,45 @@ public class CardData : ScriptableObject
         Weakness
     }
 
-    // Métodos helper para futuras expansiones (no se usan actualmente)
-    /// <summary>
-    /// Obtiene el valor total de daño incluyendo efectos personalizados
-    /// </summary>
+    // Método para obtener el objeto por nombre
+    public GameObject GetObjetoAActivar()
+    {
+        if (string.IsNullOrEmpty(nombreObjetoEnEscenaAActivar)) 
+            return null;
+            
+        GameObject obj = GameObject.Find(nombreObjetoEnEscenaAActivar);
+        if (obj == null)
+        {
+            Debug.LogError($"No se encontró el objeto con nombre: {nombreObjetoEnEscenaAActivar}");
+        }
+        return obj;
+    }
+
+    // ►►► NUEVO MÉTODO: Obtiene el prefab de animación
+    public GameObject GetAnimationPrefab()
+    {
+        return animationPrefab;
+    }
+
+    // Métodos helper para futuras expansiones
     public float GetTotalDamage()
     {
         if (!enableCustomEffects) return baseValue;
         return baseValue + additionalDamage;
     }
 
-    /// <summary>
-    /// Obtiene el valor total de curación incluyendo efectos personalizados
-    /// </summary>
     public float GetTotalHeal()
     {
         if (!enableCustomEffects) return baseValue;
         return baseValue + additionalHeal;
     }
 
-    /// <summary>
-    /// Obtiene el valor total de bloqueo incluyendo efectos personalizados
-    /// </summary>
     public float GetTotalBlock()
     {
         if (!enableCustomEffects) return baseValue;
         return baseValue + additionalBlock;
     }
 
-    /// <summary>
-    /// Verifica si la carta tiene efectos personalizados activos
-    /// </summary>
     public bool HasCustomEffects()
     {
         return enableCustomEffects && (

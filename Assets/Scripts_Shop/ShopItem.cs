@@ -4,7 +4,7 @@ public class ShopItem : MonoBehaviour
 {
     [SerializeField] private int itemPrice;
     [SerializeField] private string itemID;
-    [SerializeField] private bool consumable = true; // Si es consumible, se desactiva después de comprar
+    [SerializeField] private bool consumable = true; // Si es consumible, se desactiva despuï¿½s de comprar
 
     public void AttemptPurchase()
     {
@@ -12,7 +12,7 @@ public class ShopItem : MonoBehaviour
         {
             Debug.Log($"Compra exitosa: {itemID}");
 
-            // Entregar el ítem (lógica específica en clases hijas)
+            // Entregar el ï¿½tem (lï¿½gica especï¿½fica en clases hijas)
             DeliverItem();
 
             if (consumable)
@@ -30,6 +30,6 @@ public class ShopItem : MonoBehaviour
     // Virtual para permitir override en clases hijas
     protected virtual void DeliverItem()
     {
-        // Implementación específica en clases hijas
+        // Implementaciï¿½n especï¿½fica en clases hijas
     }
 }

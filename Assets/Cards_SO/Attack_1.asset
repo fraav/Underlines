@@ -14,9 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardType: 0
   baseValue: 70
-  cardName: Attack_1
-  description: Ataca
-  icon: {fileID: 21300000, guid: 8d9116558b06f174cbe02b7571937fe8, type: 3}
+  cardName: Lucy
+  description: DOBLE ATAQUE
+  icon: {fileID: 21300000, guid: 70ec4c9c4f56bcc48aaf7ffc2a63df84, type: 3}
   shopIcon: {fileID: 0}
-  individualBaseValueUpgrade: 10
+  customAnimationTrigger: 
+  customActionPointTime: 0
+  customAnimationDuration: 0
+  cardSound: {fileID: 8300000, guid: 728a0d47a54516a44aa35609bdd3143a, type: 3}
+  individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
+  boosterEffectType: 0
+  boosterValue: 1
+  enableCustomEffects: 0
+  effectDuration: 0
+  additionalDamage: 0
+  additionalHeal: 0
+  additionalBlock: 0
+  energyCost: 0
+  customTargetType: 0
+  statusEffect: 0
+  statusEffectDuration: 0
+  customValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  customEffectDescription: 
+  customEffectID: 

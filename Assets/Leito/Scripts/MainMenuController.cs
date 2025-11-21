@@ -11,16 +11,18 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private TMP_Text versionText;
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private Slider masterVolumeSlider;
-    [SerializeField] private Slider musicVolumeSlider;
     [SerializeField] private Slider sfxVolumeSlider;
     [SerializeField] private Toggle fullscreenToggle;
     [SerializeField] private Button socialButton;
     [SerializeField] private GameObject socialTooltip;
     [SerializeField] private Animator glitchAnimator;
     
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private AudioClip buttonClickSound;
+    
     [Header("Volume Texts")]
     [SerializeField] private TMP_Text masterVolumeText;
-    [SerializeField] private TMP_Text musicVolumeText;
     [SerializeField] private TMP_Text sfxVolumeText;
     
     [Header("Social Settings")]
@@ -39,9 +41,16 @@ public class MainMenuController : MonoBehaviour
     {
         versionText.text = $"v{Application.version}";
         
-        masterVolumeSlider.value = PlayerPrefs.GetFloat("MasterVolume", 0.7f);
-        musicVolumeSlider.value = PlayerPrefs.GetFloat("MusicVolume", 0.7f);
-        sfxVolumeSlider.value = PlayerPrefs.GetFloat("SFXVolume", 0.7f);
+        // Cargar volumen guardado o usar valor por defecto
+        float savedVolume = PlayerPrefs.GetFloat("SFXVolume", 0.7f);
+        masterVolumeSlider.value = savedVolume;
+        sfxVolumeSlider.value = savedVolume;
+        
+        // Aplicar volumen al AudioSource si existe
+        if (sfxAudioSource != null)
+        {
+            sfxAudioSource.volume = savedVolume;
+        }
         
         fullscreenToggle.isOn = PlayerPrefs.GetInt("Fullscreen", Screen.fullScreen ? 1 : 0) == 1;
         
@@ -51,7 +60,6 @@ public class MainMenuController : MonoBehaviour
         UpdateVolumeTexts();
         
         masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
-        musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
         sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
         fullscreenToggle.onValueChanged.AddListener(OnFullscreenChanged);
     }
@@ -59,29 +67,46 @@ public class MainMenuController : MonoBehaviour
     #region Volume Management
     public void OnMasterVolumeChanged(float volume)
     {
-        AudioManager.Instance.SetMasterVolume(volume);
-        UpdateVolumeTexts();
-    }
-
-    public void OnMusicVolumeChanged(float volume)
-    {
-        AudioManager.Instance.SetMusicVolume(volume);
+        // Actualizar el volumen del AudioSource
+        if (sfxAudioSource != null)
+        {
+            sfxAudioSource.volume = volume;
+        }
+        
+        // Guardar preferencia
+        PlayerPrefs.SetFloat("SFXVolume", volume);
+        PlayerPrefs.Save();
+        
         UpdateVolumeTexts();
     }
 
     public void OnSFXVolumeChanged(float volume)
     {
-        AudioManager.Instance.SetSFXVolume(volume);
+        // Actualizar el volumen del AudioSource
+        if (sfxAudioSource != null)
+        {
+            sfxAudioSource.volume = volume;
+        }
+        
+        // Guardar preferencia
+        PlayerPrefs.SetFloat("SFXVolume", volume);
+        PlayerPrefs.Save();
+        
         UpdateVolumeTexts();
+    }
+    
+    private void PlayButtonClick()
+    {
+        if (sfxAudioSource != null && buttonClickSound != null)
+        {
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
     }
 
     private void UpdateVolumeTexts()
     {
         if (masterVolumeText != null) 
             masterVolumeText.text = Mathf.RoundToInt(masterVolumeSlider.value * 100) + "%";
-        
-        if (musicVolumeText != null) 
-            musicVolumeText.text = Mathf.RoundToInt(musicVolumeSlider.value * 100) + "%";
         
         if (sfxVolumeText != null) 
             sfxVolumeText.text = Mathf.RoundToInt(sfxVolumeSlider.value * 100) + "%";
@@ -101,7 +126,7 @@ public class MainMenuController : MonoBehaviour
         if (!websiteOpened)
         {
             websiteOpened = true;
-            AudioManager.Instance.PlayButtonClick();
+            PlayButtonClick();
             Application.OpenURL(socialWebsiteURL);
             Invoke(nameof(ResetWebsiteOpened), 1f);
         }
@@ -115,19 +140,19 @@ public class MainMenuController : MonoBehaviour
     #region Button Actions
     public void OpenOptions()
     {
-        AudioManager.Instance.PlayButtonClick();
+        PlayButtonClick();
         optionsPanel.SetActive(true);
     }
 
     public void CloseOptions()
     {
-        AudioManager.Instance.PlayButtonClick();
+        PlayButtonClick();
         optionsPanel.SetActive(false);
     }
 
     public void StartGame()
     {
-        AudioManager.Instance.PlayButtonClick();
+        PlayButtonClick();
         StartCoroutine(StartGameSequence());
     }
 
@@ -145,7 +170,7 @@ public class MainMenuController : MonoBehaviour
             SceneManager.LoadScene("BattleScene");
         }
         
-        AudioManager.Instance.PlayGameMusic();
+        // La música de fondo ha sido eliminada
     }
 
     private void CleanupBattleObjectsFallback()
@@ -163,7 +188,7 @@ public class MainMenuController : MonoBehaviour
 
     public void OpenCredits()
     {
-        AudioManager.Instance.PlayButtonClick();
+        PlayButtonClick();
         StartCoroutine(OpenCreditsSequence());
     }
 
@@ -178,13 +203,13 @@ public class MainMenuController : MonoBehaviour
             yield return SimpleFadeOut();
         }
         
-        AudioManager.Instance.PlayCreditsMusic();
+        // La música de fondo ha sido eliminada
         SceneManager.LoadScene("Credits");
     }
 
     public void QuitGame()
     {
-        AudioManager.Instance.PlayButtonClick();
+        PlayButtonClick();
         StartCoroutine(QuitSequence());
     }
 

@@ -14,11 +14,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardType: 3
   baseValue: 10
-  cardName: 
-  description: 
-  icon: {fileID: 21300000, guid: 56dd889a4fe171d45914ffbc93819bcc, type: 3}
+  cardName: 50 PESO
+  description: "DUPLICA TU DA\xD1O"
+  icon: {fileID: 21300000, guid: bb78e895233cecf4fa3ab5b1ae3e1794, type: 3}
   shopIcon: {fileID: 0}
+  customAnimationTrigger: 
+  customActionPointTime: 0
+  customAnimationDuration: 0
+  cardSound: {fileID: 8300000, guid: f21071a51f0609549927277cab22045f, type: 3}
+  animationObjectActiveTime: 2
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
   boosterEffectType: 1
   boosterValue: 4
+  nombreObjetoEnEscenaAActivar: Container
+  animationPrefab: {fileID: 5217584273669610250, guid: d08cd14c8b3b26146bd1420cc07818b4, type: 3}
+  prefabSpawnPosition: {x: -49.35, y: -1.14, z: -4.887}
+  attachToTarget: 0
+  enableCustomEffects: 0
+  effectDuration: 0
+  additionalDamage: 0
+  additionalHeal: 0
+  additionalBlock: 0
+  energyCost: 0
+  customTargetType: 0
+  statusEffect: 0
+  statusEffectDuration: 0
+  customValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  customEffectDescription: 
+  customEffectID: 
