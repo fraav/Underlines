@@ -25341,7 +25341,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 4.588, y: 1.053, z: 0.545}
+  m_LocalEulerAnglesHint: {x: 42.693, y: -181.032, z: -0.638}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37436,7 +37436,7 @@ MonoBehaviour:
     animationName: Cap1
     duration: 3
     actionPointTime: 0.5
-    value: 30
+    value: 100
     soundPointTime: 0.5
     syncSoundWithAction: 1
   - actionType: 0
@@ -79115,7 +79115,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!320 &1073532916
 PlayableDirector:
   m_ObjectHideFlags: 0
@@ -86904,6 +86904,116 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1180871527}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1180991574
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1180991577}
+  - component: {fileID: 1180991576}
+  - component: {fileID: 1180991575}
+  m_Layer: 0
+  m_Name: DERROTA ANIM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!212 &1180991575
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180991574}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 5380fe41a15ce8e4c87d126a8d672ee6, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: 9f31b3be7684d7c49a29b3da578d1330, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 23.75818, y: 13.7699995}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!95 &1180991576
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180991574}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 3db12af65ccaa1e498623890d3ddc94c, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &1180991577
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180991574}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.042982787, y: 0.73910874, z: -0.6710911, w: 0.038827587}
+  m_LocalPosition: {x: -54.89, y: -2.01, z: -1.63}
+  m_LocalScale: {x: 0.24169116, y: 0.24169116, z: 0.24169116}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: -261.371, y: -410.091, z: 129.57199}
 --- !u!1 &1182906428
 GameObject:
   m_ObjectHideFlags: 0
@@ -95930,6 +96040,18 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: Test_Menu
           m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 2053531986}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: Test_Menu
+          m_BoolArgument: 1
         m_CallState: 2
   OnTakeDamage:
     m_PersistentCalls:
@@ -136259,7 +136381,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 4.571, y: -3.95, z: 0.306}
+  m_LocalEulerAnglesHint: {x: 0, y: 356, z: 0}
 --- !u!95 &1888110029
 Animator:
   serializedVersion: 7
@@ -145077,6 +145199,7 @@ GameObject:
   - component: {fileID: 1998331262}
   - component: {fileID: 1998331261}
   - component: {fileID: 1998331260}
+  - component: {fileID: 1998331263}
   m_Layer: 0
   m_Name: luz pj
   m_TagString: Untagged
@@ -145180,13 +145303,35 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1998331259}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5054136, y: 0.4945271, z: -0.50541365, w: 0.49452713}
+  m_LocalRotation: {x: 0.50541365, y: 0.49452707, z: -0.5054137, w: 0.4945271}
   m_LocalPosition: {x: -57.5, y: 11, z: -4.2}
   m_LocalScale: {x: 0.08641743, y: 0.001306703, z: 0.118019104}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 88.753, y: -90, z: -180}
+  m_LocalEulerAnglesHint: {x: 3, y: 0, z: -0}
+--- !u!95 &1998331263
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1998331259}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1998602141
 GameObject:
   m_ObjectHideFlags: 0
@@ -149126,6 +149271,64 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2053451103}
   m_Mesh: {fileID: 6239881831769578202, guid: bc8ade3e00c9b9c40accf8f6cf0fb0b8, type: 3}
+--- !u!1 &2053531986
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2053531988}
+  - component: {fileID: 2053531987}
+  m_Layer: 0
+  m_Name: DERROTA timeline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!320 &2053531987
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053531986}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 9c33b123216478d458f68b4bb9bd0040, type: 2}
+  m_InitialState: 1
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 1
+  m_InitialTime: 0
+  m_SceneBindings:
+  - key: {fileID: -695552580214597896, guid: 9c33b123216478d458f68b4bb9bd0040, type: 2}
+    value: {fileID: 1888110029}
+  - key: {fileID: 1995754898614606414, guid: 9c33b123216478d458f68b4bb9bd0040, type: 2}
+    value: {fileID: 1180991576}
+  - key: {fileID: -5528441900981710383, guid: 9c33b123216478d458f68b4bb9bd0040, type: 2}
+    value: {fileID: 1180991576}
+  - key: {fileID: -683981577323624460, guid: 9c33b123216478d458f68b4bb9bd0040, type: 2}
+    value: {fileID: 1998331263}
+  m_ExposedReferences:
+    m_References:
+    - db5246fef5980dd4ca8562bc72f5c14b: {fileID: 1180991574}
+--- !u!4 &2053531988
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053531986}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2053813483
 GameObject:
   m_ObjectHideFlags: 0
@@ -156677,6 +156880,8 @@ SceneRoots:
   - {fileID: 504945325}
   - {fileID: 804058628}
   - {fileID: 1888110028}
+  - {fileID: 2053531988}
+  - {fileID: 1180991577}
   - {fileID: 1073532917}
   - {fileID: 1847153549}
   - {fileID: 550376624}
