@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Playables;
 using System.Collections;
 
 [System.Serializable]
@@ -34,8 +35,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private string damageAnimationTrigger = "TakeDamage";
     [SerializeField] private string damageWhileBlockingAnimationTrigger = "TakeDamageWhileBlocking";
 
-    [Header("Death Object")]
-    [SerializeField] private GameObject objectToActivateOnDeath; // Solo este campo nuevo
+    [Header("Death System")]
+    [SerializeField] private PlayableDirector deathTimeline; // Timeline de muerte
+    [SerializeField] private GameObject objectToActivateOnDeath; // Objeto opcional a activar
 
     public HealthSystem healthSystem;
 
@@ -45,27 +47,11 @@ public class PlayerController : MonoBehaviour
     private float blockReductionMultiplier = 1.0f;
     private Coroutine blockAutoDeactivateCoroutine;
 
+    // Control de estado de muerte
+    private bool isDead = false;
+
     void Start()
     {
-        void Start()
-        {
-            if (healthSystem == null)
-            {
-                healthSystem = GetComponent<HealthSystem>();
-                if (healthSystem == null)
-                {
-                    healthSystem = gameObject.AddComponent<HealthSystem>();
-                    healthSystem.SetMaxHealth(100);
-                }
-            }
-
-            // Suscribirse a los eventos de daño Y muerte
-            if (healthSystem != null)
-            {
-                healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
-                healthSystem.OnDeath.AddListener(OnDeath); // ← ¡ESTA LÍNEA FALTA!
-            }
-        }
         if (healthSystem == null)
         {
             healthSystem = GetComponent<HealthSystem>();
@@ -76,16 +62,117 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Suscribirse al evento de daño para detectar cuando se activa el bloqueo
+        // Suscribirse a los eventos de daño y muerte
         if (healthSystem != null)
         {
             healthSystem.OnTakeDamage.AddListener(OnTakeDamage);
-            healthSystem.OnDeath.AddListener(OnDeath); // Suscribirse a la muerte
+            healthSystem.OnDeath.AddListener(OnDeathTimeline); // Usar la nueva función
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Desuscribirse de los eventos para evitar memory leaks
+        if (healthSystem != null)
+        {
+            healthSystem.OnTakeDamage.RemoveListener(OnTakeDamage);
+            healthSystem.OnDeath.RemoveListener(OnDeathTimeline);
+        }
+    }
+
+    void Update()
+    {
+        // Verificación manual cada frame por si el evento OnDeath no funciona
+        if (!isDead && healthSystem != null && healthSystem.CurrentHealth <= 0)
+        {
+            Debug.Log("🔍 Detección manual: Salud <= 0, activando timeline de muerte");
+            OnDeathTimeline();
+        }
+
+        // Test con tecla T (opcional - puedes remover esto después de probar)
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            TestDeath();
+        }
+    }
+
+    /// <summary>
+    /// NUEVA FUNCIÓN: Activa la timeline cuando la vida llega a 0
+    /// </summary>
+    public void OnDeathTimeline()
+    {
+        if (isDead) return; // Evitar ejecución múltiple
+
+        isDead = true;
+        Debug.Log("🎯 ¡FUNCIÓN OnDeathTimeline EJECUTADA!");
+
+        // 1. Activar la timeline de muerte
+        if (deathTimeline != null)
+        {
+            deathTimeline.Play();
+            Debug.Log("✅ Timeline de muerte activada: " + deathTimeline.name);
+        }
+        else
+        {
+            Debug.LogError("❌ deathTimeline no está asignada en el Inspector");
+        }
+
+        // 2. Activar objeto adicional si existe (opcional)
+        if (objectToActivateOnDeath != null)
+        {
+            objectToActivateOnDeath.SetActive(true);
+            Debug.Log("✅ Objeto adicional activado: " + objectToActivateOnDeath.name);
+        }
+
+        // 3. Desactivar bloqueo si estaba activo
+        DeactivateBlock();
+
+        // 4. Desactivar highlight
+        SetHighlight(false);
+
+        // 5. Reproducir animación de muerte si existe
+        if (animator != null)
+        {
+            animator.SetTrigger("Die"); // Asegúrate de tener este trigger en tu Animator
+            Debug.Log("✅ Animación de muerte activada");
+        }
+
+        Debug.Log("💀 Secuencia de muerte completada correctamente");
+    }
+
+    /// <summary>
+    /// FUNCIÓN DE RESPALDO: Se puede llamar manualmente desde otros scripts
+    /// </summary>
+    public void TriggerDeathTimeline()
+    {
+        if (!isDead)
+        {
+            Debug.Log("🔄 TriggerDeathTimeline llamado manualmente");
+            OnDeathTimeline();
+        }
+    }
+
+    /// <summary>
+    /// FUNCIÓN DE TEST: Para probar la muerte con una tecla
+    /// </summary>
+    public void TestDeath()
+    {
+        if (!isDead && healthSystem != null)
+        {
+            Debug.Log("🧪 TEST: Forzando muerte...");
+            healthSystem.TakeDamage(healthSystem.CurrentHealth);
         }
     }
 
     public void PlayCardAnimation(CardData card, System.Action onAction, System.Action onComplete)
     {
+        // Si está muerto, no puede realizar animaciones de cartas
+        if (isDead)
+        {
+            Debug.LogWarning("El jugador está muerto, no puede usar cartas");
+            return;
+        }
+
         // Buscar la animación correspondiente al tipo de carta
         CardAnimation animation = GetAnimationForCard(card.cardType);
         if (animation != null)
@@ -200,6 +287,8 @@ public class PlayerController : MonoBehaviour
     // Método para activar el bloqueo (ahora solo lo marca como pendiente)
     public void ActivateBlock(float reductionMultiplier)
     {
+        if (isDead) return;
+
         hasBlockPending = true;
         blockReductionMultiplier = reductionMultiplier;
         Debug.Log($"Bloqueo marcado como pendiente para el siguiente turno del enemigo. Multiplicador: {reductionMultiplier}");
@@ -208,6 +297,8 @@ public class PlayerController : MonoBehaviour
     // Método para activar el bloqueo pendiente (se llama cuando el enemigo ataca)
     public void ActivatePendingBlock()
     {
+        if (isDead) return;
+
         if (hasBlockPending)
         {
             hasBlockActive = true;
@@ -259,6 +350,8 @@ public class PlayerController : MonoBehaviour
     // Método llamado cuando el jugador recibe daño
     private void OnTakeDamage(int damage)
     {
+        if (isDead) return;
+
         // Reproducir sonido de daño a través del GameManager
         if (GameManager.Instance != null)
         {
@@ -279,22 +372,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Método llamado cuando el jugador muere
-    /// </summary>
-    private void OnDeath()
-    {
-        // Activar el objeto en la jerarquía cuando el jugador muere
-        if (objectToActivateOnDeath != null)
-        {
-            objectToActivateOnDeath.SetActive(true);
-            Debug.Log("Objeto de muerte activado: " + objectToActivateOnDeath.name);
-        }
-    }
-
     // Método para reproducir la animación de bloqueo
     public void PlayBlockAnimation()
     {
+        if (isDead) return;
+
         if (animator != null && !string.IsNullOrEmpty(blockAnimationTrigger))
         {
             animator.SetTrigger(blockAnimationTrigger);
@@ -308,6 +390,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PlayBlockIdleAnimation()
     {
+        if (isDead) return;
+
         if (animator != null && !string.IsNullOrEmpty(blockIdleAnimationTrigger))
         {
             animator.SetBool(blockIdleAnimationTrigger, true);
@@ -333,6 +417,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PlayDamageAnimation()
     {
+        if (isDead) return;
+
         if (animator != null && !string.IsNullOrEmpty(damageAnimationTrigger))
         {
             animator.SetTrigger(damageAnimationTrigger);
@@ -346,6 +432,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PlayDamageWhileBlockingAnimation()
     {
+        if (isDead) return;
+
         if (animator != null && !string.IsNullOrEmpty(damageWhileBlockingAnimationTrigger))
         {
             animator.SetTrigger(damageWhileBlockingAnimationTrigger);
@@ -383,20 +471,30 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(blockAutoDeactivateTime);
 
         // Solo desactivar si el bloqueo sigue activo (no fue desactivado por daño)
-        if (hasBlockActive)
+        if (hasBlockActive && !isDead)
         {
             DeactivateBlock();
             Debug.Log("Bloqueo desactivado automáticamente por tiempo");
         }
     }
 
+    /// <summary>
+    /// Verifica si el jugador está muerto
+    /// </summary>
+    public bool IsDead()
+    {
+        return isDead;
+    }
+
     public void SetHighlight(bool active)
     {
+        if (isDead) return;
         if (highlightEffect != null) highlightEffect.SetActive(active);
     }
 
     private void OnMouseDown()
     {
+        if (isDead) return;
         GameManager.Instance?.SelectTarget(gameObject);
     }
 }

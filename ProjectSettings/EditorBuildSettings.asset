@@ -20,13 +20,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Escenas Principales/Test_Menu.unity
     guid: 3f4554e5e925842f7bd54930ffee25fa
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Escenas Principales/BattleScene.unity
     guid: ce7f8d34bcea6e747a97ad8ae56036eb
   - enabled: 1
     path: Assets/Scenes/Escenas Principales/Shop.unity
     guid: 9fef2798ad0c3444fb2231a50d5fb63c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Escenas_Buenas/BattleScene2.unity
     guid: c3761b8ff6cdc364b91d6a63b577227c
   - enabled: 0
