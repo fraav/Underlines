@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardType: 3
   baseValue: 1
-  cardName: Adreline
-  description: 'Duplica la siguente accion que elijas '
+  cardName: Lucyy
+  description: ta loca
   icon: {fileID: 21300000, guid: 70ec4c9c4f56bcc48aaf7ffc2a63df84, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 

@@ -37186,6 +37186,7 @@ GameObject:
   - component: {fileID: 520477869}
   - component: {fileID: 520477868}
   - component: {fileID: 520477873}
+  - component: {fileID: 520477872}
   - component: {fileID: 520477874}
   - component: {fileID: 520477875}
   m_Layer: 0
@@ -37286,8 +37287,31 @@ Transform:
   m_Children:
   - {fileID: 736641615}
   - {fileID: 1327040615}
+  - {fileID: 1800380522}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &520477872
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520477867}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 351b1bf4835ea461aa4fedad0d42cfd3, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &520477873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37309,13 +37333,6 @@ MonoBehaviour:
     soundPointTime: 0.5
     syncSoundWithAction: 1
   - actionType: 0
-    animationName: Cap3
-    duration: 3
-    actionPointTime: 0.5
-    value: 50
-    soundPointTime: 0.5
-    syncSoundWithAction: 1
-  - actionType: 1
     animationName: Cap2
     duration: 3
     actionPointTime: 0.5
@@ -37329,8 +37346,15 @@ MonoBehaviour:
     value: 50
     soundPointTime: 0.5
     syncSoundWithAction: 1
-  highlightEffect: {fileID: 1327040614}
-  animator: {fileID: 1327040617}
+  - actionType: 1
+    animationName: Cap3
+    duration: 3
+    actionPointTime: 0.5
+    value: 50
+    soundPointTime: 0.5
+    syncSoundWithAction: 1
+  highlightEffect: {fileID: 0}
+  animator: {fileID: 520477872}
   deathReward: 380
   baseAttack: 10
   currentAttackMultiplier: 1
@@ -37403,7 +37427,7 @@ MonoBehaviour:
           m_StringArgument: Shop
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 520477872}
         m_TargetAssemblyTypeName: UnityEngine.Animator, UnityEngine
         m_MethodName: SetTrigger
         m_Mode: 5
@@ -37418,7 +37442,7 @@ MonoBehaviour:
   OnTakeDamage:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 520477872}
         m_TargetAssemblyTypeName: UnityEngine.Animator, UnityEngine
         m_MethodName: SetTrigger
         m_Mode: 5
@@ -37440,13 +37464,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 520477867}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a996caf06913c7344b82e384d9ec8032, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   healthSystem: {fileID: 520477874}
-  textSpawnPoint: {fileID: 0}
+  textSpawnPoint: {fileID: 1800380522}
   showDamage: 1
   showHeal: 1
   textOffset: {x: 0, y: 2, z: 0}
@@ -68265,7 +68289,7 @@ MonoBehaviour:
   playerHealth: {fileID: 1313455313}
   enemyHealth: {fileID: 520477874}
   playerTargetSprite: {fileID: 266629922}
-  enemyTargetSprite: {fileID: 0}
+  enemyTargetSprite: {fileID: 1800380521}
   isBattleScene: 0
   audioSource: {fileID: 932123690}
   attackCardSound: {fileID: 8300000, guid: 4aa455b3ad11cb24182517d92b7f8e93, type: 3}
@@ -96713,7 +96737,7 @@ GameObject:
   - component: {fileID: 1327040616}
   - component: {fileID: 1327040617}
   m_Layer: 0
-  m_Name: enemy sprite
+  m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -96799,7 +96823,7 @@ Animator:
   m_GameObject: {fileID: 1327040614}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9d83059309c46db42b75d839b685d9f0, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -130134,6 +130158,116 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797216787}
   m_Mesh: {fileID: -333043811287086158, guid: bc8ade3e00c9b9c40accf8f6cf0fb0b8, type: 3}
+--- !u!1 &1800380521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1800380522}
+  - component: {fileID: 1800380523}
+  - component: {fileID: 1800380524}
+  m_Layer: 0
+  m_Name: EnemyTargetSprite
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1800380522
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800380521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.16, y: 0.298, z: 0.941}
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 520477871}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &1800380523
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800380521}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: c8203575870842648b34240b18404206, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.58431375}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.32, y: 0.32}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!95 &1800380524
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800380521}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: def36a6c96a6d744cb938d5d3237403e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1800514090
 GameObject:
   m_ObjectHideFlags: 0
@@ -133613,7 +133747,7 @@ PlayableDirector:
   - key: {fileID: 8916347071925926364, guid: 849b62b7e127d4847b903462a33c422b, type: 2}
     value: {fileID: 1888110029}
   - key: {fileID: -4567929860113052969, guid: 849b62b7e127d4847b903462a33c422b, type: 2}
-    value: {fileID: 0}
+    value: {fileID: 520477872}
   - key: {fileID: -4992215211712478624, guid: 849b62b7e127d4847b903462a33c422b, type: 2}
     value: {fileID: 1313455309}
   - key: {fileID: -8784295041172875939, guid: 849b62b7e127d4847b903462a33c422b, type: 2}

@@ -954,8 +954,13 @@ public class GameManager : MonoBehaviour
         // Limpiar cartas jugadas del turno anterior
         playedCardsThisTurn.Clear();
 
-        // Descartar todas las cartas de la mano del turno anterior
-        DiscardAllHandCards();
+        // NOTA: No es necesario descartar aquí porque las cartas ya fueron descartadas
+        // en EndPlayerTurn(). La mano debería estar vacía en este punto.
+        if (currentHand.Count > 0)
+        {
+            Debug.LogWarning($"[GameManager] Advertencia: La mano no está vacía al inicio del turno ({currentHand.Count} cartas). Descartando...");
+            DiscardAllHandCards();
+        }
 
         // CRÍTICO: Establecer el turno ANTES de robar cartas
         // Esto asegura que RefreshHand() vea el turno correcto
@@ -993,16 +998,13 @@ public class GameManager : MonoBehaviour
         Debug.Log("[GameManager] ===== INICIANDO ROBAR CARTAS PARA NUEVO TURNO =====");
         Debug.Log($"[GameManager] Cartas en mazo principal: {availableDeck.Count}");
         Debug.Log($"[GameManager] Cartas en pila de descartes: {discardPile.Count}");
-
-        // Verificar y reciclar el mazo si es necesario ANTES de robar
-        EnsureDeckHasCards();
+        Debug.Log($"[GameManager] Cartas en mano: {currentHand.Count}");
 
         // Robar 4 cartas
         int targetDrawCount = 4;
-        int drawCount = Mathf.Min(targetDrawCount, availableDeck.Count);
         List<CardData> drawnCards = new List<CardData>();
 
-        Debug.Log($"[GameManager] Intentando robar {drawCount} cartas...");
+        Debug.Log($"[GameManager] Intentando robar {targetDrawCount} cartas...");
 
         for (int i = 0; i < targetDrawCount; i++)
         {
@@ -1011,6 +1013,15 @@ public class GameManager : MonoBehaviour
             {
                 Debug.Log("[GameManager] Mazo agotado durante el robo, reciclando descartes...");
                 RecycleDiscardPile();
+                
+                // Si después de reciclar aún no hay cartas, intentar reinicializar
+                if (availableDeck.Count == 0 && allCards.Count > 0)
+                {
+                    Debug.LogWarning("[GameManager] No hay cartas después de reciclar. Reinicializando deck desde allCards...");
+                    availableDeck.AddRange(allCards);
+                    ShuffleDeck();
+                    Debug.Log($"[GameManager] Deck reinicializado con {availableDeck.Count} cartas");
+                }
             }
 
             if (availableDeck.Count > 0)
@@ -1041,18 +1052,27 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Asegura que el mazo tenga cartas disponibles, reciclando el descarte si es necesario
+    /// Asegura que el mazo tenga suficientes cartas disponibles (4), reciclando el descarte si es necesario
     /// </summary>
-    private void EnsureDeckHasCards()
+    private void EnsureDeckHasCards(int requiredCards = 4)
     {
-        if (availableDeck.Count == 0 && discardPile.Count > 0)
+        // Si el deck no tiene suficientes cartas y hay cartas en el descarte, reciclar
+        if (availableDeck.Count < requiredCards && discardPile.Count > 0)
         {
-            Debug.Log("[GameManager] Mazo principal vacío, reciclando pila de descartes...");
+            Debug.Log($"[GameManager] Mazo principal tiene {availableDeck.Count} cartas, necesitamos {requiredCards}. Reciclando pila de descartes...");
             RecycleDiscardPile();
         }
         else if (availableDeck.Count == 0 && discardPile.Count == 0)
         {
             Debug.LogWarning("[GameManager] ¡ADVERTENCIA: No hay cartas disponibles en el mazo ni en los descartes!");
+            // Si no hay cartas en ningún lado, reinicializar el deck desde allCards
+            if (allCards.Count > 0)
+            {
+                Debug.Log("[GameManager] Reinicializando el deck desde allCards...");
+                availableDeck.AddRange(allCards);
+                ShuffleDeck();
+                Debug.Log($"[GameManager] Deck reinicializado con {availableDeck.Count} cartas");
+            }
         }
     }
 
@@ -1087,11 +1107,15 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"[GameManager] Descartando {currentHand.Count} cartas de la mano...");
 
-        foreach (CardData card in currentHand)
+        // Crear una copia de la lista para evitar problemas al modificar durante la iteración
+        List<CardData> cardsToDiscard = new List<CardData>(currentHand);
+
+        foreach (CardData card in cardsToDiscard)
         {
             if (card != null)
             {
                 discardPile.Add(card);
+                Debug.Log($"[GameManager] Carta descartada: {card.cardName}");
             }
         }
 
@@ -1102,7 +1126,7 @@ public class GameManager : MonoBehaviour
             HandManager.Instance.RefreshHand();
         }
 
-        Debug.Log($"[GameManager] Descarte completado. Cartas en pila de descarte: {discardPile.Count}");
+        Debug.Log($"[GameManager] Descarte completado. Cartas en pila de descarte: {discardPile.Count}, Cartas en mano: {currentHand.Count}");
     }
 
     public void OnEnemyAttackStart()

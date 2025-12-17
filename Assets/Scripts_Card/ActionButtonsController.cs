@@ -526,11 +526,8 @@ public class ActionButtonsController : MonoBehaviour
             PlayerTurnEffects.Instance.ClearEffects();
         }
 
-        // Descartar todas las cartas de la mano
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.DiscardAllHandCards();
-        }
+        // NOTA: No descartar aquí, EndPlayerTurn() ya se encarga de descartar las cartas
+        // para evitar descartes duplicados
 
         // Cambiar al turno del enemigo
         if (GameManager.Instance != null)

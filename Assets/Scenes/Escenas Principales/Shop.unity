@@ -19041,7 +19041,6 @@ GameObject:
   - component: {fileID: 580858433}
   - component: {fileID: 580858432}
   - component: {fileID: 580858431}
-  - component: {fileID: 580858434}
   - component: {fileID: 580858430}
   m_Layer: 5
   m_Name: Boton_CambioEscena
@@ -19078,7 +19077,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 580858428}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d3a094cdf8104e41a4fa58421090e12, type: 3}
   m_Name: 
@@ -19136,7 +19135,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Battle2
+          m_StringArgument: BattleScene
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &580858432
@@ -19177,20 +19176,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 580858428}
   m_CullTransparentMesh: 1
---- !u!114 &580858434
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 580858428}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94a5a72c7b2e0904d9941bdd4fb839e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sceneName: Battle2
-  sceneIndex: -1
 --- !u!1 &581948197
 GameObject:
   m_ObjectHideFlags: 0
@@ -63961,10 +63946,14 @@ MonoBehaviour:
   blockMultiplier: 1
   healMultiplier: 1
   allCards:
-  - {fileID: 0}
-  - {fileID: 11400000, guid: 16a8bd9a9cc9f99478d67762ab05ab90, type: 2}
-  - {fileID: 11400000, guid: c8b60b1ca6469e04bbe575ad9db6af3d, type: 2}
-  - {fileID: 11400000, guid: d46e7dbfb9de0e34484fe79bb2dea0e1, type: 2}
+  - {fileID: 11400000, guid: f727f52952604ba4d9e0ac13b637b15c, type: 2}
+  - {fileID: 11400000, guid: 77e51a545e76c40019fd0f1269ce2cd7, type: 2}
+  - {fileID: 11400000, guid: da56aa78bd70b406aaf6ff055ad099bd, type: 2}
+  - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
+  - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
+  - {fileID: 11400000, guid: 315c9cf0c37b69147851aff6148a2807, type: 2}
+  - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
+  - {fileID: 11400000, guid: 4c0ff11ed0867b04b8aeca6b2d576686, type: 2}
   enemyController: {fileID: 176679489}
   playerController: {fileID: 0}
   playerHealth: {fileID: 0}
@@ -69529,7 +69518,7 @@ Transform:
   m_GameObject: {fileID: 1829582501}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.24602379, z: -0, w: 0.96926385}
-  m_LocalPosition: {x: 2.21, y: -3.74, z: 65.32}
+  m_LocalPosition: {x: 3.18, y: -3.74, z: 65.32}
   m_LocalScale: {x: 1.0129209, y: 1.0129209, z: 1.0129209}
   m_ConstrainProportionsScale: 0
   m_Children: []
