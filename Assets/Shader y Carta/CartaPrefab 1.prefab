@@ -263,8 +263,8 @@ RectTransform:
   - {fileID: 8213048556314954076}
   - {fileID: 6061918359858755198}
   - {fileID: 2717424503939207617}
-  - {fileID: 3595629774355321729}
   - {fileID: 1753495317203402233}
+  - {fileID: 3595629774355321729}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -333,7 +333,6 @@ MonoBehaviour:
   colorOutlineBase: {r: 0.06398667, g: 1, b: 0.015686274, a: 1}
   colorOutlinePulso: {r: 0.88718677, g: 1, b: 0, a: 1}
   velocidadPulso: 4
-  audioSource: {fileID: 537048660269579861}
 --- !u!114 &1546062554730248591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -380,7 +379,6 @@ MonoBehaviour:
   fullDescriptionText: {fileID: 0}
   selectionIndicator: {fileID: 0}
   selectedScale: 1.1
-  audioSource: {fileID: 537048660269579861}
   currentCard: {fileID: 0}
 --- !u!82 &537048660269579861
 AudioSource:

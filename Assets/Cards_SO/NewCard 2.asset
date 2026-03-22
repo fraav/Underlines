@@ -16,7 +16,7 @@ MonoBehaviour:
   baseValue: 1
   cardName: Adreline
   description: 'Duplica la siguente accion que elijas '
-  icon: {fileID: 21300000, guid: 70ec4c9c4f56bcc48aaf7ffc2a63df84, type: 3}
+  icon: {fileID: 21300000, guid: 9d4b3aadee99d004884db4bdedc43f79, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
   customActionPointTime: 0

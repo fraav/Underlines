@@ -26,6 +26,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Escenas Principales/Shop.unity
     guid: 9fef2798ad0c3444fb2231a50d5fb63c
+  - enabled: 1
+    path: Assets/Scenes/scenas nache/Battle1.unity
+    guid: 8e0c16598cc300c4cb764cdc8b0e9f85
+  - enabled: 1
+    path: Assets/Scenes/scenas nache/Battle2.unity
+    guid: d46a095d72bd6644aa966e94c64891b3
+  - enabled: 1
+    path: Assets/Scenes/scenas nache/Battle3.unity
+    guid: b7ad2e6a23875994098b6dc9e5205b00
   - enabled: 0
     path: Assets/Scenes/Escenas_Buenas/BattleScene2.unity
     guid: c3761b8ff6cdc364b91d6a63b577227c
