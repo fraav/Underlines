@@ -16,6 +16,7 @@ MonoBehaviour:
   baseValue: 1
   cardName: Lucyy
   description: ta loca
+  playEnergyCost: 4
   icon: {fileID: 21300000, guid: 70ec4c9c4f56bcc48aaf7ffc2a63df84, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
@@ -36,7 +37,6 @@ MonoBehaviour:
   additionalDamage: 1
   additionalHeal: 1
   additionalBlock: 1
-  energyCost: 0
   customTargetType: 2
   statusEffect: 0
   statusEffectDuration: 1

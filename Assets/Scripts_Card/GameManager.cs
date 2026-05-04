@@ -66,6 +66,18 @@ public class GameManager : MonoBehaviour
     private bool enemyIsValidTarget;
     private const string PlayerHealthKey = "PlayerCurrentHealth";
 
+    public const int MaxEnergyPerTurn = 8;
+    private int currentEnergy;
+    public int CurrentEnergy => currentEnergy;
+
+    /// <summary>currentEnergy, MaxEnergyPerTurn</summary>
+    public event System.Action<int, int> OnPlayerEnergyChanged;
+
+    private void NotifyPlayerEnergyChanged()
+    {
+        OnPlayerEnergyChanged?.Invoke(currentEnergy, MaxEnergyPerTurn);
+    }
+
     private CardData selectedCard;
     private CardDisplay selectedCardDisplay;
     public CardData SelectedCard => selectedCard;
@@ -318,6 +330,8 @@ public class GameManager : MonoBehaviour
         availableDeck.AddRange(allCards);
         ShuffleDeck();
 
+        currentEnergy = MaxEnergyPerTurn;
+
         // CRÍTICO: Desbloquear interacciones antes de establecer el turno
         SetInteractionBlocked(false);
         waitingForDialogue = false;
@@ -333,6 +347,8 @@ public class GameManager : MonoBehaviour
         {
             HandManager.Instance.UpdateInteractableState();
         }
+
+        NotifyPlayerEnergyChanged();
     }
 
     // ►►► MÉTODO PARA ESPERAR DIÁLOGO ◄◄◄
@@ -431,9 +447,45 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void StartTargetSelection(CardData card, CardDisplay display)
+    public int GetPlayEnergyCost(CardData card)
     {
-        if (AreInteractionsBlocked() || waitingForDialogue) return;
+        if (card == null) return 0;
+        return Mathf.Max(0, card.playEnergyCost);
+    }
+
+    public bool CanAffordEnergy(CardData card)
+    {
+        return card != null && currentEnergy >= GetPlayEnergyCost(card);
+    }
+
+    private void SpendEnergyForCard(CardData card)
+    {
+        int cost = GetPlayEnergyCost(card);
+        currentEnergy = Mathf.Max(0, currentEnergy - cost);
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.UpdateInteractableState();
+        }
+
+        NotifyPlayerEnergyChanged();
+    }
+
+    public void RefundEnergy(int amount)
+    {
+        if (amount <= 0) return;
+        currentEnergy = Mathf.Min(MaxEnergyPerTurn, currentEnergy + amount);
+        if (HandManager.Instance != null)
+        {
+            HandManager.Instance.UpdateInteractableState();
+        }
+
+        NotifyPlayerEnergyChanged();
+    }
+
+    public bool StartTargetSelection(CardData card, CardDisplay display)
+    {
+        if (AreInteractionsBlocked() || waitingForDialogue) return false;
+        if (!CanAffordEnergy(card)) return false;
 
         if (selectedCardDisplay != null && selectedCardDisplay != display)
         {
@@ -473,6 +525,7 @@ public class GameManager : MonoBehaviour
 
         playerController?.SetHighlight(playerIsValidTarget);
         enemyController?.SetHighlight(enemyIsValidTarget);
+        return true;
     }
 
     public void SelectTarget(GameObject target)
@@ -511,7 +564,9 @@ public class GameManager : MonoBehaviour
         
         // Guardar referencia de la carta antes de ejecutar
         CardData cardToExecute = selectedCard;
-        
+
+        SpendEnergyForCard(cardToExecute);
+
         RemoveCardFromHand(selectedCard);
 
         // Limpiar selección antes de ejecutar para permitir nuevas selecciones
@@ -528,10 +583,9 @@ public class GameManager : MonoBehaviour
         // Para cartas Booster, esto NO termina el turno
         ExecuteCardAction(cardToExecute);
 
-        // Asegurarse de que las cartas sigan siendo interactuables
         if (HandManager.Instance != null)
         {
-            HandManager.Instance.SetInteractable(true);
+            HandManager.Instance.UpdateInteractableState();
         }
 
         Debug.Log("[GameManager] Carta ejecutada. Estado del turno: PlayerTurn. Puedes seguir jugando cartas.");
@@ -565,6 +619,15 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] ===== DESHACIENDO TODAS LAS ACCIONES DE POTENCIACIÓN DEL TURNO =====");
         Debug.Log($"[GameManager] Cartas jugadas este turno: {playedCardsThisTurn.Count}");
 
+        int refundEnergy = 0;
+        foreach (CardData card in playedCardsThisTurn)
+        {
+            if (card != null && card.cardType == CardData.CardType.Booster)
+            {
+                refundEnergy += GetPlayEnergyCost(card);
+            }
+        }
+
         // Devolver TODAS las cartas potenciadoras jugadas este turno a la mano
         List<CardData> cardsToReturn = new List<CardData>();
         
@@ -590,6 +653,11 @@ public class GameManager : MonoBehaviour
         int cardsCleared = playedCardsThisTurn.Count;
         playedCardsThisTurn.Clear();
         Debug.Log($"[GameManager] Lista de cartas jugadas limpiada ({cardsCleared} cartas)");
+
+        if (refundEnergy > 0)
+        {
+            RefundEnergy(refundEnergy);
+        }
 
         // Limpiar TODOS los efectos acumulados del turno
         if (PlayerTurnEffects.Instance != null)
@@ -930,6 +998,9 @@ public class GameManager : MonoBehaviour
     public void StartPlayerTurn()
     {
         Debug.Log("[GameManager] ===== INICIANDO TURNO DEL JUGADOR =====");
+
+        currentEnergy = MaxEnergyPerTurn;
+        NotifyPlayerEnergyChanged();
 
         // CRÍTICO: Desbloquear interacciones PRIMERO antes de cualquier otra operación
         SetInteractionBlocked(false);

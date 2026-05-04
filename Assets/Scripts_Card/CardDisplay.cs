@@ -57,7 +57,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
         {
             bool shouldBeInteractable = GameManager.Instance.currentTurn == GameManager.TurnState.PlayerTurn &&
                                       GameManager.Instance.isBattleScene &&
-                                      !GameManager.Instance.AreInteractionsBlocked();
+                                      !GameManager.Instance.AreInteractionsBlocked() &&
+                                      GameManager.Instance.CanAffordEnergy(card);
             SetInteractableState(shouldBeInteractable);
         }
         else

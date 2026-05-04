@@ -9,6 +9,11 @@ public class CardData : ScriptableObject
     public string cardName;
     [TextArea] public string description;
 
+    [Header("Energy")]
+    [Tooltip("Puntos de energía que cuesta jugar esta carta en el turno del jugador (máximo 8 por turno). Use 0 para carta gratuita.")]
+    [Min(0)]
+    public int playEnergyCost = 1;
+
     // Sprite para uso en el juego
     public Sprite icon;
 
@@ -78,9 +83,6 @@ public class CardData : ScriptableObject
 
     [Tooltip("Efecto adicional de bloqueo (se suma al baseValue)")]
     public float additionalBlock = 0f;
-
-    [Tooltip("Multiplicador de energía/coste (para futuros sistemas de energía)")]
-    public float energyCost = 0f;
 
     [Tooltip("Tipo de objetivo adicional (para futuros sistemas de targeting)")]
     public TargetType customTargetType = TargetType.None;

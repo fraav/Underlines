@@ -16,6 +16,7 @@ MonoBehaviour:
   baseValue: 0
   cardName: Defensa +
   description: Incrementa tu defensa
+  playEnergyCost: 4
   icon: {fileID: 399886012, guid: 077c00202b3c73140abf86e1cc13159b, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
@@ -36,7 +37,6 @@ MonoBehaviour:
   additionalDamage: 0
   additionalHeal: 0
   additionalBlock: 0
-  energyCost: 0
   customTargetType: 0
   statusEffect: 0
   statusEffectDuration: 0

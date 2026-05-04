@@ -145,7 +145,13 @@ public class HandManager : MonoBehaviour
                 CardDisplay display = cardObj.GetComponent<CardDisplay>();
                 if (display != null)
                 {
-                    display.SetInteractableState(interactable);
+                    bool perCardInteractable = interactable;
+                    if (perCardInteractable && GameManager.Instance != null && display.currentCard != null)
+                    {
+                        perCardInteractable = GameManager.Instance.CanAffordEnergy(display.currentCard);
+                    }
+
+                    display.SetInteractableState(perCardInteractable);
                     cardsUpdated++;
 
                     if (!interactable && display == GameManager.Instance?.SelectedCardDisplay)
