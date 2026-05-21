@@ -103,6 +103,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -239,6 +240,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -479,14 +481,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b4380c7ec550dd43be5d0d43c228a8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inclinacionMax: 80
   velocidadAnimacion: 150
-  sensibilidadBalanceo: 5
-  maxBalanceo: 120
-  amortiguacionBalanceo: 80
-  oscilacionIdle: 20
-  frecuenciaIdle: 20
-  tiempoParaIdle: 0.2
   colorOutlineBase: {r: 1, g: 0.015686274, b: 0.80877066, a: 1}
   colorOutlinePulso: {r: 0.9653371, g: 0.8066038, b: 1, a: 1}
   velocidadPulso: 4
@@ -608,6 +603,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

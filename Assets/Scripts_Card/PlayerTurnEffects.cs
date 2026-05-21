@@ -15,11 +15,22 @@ public class PlayerTurnEffects : MonoBehaviour
         public CardData.BoosterEffectType effectType;
         public float value;
 
+        public string sourceName;
+
         public ActiveEffect(CardData card)
         {
             this.card = card;
             this.effectType = card.boosterEffectType;
             this.value = card.boosterValue;
+            this.sourceName = card != null ? card.cardName : "Unknown";
+        }
+
+        public ActiveEffect(CardData.BoosterEffectType type, float effectValue, CardData cardRef, string source)
+        {
+            this.card = cardRef;
+            this.effectType = type;
+            this.value = effectValue;
+            this.sourceName = source;
         }
 
         public string GetEffectDescription()
@@ -73,13 +84,23 @@ public class PlayerTurnEffects : MonoBehaviour
             Debug.Log($"[PlayerTurnEffects] ✓ Efecto añadido: {card.cardName} - {effect.GetEffectDescription()}");
             Debug.Log($"[PlayerTurnEffects] Total de efectos activos: {activeEffects.Count}");
             
-            // Mostrar resumen de efectos acumulados
             LogEffectsSummary();
         }
         else
         {
             Debug.LogWarning($"[PlayerTurnEffects] Intento de añadir efecto de carta no potenciadora: {card.cardType}");
         }
+    }
+
+    /// <summary>
+    /// Duplica la siguiente acción (desde carta/objeto u otra fuente).
+    /// </summary>
+    public void AddDoubleActionEffect(string sourceName = "Object")
+    {
+        ActiveEffect effect = new ActiveEffect(CardData.BoosterEffectType.DoubleAction, 1f, null, sourceName);
+        activeEffects.Add(effect);
+        Debug.Log($"[PlayerTurnEffects] ✓ Duplicar acción desde: {sourceName}");
+        LogEffectsSummary();
     }
 
     /// <summary>

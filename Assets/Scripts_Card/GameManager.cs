@@ -19,10 +19,19 @@ public class GameManager : MonoBehaviour
     public float healMultiplier = 1.0f;
 
     [Header("Card System")]
+    public const int CardsDrawPerTurn = 2;
+    public const int ObjectCardsDrawPerTurn = 2;
+
     public List<CardData> allCards = new List<CardData>();
     private List<CardData> availableDeck = new List<CardData>();
     private List<CardData> discardPile = new List<CardData>();
     public List<CardData> currentHand { get; private set; } = new List<CardData>();
+
+    [Header("Object Card System (carta/objeto)")]
+    public List<ObjectCardData> allObjectCards = new List<ObjectCardData>();
+    private List<ObjectCardData> availableObjectDeck = new List<ObjectCardData>();
+    private List<ObjectCardData> objectDiscardPile = new List<ObjectCardData>();
+    public List<ObjectCardData> currentObjectHand { get; private set; } = new List<ObjectCardData>();
     
     // Rastreo de cartas jugadas en el turno actual (para deshacer)
     private List<CardData> playedCardsThisTurn = new List<CardData>();
@@ -136,6 +145,10 @@ public class GameManager : MonoBehaviour
         discardPile.Clear();
         playedCardsThisTurn.Clear();
 
+        currentObjectHand.Clear();
+        availableObjectDeck.Clear();
+        objectDiscardPile.Clear();
+
         // Limpiar efectos del jugador
         if (PlayerTurnEffects.Instance != null)
         {
@@ -188,6 +201,30 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.LogWarning($"[GameManager] La carta {card.cardName} ya está en el deck permanente");
+        }
+    }
+
+    /// <summary>
+    /// Añade una carta/objeto al mazo permanente (tienda u otros sistemas).
+    /// </summary>
+    public void AddCardToPermanentObjectDeck(ObjectCardData card)
+    {
+        if (card == null)
+        {
+            Debug.LogWarning("[GameManager] Intento de añadir carta/objeto nula al mazo");
+            return;
+        }
+
+        if (!allObjectCards.Contains(card))
+        {
+            allObjectCards.Add(card);
+            Debug.Log($"[GameManager] ✓ Carta/objeto {card.cardName} añadida al mazo permanente");
+            PlayerPrefs.SetInt($"ObjectCardInDeck_{card.cardName}", 1);
+            PlayerPrefs.Save();
+        }
+        else
+        {
+            Debug.LogWarning($"[GameManager] La carta/objeto {card.cardName} ya está en el mazo");
         }
     }
 
@@ -330,6 +367,12 @@ public class GameManager : MonoBehaviour
         availableDeck.AddRange(allCards);
         ShuffleDeck();
 
+        currentObjectHand.Clear();
+        availableObjectDeck.Clear();
+        objectDiscardPile.Clear();
+        availableObjectDeck.AddRange(allObjectCards);
+        ShuffleObjectDeck();
+
         currentEnergy = MaxEnergyPerTurn;
 
         // CRÍTICO: Desbloquear interacciones antes de establecer el turno
@@ -339,7 +382,6 @@ public class GameManager : MonoBehaviour
         // CRÍTICO: Establecer el turno ANTES de robar cartas
         currentTurn = TurnState.PlayerTurn;
 
-        // Robar 4 cartas al inicio del primer turno
         DrawCardsForNewTurn();
 
         // CRÍTICO: Forzar actualización del estado después de robar cartas
@@ -458,16 +500,37 @@ public class GameManager : MonoBehaviour
         return card != null && currentEnergy >= GetPlayEnergyCost(card);
     }
 
+    public int GetObjectPlayEnergyCost(ObjectCardData card)
+    {
+        if (card == null) return 0;
+        return Mathf.Max(0, card.playEnergyCost);
+    }
+
+    public bool CanAffordObjectEnergy(ObjectCardData card)
+    {
+        return card != null && currentEnergy >= GetObjectPlayEnergyCost(card);
+    }
+
     private void SpendEnergyForCard(CardData card)
     {
         int cost = GetPlayEnergyCost(card);
         currentEnergy = Mathf.Max(0, currentEnergy - cost);
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.UpdateInteractableState();
-        }
-
+        RefreshHandInteractableState();
         NotifyPlayerEnergyChanged();
+    }
+
+    private void SpendEnergyForObjectCard(ObjectCardData card)
+    {
+        int cost = GetObjectPlayEnergyCost(card);
+        currentEnergy = Mathf.Max(0, currentEnergy - cost);
+        RefreshHandInteractableState();
+        NotifyPlayerEnergyChanged();
+    }
+
+    private void RefreshHandInteractableState()
+    {
+        if (HandManager.Instance != null)
+            HandManager.Instance.UpdateInteractableState();
     }
 
     public void RefundEnergy(int amount)
@@ -658,6 +721,8 @@ public class GameManager : MonoBehaviour
         {
             RefundEnergy(refundEnergy);
         }
+
+        RefreshHandInteractableState();
 
         // Limpiar TODOS los efectos acumulados del turno
         if (PlayerTurnEffects.Instance != null)
@@ -877,6 +942,104 @@ public class GameManager : MonoBehaviour
         Debug.Log("[GameManager] Carta potenciadora jugada. El turno continúa, puedes jugar más cartas.");
     }
 
+    // ─── Carta/objeto: juego instantáneo (no termina turno) ───
+
+    public bool TryPlayObjectCard(ObjectCardDisplay display)
+    {
+        if (display == null || display.currentCard == null) return false;
+        if (AreInteractionsBlocked() || waitingForDialogue) return false;
+        if (currentTurn != TurnState.PlayerTurn) return false;
+        if (!CanAffordObjectEnergy(display.currentCard)) return false;
+
+        ObjectCardData card = display.currentCard;
+        SpendEnergyForObjectCard(card);
+        RemoveObjectCardFromHand(card);
+        ExecuteObjectCardEffect(card);
+
+        Debug.Log($"[GameManager] Carta/objeto jugada: {card.cardName}. Turno continúa.");
+        return true;
+    }
+
+    private void RemoveObjectCardFromHand(ObjectCardData card)
+    {
+        if (!currentObjectHand.Contains(card)) return;
+        currentObjectHand.Remove(card);
+        objectDiscardPile.Add(card);
+
+        if (HandManager.Instance != null)
+            HandManager.Instance.RefreshObjectHand();
+    }
+
+    private void ExecuteObjectCardEffect(ObjectCardData card)
+    {
+        if (card == null) return;
+
+        GameObject target = playerHealth != null ? playerHealth.gameObject : null;
+        PlayObjectCardEffects(card, target);
+
+        switch (card.effectType)
+        {
+            case ObjectCardData.ObjectEffectType.DoubleNextAction:
+                if (PlayerTurnEffects.Instance != null)
+                    PlayerTurnEffects.Instance.AddDoubleActionEffect(card.cardName);
+                if (EffectsDisplayUI.Instance != null)
+                    EffectsDisplayUI.Instance.RefreshDisplay();
+                break;
+
+            case ObjectCardData.ObjectEffectType.Heal:
+                float finalHeal = (card.baseValue + card.individualBaseValueUpgrade) * healMultiplier;
+                if (playerHealth != null)
+                    playerHealth.Heal((int)finalHeal);
+                break;
+
+            case ObjectCardData.ObjectEffectType.RestoreEnergy:
+                RefundEnergy(card.restoreEnergyAmount);
+                break;
+
+            case ObjectCardData.ObjectEffectType.DrawCard:
+                DrawCardsFromMainDeck(card.drawCardCount);
+                break;
+        }
+    }
+
+    public void PlayObjectCardEffects(ObjectCardData card, GameObject target = null)
+    {
+        if (card == null) return;
+
+        if (card.cardSound != null)
+            AudioSource.PlayClipAtPoint(card.cardSound, Camera.main.transform.position);
+        else
+            PlayHealCardSound();
+
+        if (card.animationPrefab != null)
+            SpawnObjectAnimationPrefab(card, target);
+        else if (!string.IsNullOrEmpty(card.nombreObjetoEnEscenaAActivar))
+        {
+            GameObject animationObject = card.GetObjetoAActivar();
+            if (animationObject != null)
+                StartCoroutine(ActivateObjectForTime(animationObject, card.animationObjectActiveTime));
+        }
+    }
+
+    private void SpawnObjectAnimationPrefab(ObjectCardData card, GameObject target)
+    {
+        if (card.animationPrefab == null) return;
+
+        Vector3 spawnPosition = card.prefabSpawnPosition;
+        Transform parent = null;
+
+        if (target != null && card.attachToTarget)
+            parent = target.transform;
+
+        GameObject instance = Instantiate(card.animationPrefab, spawnPosition, Quaternion.identity, parent);
+        if (instance != null)
+        {
+            if (parent == null && spawnPosition == Vector3.zero && target != null)
+                instance.transform.position = target.transform.position;
+            StartCoroutine(DestroyAfterTime(instance, card.animationObjectActiveTime));
+        }
+    }
+
     public void UpdateTargetSelection(GameObject target)
     {
         if (target.CompareTag("Player"))
@@ -950,6 +1113,7 @@ public class GameManager : MonoBehaviour
 
         // Descartar todas las cartas de la mano
         DiscardAllHandCards();
+        DiscardAllObjectHandCards();
 
         // Limpiar cartas jugadas del turno
         playedCardsThisTurn.Clear();
@@ -1033,11 +1197,17 @@ public class GameManager : MonoBehaviour
             DiscardAllHandCards();
         }
 
+        if (currentObjectHand.Count > 0)
+        {
+            Debug.LogWarning($"[GameManager] Mano objeto no vacía ({currentObjectHand.Count}). Descartando...");
+            DiscardAllObjectHandCards();
+        }
+
         // CRÍTICO: Establecer el turno ANTES de robar cartas
         // Esto asegura que RefreshHand() vea el turno correcto
         currentTurn = TurnState.PlayerTurn;
 
-        // Robar 4 cartas nuevas para este turno (RefreshHand se llama dentro de DrawCardsForNewTurn)
+        // Robar 2 cartas + 2 carta/objeto (RefreshAllHands dentro de DrawCardsForNewTurn)
         DrawCardsForNewTurn();
         
         // CRÍTICO: Forzar actualización del estado de interacción después de robar cartas
@@ -1062,64 +1232,76 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Roba 4 cartas para el inicio de un nuevo turno del jugador
+    /// Roba cartas y carta/objeto al inicio del turno del jugador (2 + 2 por defecto).
     /// </summary>
     private void DrawCardsForNewTurn()
     {
-        Debug.Log("[GameManager] ===== INICIANDO ROBAR CARTAS PARA NUEVO TURNO =====");
-        Debug.Log($"[GameManager] Cartas en mazo principal: {availableDeck.Count}");
-        Debug.Log($"[GameManager] Cartas en pila de descartes: {discardPile.Count}");
-        Debug.Log($"[GameManager] Cartas en mano: {currentHand.Count}");
+        Debug.Log("[GameManager] ===== ROBAR PARA NUEVO TURNO =====");
+        DrawCardsFromMainDeck(CardsDrawPerTurn);
+        DrawObjectCardsForTurn(ObjectCardsDrawPerTurn);
 
-        // Robar 4 cartas
-        int targetDrawCount = 4;
-        List<CardData> drawnCards = new List<CardData>();
+        if (HandManager.Instance != null)
+            HandManager.Instance.RefreshAllHands();
 
-        Debug.Log($"[GameManager] Intentando robar {targetDrawCount} cartas...");
+        Debug.Log($"[GameManager] Mano cartas: {currentHand.Count}, Mano objeto: {currentObjectHand.Count}");
+    }
 
-        for (int i = 0; i < targetDrawCount; i++)
+    /// <summary>
+    /// Roba cartas del mazo principal (p. ej. efecto DrawCard en carta/objeto).
+    /// </summary>
+    public int DrawCardsFromMainDeck(int count)
+    {
+        if (count <= 0) return 0;
+
+        int drawn = 0;
+        for (int i = 0; i < count; i++)
         {
-            // Verificar si necesitamos reciclar el mazo antes de cada robo
             if (availableDeck.Count == 0)
             {
-                Debug.Log("[GameManager] Mazo agotado durante el robo, reciclando descartes...");
                 RecycleDiscardPile();
-                
-                // Si después de reciclar aún no hay cartas, intentar reinicializar
                 if (availableDeck.Count == 0 && allCards.Count > 0)
                 {
-                    Debug.LogWarning("[GameManager] No hay cartas después de reciclar. Reinicializando deck desde allCards...");
                     availableDeck.AddRange(allCards);
                     ShuffleDeck();
-                    Debug.Log($"[GameManager] Deck reinicializado con {availableDeck.Count} cartas");
                 }
             }
 
-            if (availableDeck.Count > 0)
-            {
-                CardData card = availableDeck[0];
-                availableDeck.RemoveAt(0);
-                drawnCards.Add(card);
-                currentHand.Add(card);
-                Debug.Log($"[GameManager] ✓ Carta robada ({i + 1}/{targetDrawCount}): {card.cardName}");
-            }
-            else
-            {
-                Debug.LogWarning($"[GameManager] No hay más cartas disponibles para robar. Robadas: {drawnCards.Count}/{targetDrawCount}");
-                break;
-            }
+            if (availableDeck.Count == 0) break;
+
+            CardData card = availableDeck[0];
+            availableDeck.RemoveAt(0);
+            currentHand.Add(card);
+            drawn++;
+            Debug.Log($"[GameManager] Carta robada (extra): {card.cardName}");
         }
 
         if (HandManager.Instance != null)
-        {
             HandManager.Instance.RefreshHand();
-        }
 
-        Debug.Log($"[GameManager] ===== ROBAR COMPLETADO =====");
-        Debug.Log($"[GameManager] Cartas robadas: {drawnCards.Count}");
-        Debug.Log($"[GameManager] Cartas en mano: {currentHand.Count}");
-        Debug.Log($"[GameManager] Cartas restantes en mazo: {availableDeck.Count}");
-        Debug.Log($"[GameManager] Cartas en pila de descartes: {discardPile.Count}");
+        return drawn;
+    }
+
+    private void DrawObjectCardsForTurn(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (availableObjectDeck.Count == 0)
+            {
+                RecycleObjectDiscardPile();
+                if (availableObjectDeck.Count == 0 && allObjectCards.Count > 0)
+                {
+                    availableObjectDeck.AddRange(allObjectCards);
+                    ShuffleObjectDeck();
+                }
+            }
+
+            if (availableObjectDeck.Count == 0) break;
+
+            ObjectCardData card = availableObjectDeck[0];
+            availableObjectDeck.RemoveAt(0);
+            currentObjectHand.Add(card);
+            Debug.Log($"[GameManager] Carta/objeto robada: {card.cardName}");
+        }
     }
 
     /// <summary>
@@ -1198,6 +1380,40 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"[GameManager] Descarte completado. Cartas en pila de descarte: {discardPile.Count}, Cartas en mano: {currentHand.Count}");
+    }
+
+    public void DiscardAllObjectHandCards()
+    {
+        List<ObjectCardData> toDiscard = new List<ObjectCardData>(currentObjectHand);
+        foreach (ObjectCardData card in toDiscard)
+        {
+            if (card != null)
+                objectDiscardPile.Add(card);
+        }
+
+        currentObjectHand.Clear();
+
+        if (HandManager.Instance != null)
+            HandManager.Instance.RefreshObjectHand();
+    }
+
+    private void RecycleObjectDiscardPile()
+    {
+        if (objectDiscardPile.Count == 0) return;
+        availableObjectDeck.AddRange(objectDiscardPile);
+        objectDiscardPile.Clear();
+        ShuffleObjectDeck();
+    }
+
+    public void ShuffleObjectDeck()
+    {
+        for (int i = availableObjectDeck.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+            ObjectCardData temp = availableObjectDeck[i];
+            availableObjectDeck[i] = availableObjectDeck[randomIndex];
+            availableObjectDeck[randomIndex] = temp;
+        }
     }
 
     public void OnEnemyAttackStart()
@@ -1368,11 +1584,7 @@ public class GameManager : MonoBehaviour
         interactionsBlocked = blocked;
         Debug.Log($"[GameManager] SetInteractionBlocked({blocked}) - interactionsBlocked: {interactionsBlocked}, waitingForDialogue: {waitingForDialogue}");
         
-        // CRÍTICO: Actualizar el estado de las cartas cuando cambia el bloqueo
-        if (HandManager.Instance != null)
-        {
-            HandManager.Instance.UpdateInteractableState();
-        }
+        RefreshHandInteractableState();
     }
 
     public bool AreInteractionsBlocked()

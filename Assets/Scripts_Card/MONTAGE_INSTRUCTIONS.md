@@ -42,9 +42,19 @@ Este documento explica cómo montar todos los nuevos elementos necesarios para e
        - `effectsText` → Componente TMP_Text de EffectsText
        - `undoButton` → Componente Button de UndoButton
 
-### 5. **HandManager** (Ya existe, verificar configuración)
-   - ✅ Debe tener el prefab de carta asignado
-   - ✅ Debe tener el contenedor de la mano configurado
+### 5. **HandManager** (dos paneles: carta + carta/objeto)
+   - **Cartas (mazo principal)**:
+     - `cardPrefab` → prefab con `CardDisplay` + `Card`
+     - `handContainer` → panel UI de la mano de cartas
+   - **Carta/objeto (mazo secundario)**:
+     - `objectCardPrefab` → prefab con `ObjectCardDisplay` + `ObjectCard` (puede duplicar el prefab de carta y cambiar componentes)
+     - `objectHandContainer` → **panel UI distinto** (otra zona de la pantalla)
+   - Ajusta `cardSpacing` / `objectCardSpacing` y posiciones X/Y de cada panel por separado
+
+### 5b. **GameManager – dos mazos**
+   - `allCards` → solo cartas normales (ataque/bloqueo/cura/booster)
+   - `allObjectCards` → solo ScriptableObjects **Object Card** (nunca mezclar listas)
+   - Al inicio de cada turno del jugador: **2 cartas + 2 carta/objeto** (`CardsDrawPerTurn` / `ObjectCardsDrawPerTurn` en código)
 
 ### 6. **Player GameObject** (Ya existe)
    - ✅ Debe tener el tag "Player"
@@ -80,6 +90,42 @@ Canvas
 ```
 
 **Posición recomendada**: Esquina superior izquierda o derecha.
+
+## 🃏 Carta/objeto (Object Card) – montaje rápido
+
+### Crear assets
+1. Project → **Create → Card Game → Object Card**
+2. Por cada efecto, configura `effectType`:
+   - **DoubleNextAction** → duplica la siguiente acción (botones de ataque/bloqueo/cura)
+   - **Heal** → `baseValue` = cantidad de curación
+   - **RestoreEnergy** → `restoreEnergyAmount` (por defecto 2)
+   - **DrawCard** → `drawCardCount` (por defecto 1, roba del mazo de **cartas**, no del mazo objeto)
+3. `playEnergyCost` como en las cartas normales
+4. Añade cada asset a **GameManager → All Object Cards** (no a `allCards`)
+
+### Prefab de mano objeto
+- Duplica `Card_Prefab` (o crea uno nuevo)
+- Quita `Card` / `CardDisplay` si no los necesitas en ese prefab
+- Añade **ObjectCardDisplay** y **ObjectCard**
+- Enlaza en HandManager → `objectCardPrefab` y `objectHandContainer`
+
+### Jugar carta/objeto
+- **Arrastrar al jugador** (tag `Player`) → efecto al instante (igual que cartas booster)
+- **No** se activa con clic izquierdo
+- `objectHandContainer` debe tener **Vertical Layout Group** (HandManager lo crea si falta)
+- No asignes posiciones manuales a las carta/objeto; el layout las apila en vertical
+
+### Tienda (opcional)
+- GameObject con `ObjectCardPurchaseShopItem` (hereda de `ShopItem`)
+- Asigna el `ObjectCardData` a comprar → llama a `AddCardToPermanentObjectDeck`
+
+### Ejemplo de 4 carta/objeto iniciales
+| Nombre (ejemplo) | effectType      | Campos clave        |
+|----------------|-----------------|---------------------|
+| Duplicador     | DoubleNextAction| playEnergyCost: 1   |
+| Botiquín       | Heal            | baseValue: 20       |
+| Batería        | RestoreEnergy   | restoreEnergyAmount: 2 |
+| Recarga        | DrawCard        | drawCardCount: 1    |
 
 ## 📝 Pasos de Montaje Detallados
 
@@ -167,7 +213,7 @@ El sistema incluye extensos `Debug.Log` para verificar el funcionamiento. Al pro
    - `[EffectsDisplayUI]` - Actualización de UI
 
 2. **Flujo de prueba**:
-   - Inicia la batalla → Deberías ver "Robando 4 cartas..."
+   - Inicia la batalla → Mano con 2 cartas + 2 carta/objeto en sus paneles
    - Arrastra una carta Booster al jugador → Deberías ver "Efecto agregado"
    - Presiona un botón de acción → Deberías ver "Botón de [ACCIÓN] presionado"
    - Verifica que los efectos se muestren en el panel
@@ -177,7 +223,7 @@ El sistema incluye extensos `Debug.Log` para verificar el funcionamiento. Al pro
 
 - **Todas las cartas Booster** deben tener como objetivo válido al **jugador**
 - El sistema **descartará todas las cartas** al final del turno
-- Se robarán **4 cartas nuevas** al inicio de cada turno del jugador
+- Se robarán **2 cartas** y **2 carta/objeto** al inicio de cada turno del jugador
 - Los **efectos se consumen** cuando se ejecuta una acción
 - El **turno del enemigo** no ha sido modificado y funciona igual que antes
 
