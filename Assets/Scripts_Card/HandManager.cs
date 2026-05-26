@@ -16,9 +16,12 @@ public class HandManager : MonoBehaviour
     [SerializeField] private float startYPosition = 0f;
     private List<GameObject> spawnedCards = new List<GameObject>();
 
-    [Header("Carta/objeto (Vertical Layout Group en objectHandContainer)")]
+    [Header("Carta/objeto (mismo sistema de posición manual que cartas, en vertical)")]
     [SerializeField] private GameObject objectCardPrefab;
     [SerializeField] private Transform objectHandContainer;
+    [SerializeField] private float objectCardSpacing = 120f;
+    [SerializeField] private float objectStartXPosition = 0f;
+    [SerializeField] private float objectStartYPosition = 0f;
     private List<GameObject> spawnedObjectCards = new List<GameObject>();
 
     void Awake()
@@ -40,40 +43,28 @@ public class HandManager : MonoBehaviour
         if (objectCardPrefab == null)
             objectCardPrefab = cardPrefab;
 
-        EnsureObjectHandLayoutSetup();
+        DisableLayoutOnObjectHandContainer();
         StartCoroutine(InitializeHand());
     }
 
     /// <summary>
-    /// El contenedor de carta/objeto debe usar Vertical Layout Group; no se posicionan manualmente.
+    /// El layout group interfiere con el posicionamiento manual (igual que en la mano de cartas).
     /// </summary>
-    private void EnsureObjectHandLayoutSetup()
+    private void DisableLayoutOnObjectHandContainer()
     {
         if (objectHandContainer == null) return;
 
-        RectTransform rt = objectHandContainer as RectTransform;
-        if (rt == null) return;
-
         VerticalLayoutGroup vlg = objectHandContainer.GetComponent<VerticalLayoutGroup>();
-        if (vlg == null)
-        {
-            vlg = objectHandContainer.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 12f;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = true;
-            vlg.childForceExpandWidth = false;
-            vlg.childForceExpandHeight = false;
-            Debug.Log("[HandManager] VerticalLayoutGroup añadido a objectHandContainer.");
-        }
+        if (vlg != null)
+            vlg.enabled = false;
+
+        HorizontalLayoutGroup hlg = objectHandContainer.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null)
+            hlg.enabled = false;
 
         ContentSizeFitter csf = objectHandContainer.GetComponent<ContentSizeFitter>();
-        if (csf == null)
-        {
-            csf = objectHandContainer.gameObject.AddComponent<ContentSizeFitter>();
-            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        }
+        if (csf != null)
+            csf.enabled = false;
     }
 
     private IEnumerator InitializeHand()
@@ -132,8 +123,14 @@ public class HandManager : MonoBehaviour
         foreach (ObjectCardData card in GameManager.Instance.currentObjectHand)
         {
             GameObject newCard = Instantiate(prefab, objectHandContainer);
-            newCard.transform.localScale = Vector3.one;
-            newCard.transform.localRotation = Quaternion.identity;
+
+            // Evitar conflicto si el prefab duplicado aún trae Card/CardDisplay
+            Card legacyCard = newCard.GetComponent<Card>();
+            if (legacyCard != null)
+                Destroy(legacyCard);
+            CardDisplay legacyDisplay = newCard.GetComponent<CardDisplay>();
+            if (legacyDisplay != null)
+                Destroy(legacyDisplay);
 
             ObjectCardDisplay display = newCard.GetComponent<ObjectCardDisplay>();
             if (display == null)
@@ -142,39 +139,12 @@ public class HandManager : MonoBehaviour
             if (newCard.GetComponent<ObjectCard>() == null)
                 newCard.AddComponent<ObjectCard>();
 
-            EnsureObjectCardLayoutElement(newCard);
-
             display.Initialize(card);
             spawnedObjectCards.Add(newCard);
         }
 
-        RebuildObjectHandLayout();
+        ArrangeCardsVertical(spawnedObjectCards, objectCardSpacing, objectStartXPosition, objectStartYPosition);
         UpdateInteractableState();
-    }
-
-    private static void EnsureObjectCardLayoutElement(GameObject cardObject)
-    {
-        LayoutElement le = cardObject.GetComponent<LayoutElement>();
-        if (le == null)
-            le = cardObject.AddComponent<LayoutElement>();
-
-        RectTransform rt = cardObject.GetComponent<RectTransform>();
-        if (rt != null)
-        {
-            if (le.preferredWidth <= 0f)
-                le.preferredWidth = rt.sizeDelta.x > 0 ? rt.sizeDelta.x : 120f;
-            if (le.preferredHeight <= 0f)
-                le.preferredHeight = rt.sizeDelta.y > 0 ? rt.sizeDelta.y : 160f;
-        }
-    }
-
-    public void RebuildObjectHandLayout()
-    {
-        if (objectHandContainer == null) return;
-
-        RectTransform containerRect = objectHandContainer as RectTransform;
-        if (containerRect != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
     }
 
     public void RefreshAllHands()
@@ -215,17 +185,45 @@ public class HandManager : MonoBehaviour
 
             float x = startX + i * spacing;
             float y = startY;
-            Vector2 targetPos = new Vector2(x, y);
-
-            RectTransform cardRect = card.GetComponent<RectTransform>();
-            if (cardRect != null)
-            {
-                cardRect.anchoredPosition = targetPos;
-                cardRect.rotation = Quaternion.identity;
-            }
-
-            cardComponent?.UpdateOriginalPosition(targetPos);
+            ApplyCardPosition(card, new Vector2(x, y), cardComponent, null);
         }
+    }
+
+    private void ArrangeCardsVertical(List<GameObject> cards, float spacing, float startX, float startY)
+    {
+        int cardCount = cards.Count;
+        if (cardCount == 0) return;
+
+        for (int i = 0; i < cardCount; i++)
+        {
+            GameObject card = cards[i];
+            if (card == null) continue;
+
+            ObjectCard objectCard = card.GetComponent<ObjectCard>();
+            if (objectCard != null && objectCard.IsBeingDragged())
+                continue;
+
+            float x = startX;
+            float y = startY - i * spacing;
+            ApplyCardPosition(card, new Vector2(x, y), null, objectCard);
+        }
+    }
+
+    private static void ApplyCardPosition(
+        GameObject card,
+        Vector2 targetPos,
+        Card cardComponent,
+        ObjectCard objectCard)
+    {
+        RectTransform cardRect = card.GetComponent<RectTransform>();
+        if (cardRect != null)
+        {
+            cardRect.anchoredPosition = targetPos;
+            cardRect.localRotation = Quaternion.identity;
+        }
+
+        cardComponent?.UpdateOriginalPosition(targetPos);
+        objectCard?.UpdateOriginalPosition(targetPos);
     }
 
     public void SetInteractable(bool interactable)
@@ -240,12 +238,12 @@ public class HandManager : MonoBehaviour
         {
             if (cardObj == null) continue;
 
-            ObjectCard objectCard = cardObj.GetComponent<ObjectCard>();
-            if (objectCard != null && objectCard.IsBeingDragged())
-                continue;
-
             if (objectPanel)
             {
+                ObjectCard objectCard = cardObj.GetComponent<ObjectCard>();
+                if (objectCard != null && objectCard.IsBeingDragged())
+                    continue;
+
                 ObjectCardDisplay display = cardObj.GetComponent<ObjectCardDisplay>();
                 if (display == null || display.currentCard == null) continue;
 
@@ -257,6 +255,10 @@ public class HandManager : MonoBehaviour
             }
             else
             {
+                Card cardComponent = cardObj.GetComponent<Card>();
+                if (cardComponent != null && cardComponent.IsBeingDragged())
+                    continue;
+
                 CardDisplay display = cardObj.GetComponent<CardDisplay>();
                 if (display == null) continue;
 

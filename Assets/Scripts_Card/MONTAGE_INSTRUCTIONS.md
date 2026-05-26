@@ -43,13 +43,10 @@ Este documento explica cómo montar todos los nuevos elementos necesarios para e
        - `undoButton` → Componente Button de UndoButton
 
 ### 5. **HandManager** (dos paneles: carta + carta/objeto)
-   - **Cartas (mazo principal)**:
-     - `cardPrefab` → prefab con `CardDisplay` + `Card`
-     - `handContainer` → panel UI de la mano de cartas
-   - **Carta/objeto (mazo secundario)**:
-     - `objectCardPrefab` → prefab con `ObjectCardDisplay` + `ObjectCard` (puede duplicar el prefab de carta y cambiar componentes)
-     - `objectHandContainer` → **panel UI distinto** (otra zona de la pantalla)
-   - Ajusta `cardSpacing` / `objectCardSpacing` y posiciones X/Y de cada panel por separado
+   - **Cartas**: `handContainer` + posición manual horizontal (`cardSpacing`, `startX/Y`)
+   - **Carta/objeto**: `objectHandContainer` + posición manual **vertical** (`objectCardSpacing`, `objectStartX/Y`)
+   - Mismo sistema que las cartas; **desactiva** Vertical Layout Group en `HandPanel-objeto` (HandManager lo desactiva al iniciar)
+   - Ajusta `objectCardSpacing` (ej. 130) y `objectStartYPosition` para apilar hacia abajo sin solaparse
 
 ### 5b. **GameManager – dos mazos**
    - `allCards` → solo cartas normales (ataque/bloqueo/cura/booster)
@@ -112,8 +109,8 @@ Canvas
 ### Jugar carta/objeto
 - **Arrastrar al jugador** (tag `Player`) → efecto al instante (igual que cartas booster)
 - **No** se activa con clic izquierdo
-- `objectHandContainer` debe tener **Vertical Layout Group** (HandManager lo crea si falta)
-- No asignes posiciones manuales a las carta/objeto; el layout las apila en vertical
+- Posición en mano: **manual** vía HandManager (como las cartas), no Layout Group activo
+- Prefab: `ObjectCard` + `ObjectCardDisplay` (misma base de arrastre que `Card` + `CardDisplay`)
 
 ### Tienda (opcional)
 - GameObject con `ObjectCardPurchaseShopItem` (hereda de `ShopItem`)

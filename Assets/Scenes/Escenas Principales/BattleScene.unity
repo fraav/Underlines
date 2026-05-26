@@ -66864,6 +66864,9 @@ MonoBehaviour:
   startYPosition: 0
   objectCardPrefab: {fileID: 5459052531377889888, guid: 0ea10be2cb64c57488796d7b1e978b8b, type: 3}
   objectHandContainer: {fileID: 1007310648}
+  objectCardSpacing: 120
+  objectStartXPosition: 0
+  objectStartYPosition: 0
 --- !u!4 &867720230
 Transform:
   m_ObjectHideFlags: 0
@@ -76898,7 +76901,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 1
-  m_Spacing: 20
+  m_Spacing: 10
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0

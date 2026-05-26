@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   icon: {fileID: 0}
   shopIcon: {fileID: 0}
-  effectType: 2
+  effectType: 0
   baseValue: 15
   restoreEnergyAmount: 2
   drawCardCount: 1

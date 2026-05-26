@@ -60,7 +60,7 @@ public class ObjectCardDisplay : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        // Solo clic derecho (info). El efecto se activa arrastrando al Player (ObjectCard).
+        // Clic derecho: info. El juego es por arrastre (ObjectCard, igual que Card).
         if (eventData.button != PointerEventData.InputButton.Right) return;
         if (GameManager.Instance != null && GameManager.Instance.AreInteractionsBlocked()) return;
         if (currentCard == null) return;
