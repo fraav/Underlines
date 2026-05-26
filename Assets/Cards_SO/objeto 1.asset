@@ -28,6 +28,6 @@ MonoBehaviour:
   cardSound: {fileID: 0}
   animationObjectActiveTime: 2
   nombreObjetoEnEscenaAActivar: 
-  animationPrefab: {fileID: 0}
+  animationPrefab: {fileID: 8617339864812495883, guid: 6d72ea234362a4c43ae9b8791e43f58f, type: 3}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0

@@ -17,7 +17,7 @@ MonoBehaviour:
   cardName: Lucy
   description: DOBLE ATAQUE
   playEnergyCost: 4
-  icon: {fileID: 21300000, guid: 70ec4c9c4f56bcc48aaf7ffc2a63df84, type: 3}
+  icon: {fileID: 21300000, guid: 4c85e4746eae0064b8e70c7bd1cd918f, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
   customActionPointTime: 0

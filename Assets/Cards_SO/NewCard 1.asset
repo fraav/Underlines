@@ -17,7 +17,7 @@ MonoBehaviour:
   cardName: 50 PESO
   description: "DUPLICA TU DA\xD1O"
   playEnergyCost: 4
-  icon: {fileID: 21300000, guid: bb78e895233cecf4fa3ab5b1ae3e1794, type: 3}
+  icon: {fileID: 21300000, guid: 120d14a82234dd24fa8791cf24ca5570, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
   customActionPointTime: 0
