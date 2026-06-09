@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjectCardData
   cardName: 
   description: 
-  icon: {fileID: 0}
-  shopIcon: {fileID: 0}
-  effectType: 0
+  icon: {fileID: 21300000, guid: 96dc267de3aff7d4090590279da5bc6f, type: 3}
+  shopIcon: {fileID: 21300000, guid: 96dc267de3aff7d4090590279da5bc6f, type: 3}
+  effectType: 3
   baseValue: 15
   restoreEnergyAmount: 2
   drawCardCount: 1
@@ -28,6 +28,6 @@ MonoBehaviour:
   cardSound: {fileID: 0}
   animationObjectActiveTime: 2
   nombreObjetoEnEscenaAActivar: 
-  animationPrefab: {fileID: 0}
+  animationPrefab: {fileID: 5420510525954485442, guid: 999d5950bf03c3144a07c8c2db0be2f5, type: 3}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
