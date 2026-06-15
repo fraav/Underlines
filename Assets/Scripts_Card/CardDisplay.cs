@@ -180,7 +180,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 return $"Damage: {attackValue:F1}";
             case CardData.CardType.Block:
                 float blockValue = upgradedValue * GameManager.Instance.blockMultiplier;
-                return $"Reduce: {blockValue:F0}%";
+                string blockDesc = $"Reduce: {blockValue:F0}%";
+                if (currentCard.blockBonusType == CardData.BlockBonusType.RewardEnergyOnBlock)
+                    blockDesc += $" | +{currentCard.blockEnergyReward}⚡ al bloquear";
+                else if (currentCard.blockBonusType == CardData.BlockBonusType.CounterDamageOnBlock)
+                    blockDesc += $" | {currentCard.blockCounterDamage:F0} daño al bloquear";
+                return blockDesc;
             case CardData.CardType.Heal:
                 float healValue = upgradedValue * GameManager.Instance.healMultiplier;
                 return $"Heal: {healValue:F1}";
@@ -206,10 +211,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                        $"Damage: <color=#FFD700>{attackValue:F1}</color>";
             case CardData.CardType.Block:
                 float blockValue = upgradedValue * GameManager.Instance.blockMultiplier;
+                string bonusText = GetBlockBonusDescription();
                 return $"<b>{currentCard.cardName}</b>\n\n" +
                        $"{currentCard.description}\n\n" +
                        $"Reduces enemy attack by <color=#FFD700>{blockValue:F0}%</color> " +
-                       $"on their next turn";
+                       $"on their next turn" +
+                       (string.IsNullOrEmpty(bonusText) ? "" : $"\n<color=#FFD700>{bonusText}</color>");
             case CardData.CardType.Heal:
                 float healValue = upgradedValue * GameManager.Instance.healMultiplier;
                 return $"<b>{currentCard.cardName}</b>\n\n" +
@@ -221,6 +228,22 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                        $"Efecto: <color=#FFD700>{GetBoosterFullDescription()}</color>";
             default:
                 return currentCard.description;
+        }
+    }
+
+    private string GetBlockBonusDescription()
+    {
+        if (currentCard == null || currentCard.cardType != CardData.CardType.Block)
+            return "";
+
+        switch (currentCard.blockBonusType)
+        {
+            case CardData.BlockBonusType.RewardEnergyOnBlock:
+                return $"Si bloqueas un ataque: recuperas {currentCard.blockEnergyReward} de energía";
+            case CardData.BlockBonusType.CounterDamageOnBlock:
+                return $"Si bloqueas un ataque: infliges {currentCard.blockCounterDamage:F0} de daño al enemigo";
+            default:
+                return "";
         }
     }
 

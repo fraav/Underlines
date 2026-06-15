@@ -120,9 +120,44 @@ Canvas
 | Nombre (ejemplo) | effectType      | Campos clave        |
 |----------------|-----------------|---------------------|
 | Duplicador     | DoubleNextAction| playEnergyCost: 1   |
-| Botiquín       | Heal            | baseValue: 20       |
+| Botiquín       | Heal            | baseValue: 20, **customAnimationTrigger** en ObjectCardData |
 | Batería        | RestoreEnergy   | restoreEnergyAmount: 2 |
 | Recarga        | DrawCard        | drawCardCount: 1    |
+
+**Animación carta/objeto**: asigna `customAnimationTrigger`, `customActionPointTime` y `customAnimationDuration` en el ObjectCardData. El **Player** ejecuta la animación (igual que curación). El prefab VFX (`animationPrefab`) es opcional y se spawnea aparte.
+
+## 🛡️ Cartas de bloqueo especiales (mazo principal)
+
+Crear con **Create → Card Game → Card**, `cardType` = **Block**:
+
+| Carta (ejemplo) | blockBonusType | Campos |
+|-----------------|----------------|--------|
+| Bloqueo Energético | RewardEnergyOnBlock | `baseValue`: % reducción, `blockEnergyReward`: 1 |
+| Bloqueo Contraataque | CounterDamageOnBlock | `baseValue`: % reducción, `blockCounterDamage`: 100 |
+
+Compatible con **botón de bloqueo** en el mismo turno: el bonus de la carta se conserva aunque uses el botón después.
+
+Flujo: arrastrar al **Player** → animación Block (PlayerController) → bloqueo pendiente → turno enemigo ataca → si bloquea, bonus (+energía o daño al enemigo).
+
+Configura en cada carta: `cardSound`, `animationPrefab`, `customAnimationTrigger` como las cartas normales.
+
+## ⚡ UI de energía (posiciones manuales)
+
+En **PlayerEnergyPipsUI**:
+1. Activa **Use Manual Pip Positions**
+2. Crea 8 `Image` hijos donde quieras en el Canvas
+3. Arrástralas al array **Energy Pips** (índice 0 = primer punto)
+4. Desactiva o elimina **Horizontal Layout Group** del contenedor de energía
+
+## 🐛 Drag carta/objeto – causas comunes de error
+
+| Causa | Síntoma | Solución |
+|-------|---------|----------|
+| **Coordenadas canvas vs panel padre** | Salto/erratic al arrastrar | `ObjectCard` reparenta al Canvas durante el drag (implementado) |
+| **Vertical/Horizontal Layout Group activo** | Carta “pegada” o saltando | HandManager desactiva layout en `objectHandContainer` |
+| **Canvas anidados / múltiples Canvas** | Offset incorrecto | Usar el Canvas raíz de batalla; evitar Canvas hijo con escala distinta |
+| **Pivot/anclas del panel objeto** | Posición en mano incorrecta | Ajustar `objectStartX/Y` y `objectCardSpacing` en HandManager |
+| **Prefab con Card + ObjectCard** | Doble handler de drag | Prefab solo con `ObjectCard` + `ObjectCardDisplay` |
 
 ## 📝 Pasos de Montaje Detallados
 

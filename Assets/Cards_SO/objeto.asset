@@ -22,7 +22,7 @@ MonoBehaviour:
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
-  customAnimationTrigger: 
+  customAnimationTrigger: Heal
   customActionPointTime: 0
   customAnimationDuration: 0
   cardSound: {fileID: 0}

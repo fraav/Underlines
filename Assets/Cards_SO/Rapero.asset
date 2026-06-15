@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96a0746ce4843254fbb0b867109c7d41, type: 3}
+  m_Name: Rapero
+  m_EditorClassIdentifier: 
+  cardType: 3
+  baseValue: 10
+  cardName: 50 PESO
+  description: "DUPLICA TU DA\xD1O"
+  playEnergyCost: 4
+  icon: {fileID: 21300000, guid: 120d14a82234dd24fa8791cf24ca5570, type: 3}
+  shopIcon: {fileID: 0}
+  customAnimationTrigger: 
+  customActionPointTime: 0
+  customAnimationDuration: 0
+  cardSound: {fileID: 8300000, guid: f21071a51f0609549927277cab22045f, type: 3}
+  animationObjectActiveTime: 2
+  individualBaseValueUpgrade: 0
+  individualDamageMultiplier: 1
+  boosterEffectType: 1
+  boosterValue: 4
+  nombreObjetoEnEscenaAActivar: Container
+  animationPrefab: {fileID: 5217584273669610250, guid: d08cd14c8b3b26146bd1420cc07818b4, type: 3}
+  prefabSpawnPosition: {x: -49.35, y: -1.14, z: -4.887}
+  attachToTarget: 0
+  enableCustomEffects: 0
+  effectDuration: 0
+  additionalDamage: 0
+  additionalHeal: 0
+  additionalBlock: 0
+  customTargetType: 0
+  statusEffect: 0
+  statusEffectDuration: 0
+  customValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  customEffectDescription: 
+  customEffectID: 

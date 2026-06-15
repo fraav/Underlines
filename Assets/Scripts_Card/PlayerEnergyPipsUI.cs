@@ -2,76 +2,96 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Muestra 8 iconos de color sólido: los primeros N reflejan la energía actual del jugador.
-/// Asigna 8 <see cref="Image"/> en el Inspector (o usa pipContainer + pipPrefab).
+/// Muestra 8 iconos de energía. Modo manual: coloca cada Image en el Inspector con posición libre.
+/// Modo automático: pipContainer + pipPrefab con layout horizontal.
 /// </summary>
 public class PlayerEnergyPipsUI : MonoBehaviour
 {
-    [Tooltip("Ocho imágenes en orden. Si usas pipContainer + pipPrefab, este array se rellena en Awake.")]
+    [Tooltip("Ocho imágenes en orden (índice 0 = primer punto de energía).")]
     [SerializeField] private Image[] energyPips = new Image[8];
 
-    [Tooltip("Contenedor con HorizontalLayoutGroup; se instancian 8 hijos desde pipPrefab.")]
+    [Header("Modo de colocación")]
+    [Tooltip("Activo: usa las 8 Image ya posicionadas en escena (sin Layout Group).")]
+    [SerializeField] private bool useManualPipPositions = true;
+
+    [Tooltip("Solo si useManualPipPositions = false: instancia 8 pips en este contenedor.")]
     [SerializeField] private RectTransform pipContainer;
 
     [SerializeField] private Image pipPrefab;
 
     [SerializeField] private Color availableColor = new Color(0.35f, 0.85f, 1f, 1f);
-
     [SerializeField] private Color spentColor = new Color(0.45f, 0.45f, 0.5f, 1f);
 
-    [Tooltip("Si está activo, cada frame se compara con GameManager.CurrentEnergy por si el evento no llegó (orden de ejecución).")]
     [SerializeField] private bool syncEnergyEveryFrame = true;
 
     private static Sprite _unitSquareSprite;
-
     private bool _subscribed;
     private int _lastAppliedEnergy = int.MinValue;
 
     void Awake()
     {
-        EnsureEightPips();
+        if (useManualPipPositions)
+            SetupManualMode();
+        else
+            EnsureEightPipsFromPrefab();
     }
 
-    void OnEnable()
-    {
-        TrySubscribeAndRefresh();
-    }
-
-    void Start()
-    {
-        TrySubscribeAndRefresh();
-    }
+    void OnEnable() => TrySubscribeAndRefresh();
+    void Start() => TrySubscribeAndRefresh();
 
     void Update()
     {
         if (!syncEnergyEveryFrame || GameManager.Instance == null || energyPips == null || energyPips.Length != 8)
-        {
             return;
-        }
 
         int current = GameManager.Instance.CurrentEnergy;
         if (current != _lastAppliedEnergy)
-        {
             ApplyVisual(current, GameManager.MaxEnergyPerTurn);
+    }
+
+    void OnDisable() => Unsubscribe();
+    void OnDestroy() => Unsubscribe();
+
+    private void SetupManualMode()
+    {
+        if (pipContainer != null)
+            DisableLayoutComponents(pipContainer.gameObject);
+
+        if (energyPips == null || energyPips.Length != 8)
+        {
+            Debug.LogWarning("[PlayerEnergyPipsUI] Modo manual: asigna 8 Image en energyPips.", this);
+            return;
         }
+
+        for (int i = 0; i < 8; i++)
+        {
+            if (energyPips[i] == null)
+            {
+                Debug.LogWarning($"[PlayerEnergyPipsUI] Falta energyPips[{i}].", this);
+                continue;
+            }
+
+            DisableLayoutComponents(energyPips[i].gameObject);
+        }
+
+        ApplySolidSpriteToPips(energyPips);
     }
 
-    void OnDisable()
+    private static void DisableLayoutComponents(GameObject go)
     {
-        Unsubscribe();
-    }
-
-    void OnDestroy()
-    {
-        Unsubscribe();
+        if (go.GetComponent<HorizontalLayoutGroup>() is HorizontalLayoutGroup hlg)
+            hlg.enabled = false;
+        if (go.GetComponent<VerticalLayoutGroup>() is VerticalLayoutGroup vlg)
+            vlg.enabled = false;
+        if (go.GetComponent<ContentSizeFitter>() is ContentSizeFitter csf)
+            csf.enabled = false;
+        if (go.GetComponent<LayoutElement>() is LayoutElement le)
+            le.ignoreLayout = true;
     }
 
     private void TrySubscribeAndRefresh()
     {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
+        if (GameManager.Instance == null) return;
 
         if (!_subscribed)
         {
@@ -84,30 +104,17 @@ public class PlayerEnergyPipsUI : MonoBehaviour
 
     private void Unsubscribe()
     {
-        if (!_subscribed)
-        {
-            return;
-        }
-
+        if (!_subscribed) return;
         if (GameManager.Instance != null)
-        {
             GameManager.Instance.OnPlayerEnergyChanged -= OnEnergyChanged;
-        }
-
         _subscribed = false;
     }
 
-    private void OnEnergyChanged(int current, int max)
-    {
-        ApplyVisual(current, max);
-    }
+    private void OnEnergyChanged(int current, int max) => ApplyVisual(current, max);
 
     private void ApplyVisual(int current, int max)
     {
-        if (energyPips == null || energyPips.Length != 8)
-        {
-            return;
-        }
+        if (energyPips == null || energyPips.Length != 8) return;
 
         max = Mathf.Max(1, max);
         current = Mathf.Clamp(current, 0, max);
@@ -117,97 +124,40 @@ public class PlayerEnergyPipsUI : MonoBehaviour
         {
             Image img = energyPips[i];
             if (img == null) continue;
-
-            bool lit = i < current;
-            img.color = lit ? availableColor : spentColor;
+            img.color = i < current ? availableColor : spentColor;
             img.enabled = true;
         }
-
-        RebuildLayoutIfNeeded();
     }
 
-    private void RebuildLayoutIfNeeded()
+    private void EnsureEightPipsFromPrefab()
     {
-        RectTransform root = pipContainer;
-        if (root == null && energyPips != null && energyPips.Length > 0 && energyPips[0] != null)
-        {
-            root = energyPips[0].transform.parent as RectTransform;
-        }
+        if (pipContainer != null)
+            DisableLayoutComponents(pipContainer.gameObject);
 
-        if (root != null)
+        if (pipContainer == null || pipPrefab == null)
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate(root);
-        }
-    }
-
-    private void EnsureEightPips()
-    {
-        if (pipContainer != null && pipPrefab != null)
-        {
-            for (int c = pipContainer.childCount - 1; c >= 0; c--)
+            if (energyPips != null && energyPips.Length == 8)
             {
-                Destroy(pipContainer.GetChild(c).gameObject);
-            }
-
-            energyPips = new Image[8];
-            for (int i = 0; i < 8; i++)
-            {
-                Image img = Instantiate(pipPrefab, pipContainer);
-                img.gameObject.name = $"EnergyPip_{i}";
-                RectTransform rt = img.rectTransform;
-
-                LayoutElement le = img.GetComponent<LayoutElement>();
-                if (le == null)
-                {
-                    le = img.gameObject.AddComponent<LayoutElement>();
-                }
-
-                le.minWidth = 28f;
-                le.minHeight = 28f;
-                le.preferredWidth = 28f;
-                le.preferredHeight = 28f;
-                le.flexibleWidth = 0f;
-                le.flexibleHeight = 0f;
-
-                rt.sizeDelta = new Vector2(28f, 28f);
-                energyPips[i] = img;
-            }
-
-            ApplySolidSpriteToPips(energyPips);
-            RebuildLayoutIfNeeded();
-            return;
-        }
-
-        if (energyPips == null || energyPips.Length != 8)
-        {
-            Debug.LogWarning("[PlayerEnergyPipsUI] Asigna 8 Image en energyPips, o bien pipContainer + pipPrefab (Image).", this);
-            return;
-        }
-
-        for (int i = 0; i < 8; i++)
-        {
-            if (energyPips[i] == null)
-            {
-                Debug.LogWarning("[PlayerEnergyPipsUI] Falta una referencia en energyPips.", this);
+                ApplySolidSpriteToPips(energyPips);
                 return;
             }
 
-            LayoutElement le = energyPips[i].GetComponent<LayoutElement>();
-            if (le == null)
-            {
-                le = energyPips[i].gameObject.AddComponent<LayoutElement>();
-            }
+            Debug.LogWarning("[PlayerEnergyPipsUI] Asigna 8 Image o pipContainer + pipPrefab.", this);
+            return;
+        }
 
-            le.minWidth = 28f;
-            le.minHeight = 28f;
-            le.preferredWidth = 28f;
-            le.preferredHeight = 28f;
-            le.flexibleWidth = 0f;
-            le.flexibleHeight = 0f;
+        for (int c = pipContainer.childCount - 1; c >= 0; c--)
+            Destroy(pipContainer.GetChild(c).gameObject);
+
+        energyPips = new Image[8];
+        for (int i = 0; i < 8; i++)
+        {
+            Image img = Instantiate(pipPrefab, pipContainer);
+            img.gameObject.name = $"EnergyPip_{i}";
+            energyPips[i] = img;
         }
 
         ApplySolidSpriteToPips(energyPips);
-        RebuildLayoutIfNeeded();
     }
 
     private static void ApplySolidSpriteToPips(Image[] pips)
@@ -216,11 +166,7 @@ public class PlayerEnergyPipsUI : MonoBehaviour
         foreach (Image img in pips)
         {
             if (img == null) continue;
-            if (img.sprite == null)
-            {
-                img.sprite = s;
-            }
-
+            if (img.sprite == null) img.sprite = s;
             img.type = Image.Type.Simple;
             img.preserveAspect = false;
             img.raycastTarget = false;

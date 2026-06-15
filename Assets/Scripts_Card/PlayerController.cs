@@ -38,9 +38,14 @@ public class PlayerController : MonoBehaviour
     
     // Sistema de bloqueo
     private bool hasBlockActive = false;
-    private bool hasBlockPending = false; // Nuevo: bloqueo pendiente para el siguiente turno
+    private bool hasBlockPending = false;
     private float blockReductionMultiplier = 1.0f;
     private Coroutine blockAutoDeactivateCoroutine;
+
+    private CardData.BlockBonusType pendingBlockBonus = CardData.BlockBonusType.None;
+    private int pendingBlockEnergyReward = 1;
+    private float pendingBlockCounterDamage = 10f;
+    private bool blockTriggeredThisAttack;
 
     void Start()
     {
@@ -99,17 +104,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Desactivar objetos configurados mientras dura la animación
-        if (objectsToDisableDuringCardAnimation != null)
-        {
-            for (int i = 0; i < objectsToDisableDuringCardAnimation.Length; i++)
-            {
-                GameObject obj = objectsToDisableDuringCardAnimation[i];
-                if (obj != null)
-                {
-                    obj.SetActive(false);
-                }
-            }
-        }
+        SetObjectsHiddenDuringAnimation(false);
 
         // Lanzar la animación del jugador
         if (animator != null && !string.IsNullOrEmpty(triggerToUse))
@@ -136,19 +131,71 @@ public class PlayerController : MonoBehaviour
         }
 
         // Reactivar objetos tras completar la animación
-        if (objectsToDisableDuringCardAnimation != null)
+        SetObjectsHiddenDuringAnimation(true);
+
+        onComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// Animación del jugador para carta/objeto (usa customAnimationTrigger del ObjectCardData).
+    /// </summary>
+    public void PlayObjectCardAnimation(ObjectCardData card, System.Action onAction, System.Action onComplete = null)
+    {
+        if (card == null)
         {
-            for (int i = 0; i < objectsToDisableDuringCardAnimation.Length; i++)
+            onAction?.Invoke();
+            onComplete?.Invoke();
+            return;
+        }
+
+        StartCoroutine(PerformObjectCardAnimation(card, onAction, onComplete));
+    }
+
+    private IEnumerator PerformObjectCardAnimation(ObjectCardData card, System.Action onAction, System.Action onComplete)
+    {
+        string triggerToUse = card.customAnimationTrigger;
+        float actionPointTime = card.customActionPointTime > 0f ? card.customActionPointTime : 0.5f;
+        float animationDuration = card.customAnimationDuration > 0f ? card.customAnimationDuration : 1f;
+
+        if (string.IsNullOrEmpty(triggerToUse))
+        {
+            CardAnimation fallback = GetAnimationForCard(CardData.CardType.Heal);
+            if (fallback != null)
             {
-                GameObject obj = objectsToDisableDuringCardAnimation[i];
-                if (obj != null)
-                {
-                    obj.SetActive(true);
-                }
+                triggerToUse = fallback.animationTrigger;
+                if (card.customActionPointTime <= 0f) actionPointTime = fallback.actionPointTime;
+                if (card.customAnimationDuration <= 0f) animationDuration = fallback.animationDuration;
             }
         }
 
+        SetObjectsHiddenDuringAnimation(false);
+
+        if (animator != null && !string.IsNullOrEmpty(triggerToUse))
+            animator.SetTrigger(triggerToUse);
+
+        if (card.cardSound != null && GameManager.Instance != null && GameManager.Instance.audioSource != null)
+            GameManager.Instance.audioSource.PlayOneShot(card.cardSound);
+
+        yield return new WaitForSeconds(actionPointTime);
+        onAction?.Invoke();
+
+        float remainingTime = animationDuration - actionPointTime;
+        if (remainingTime > 0f)
+            yield return new WaitForSeconds(remainingTime);
+
+        SetObjectsHiddenDuringAnimation(true);
         onComplete?.Invoke();
+    }
+
+    private void SetObjectsHiddenDuringAnimation(bool active)
+    {
+        if (objectsToDisableDuringCardAnimation == null) return;
+        for (int i = 0; i < objectsToDisableDuringCardAnimation.Length; i++)
+        {
+            GameObject obj = objectsToDisableDuringCardAnimation[i];
+            if (obj != null)
+                obj.SetActive(active);
+        }
     }
 
     private CardAnimation GetAnimationForCard(CardData.CardType cardType)
@@ -177,26 +224,63 @@ public class PlayerController : MonoBehaviour
     // Método para activar el bloqueo (ahora solo lo marca como pendiente)
     public void ActivateBlock(float reductionMultiplier)
     {
+        MergeBlockState(reductionMultiplier, CardData.BlockBonusType.None, 1, 0f);
+    }
+
+    public void ActivateBlock(float reductionMultiplier, CardData.BlockBonusType bonusType, int energyReward, float counterDamage)
+    {
+        MergeBlockState(reductionMultiplier, bonusType, energyReward, counterDamage);
+    }
+
+    /// <summary>
+    /// Acumula bloqueo: mejor reducción (menor multiplicador) y conserva bonus de carta si el botón no trae bonus.
+    /// </summary>
+    private void MergeBlockState(float reductionMultiplier, CardData.BlockBonusType bonusType, int energyReward, float counterDamage)
+    {
+        blockReductionMultiplier = Mathf.Min(blockReductionMultiplier, reductionMultiplier);
+
+        if (bonusType != CardData.BlockBonusType.None)
+        {
+            pendingBlockBonus = bonusType;
+            pendingBlockEnergyReward = Mathf.Max(1, energyReward);
+            pendingBlockCounterDamage = counterDamage;
+        }
+
         hasBlockPending = true;
-        blockReductionMultiplier = reductionMultiplier;
-        Debug.Log($"Bloqueo marcado como pendiente para el siguiente turno del enemigo. Multiplicador: {reductionMultiplier}");
+        Debug.Log($"[PlayerController] Bloqueo pendiente. Reducción: {blockReductionMultiplier}, Bonus: {pendingBlockBonus}, Counter: {pendingBlockCounterDamage}");
     }
 
     // Método para activar el bloqueo pendiente (se llama cuando el enemigo ataca)
     public void ActivatePendingBlock()
     {
-        if (hasBlockPending)
+        if (hasBlockPending || hasBlockActive)
         {
             hasBlockActive = true;
             hasBlockPending = false;
-            Debug.Log($"Bloqueo activado para este ataque enemigo. Multiplicador: {blockReductionMultiplier}");
+            blockTriggeredThisAttack = true;
+            Debug.Log($"[PlayerController] Bloqueo activo para ataque enemigo. Bonus: {pendingBlockBonus}, Counter: {pendingBlockCounterDamage}");
             
-            // Iniciar animación de bloqueo activo
             PlayBlockIdleAnimation();
-            
-            // Iniciar temporizador para desactivar bloqueo automáticamente
             StartBlockAutoDeactivateTimer();
         }
+    }
+
+    public bool HasPendingBlockBonus()
+    {
+        return pendingBlockBonus != CardData.BlockBonusType.None;
+    }
+
+    public bool ShouldResolveBlockBonusThisAttack()
+    {
+        return blockTriggeredThisAttack && HasPendingBlockBonus();
+    }
+
+    public void ClearBlockBonuses()
+    {
+        pendingBlockBonus = CardData.BlockBonusType.None;
+        pendingBlockEnergyReward = 1;
+        pendingBlockCounterDamage = 0f;
+        blockTriggeredThisAttack = false;
     }
 
     // Método para desactivar el bloqueo
@@ -206,13 +290,10 @@ public class PlayerController : MonoBehaviour
         hasBlockPending = false;
         blockReductionMultiplier = 1.0f;
         
-        // Detener animación de bloqueo
         StopBlockIdleAnimation();
-        
-        // Detener temporizador de desactivación automática
         StopBlockAutoDeactivateTimer();
         
-        Debug.Log("Bloqueo desactivado");
+        Debug.Log("[PlayerController] Bloqueo mecánico desactivado (bonus conservado hasta resolver)");
     }
 
     // Método para verificar si tiene bloqueo activo
@@ -231,6 +312,60 @@ public class PlayerController : MonoBehaviour
     public float GetBlockReductionMultiplier()
     {
         return blockReductionMultiplier;
+    }
+
+    /// <summary>
+    /// Llamado cuando el jugador bloquea un ataque enemigo (daño reducido por bloqueo activo).
+    /// </summary>
+    public void ResolveBlockBonusOnEnemyHit()
+    {
+        if (pendingBlockBonus == CardData.BlockBonusType.None)
+            return;
+
+        if (!blockTriggeredThisAttack && !hasBlockActive)
+        {
+            Debug.LogWarning("[PlayerController] Bonus de bloqueo sin bloqueo activo en este ataque.");
+            return;
+        }
+
+        if (GameManager.Instance == null)
+            return;
+
+        switch (pendingBlockBonus)
+        {
+            case CardData.BlockBonusType.RewardEnergyOnBlock:
+                GameManager.Instance.RefundEnergy(pendingBlockEnergyReward);
+                Debug.Log($"[PlayerController] Bloqueo exitoso: +{pendingBlockEnergyReward} energía");
+                break;
+
+            case CardData.BlockBonusType.CounterDamageOnBlock:
+                int counterDamage = Mathf.RoundToInt(pendingBlockCounterDamage);
+                if (counterDamage <= 0)
+                {
+                    Debug.LogWarning("[PlayerController] blockCounterDamage es 0; revisa el asset de la carta.");
+                    break;
+                }
+
+                if (GameManager.Instance.enemyHealth != null)
+                {
+                    GameManager.Instance.enemyHealth.TakeDamage(counterDamage);
+                    GameManager.Instance.PlayEnemyDamageSound();
+                    Debug.Log($"[PlayerController] Contraataque: {counterDamage} daño al enemigo");
+                }
+                else if (GameManager.Instance.enemyController != null)
+                {
+                    GameManager.Instance.enemyController.TakeDamage(counterDamage);
+                    GameManager.Instance.PlayEnemyDamageSound();
+                    Debug.Log($"[PlayerController] Contraataque (EnemyController): {counterDamage} daño");
+                }
+                else
+                {
+                    Debug.LogError("[PlayerController] No hay enemyHealth ni enemyController para contraataque.");
+                }
+                break;
+        }
+
+        ClearBlockBonuses();
     }
 
     // Método llamado cuando el jugador recibe daño
@@ -345,12 +480,17 @@ public class PlayerController : MonoBehaviour
     private IEnumerator BlockAutoDeactivateTimer()
     {
         yield return new WaitForSeconds(blockAutoDeactivateTime);
-        
-        // Solo desactivar si el bloqueo sigue activo (no fue desactivado por daño)
+
+        if (GameManager.Instance != null &&
+            GameManager.Instance.currentTurn == GameManager.TurnState.EnemyTurn)
+        {
+            yield break;
+        }
+
         if (hasBlockActive)
         {
             DeactivateBlock();
-            Debug.Log("Bloqueo desactivado automáticamente por tiempo");
+            Debug.Log("[PlayerController] Bloqueo desactivado por tiempo (fuera del turno enemigo)");
         }
     }
 

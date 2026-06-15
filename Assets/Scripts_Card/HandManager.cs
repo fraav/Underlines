@@ -147,6 +147,11 @@ public class HandManager : MonoBehaviour
         UpdateInteractableState();
     }
 
+    public void SyncObjectCardPositions()
+    {
+        ArrangeCardsVertical(spawnedObjectCards, objectCardSpacing, objectStartXPosition, objectStartYPosition);
+    }
+
     public void RefreshAllHands()
     {
         RefreshHand();

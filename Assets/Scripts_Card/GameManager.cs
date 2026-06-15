@@ -560,8 +560,8 @@ public class GameManager : MonoBehaviour
         currentTurn = TurnState.SelectingTarget;
         selectedCardDisplay?.SetSelected(true);
 
-        // Todas las cartas potenciadoras (y las nuevas) tienen como objetivo válido al jugador
-        if (card.cardType == CardData.CardType.Booster)
+        // Objetivo jugador: booster, bloqueo, cura o carta con blockBonusType
+        if (card.cardType == CardData.CardType.Booster || card.ShouldExecuteAsBlockCard())
         {
             playerIsValidTarget = true;
             enemyIsValidTarget = false;
@@ -756,13 +756,19 @@ public class GameManager : MonoBehaviour
         GameObject target = GetAppropriateTarget(card);
         PlayCardEffects(card, target);
 
+        if (card.ShouldExecuteAsBlockCard())
+        {
+            Card_Block(card);
+            return;
+        }
+
         switch (card.cardType)
         {
             case CardData.CardType.Attack:
                 Debug.LogWarning("[GameManager] Carta de Ataque jugada directamente. Debería usarse el botón de acción.");
                 break;
             case CardData.CardType.Block:
-                Debug.LogWarning("[GameManager] Carta de Bloqueo jugada directamente. Debería usarse el botón de acción.");
+                Card_Block(card);
                 break;
             case CardData.CardType.Heal:
                 Debug.LogWarning("[GameManager] Carta de Curación jugada directamente. Debería usarse el botón de acción.");
@@ -788,6 +794,8 @@ public class GameManager : MonoBehaviour
             case CardData.CardType.Booster:
                 return playerHealth?.gameObject;
             default:
+                if (card.HasBlockBonusEffect())
+                    return playerHealth?.gameObject;
                 return null;
         }
     }
@@ -954,7 +962,7 @@ public class GameManager : MonoBehaviour
         ObjectCardData card = display.currentCard;
         SpendEnergyForObjectCard(card);
         RemoveObjectCardFromHand(card);
-        ExecuteObjectCardEffect(card);
+        StartCoroutine(ExecuteObjectCardEffectRoutine(card));
 
         Debug.Log($"[GameManager] Carta/objeto jugada: {card.cardName}. Turno continúa.");
         return true;
@@ -970,12 +978,35 @@ public class GameManager : MonoBehaviour
             HandManager.Instance.RefreshObjectHand();
     }
 
-    private void ExecuteObjectCardEffect(ObjectCardData card)
+    private IEnumerator ExecuteObjectCardEffectRoutine(ObjectCardData card)
     {
-        if (card == null) return;
+        if (card == null) yield break;
 
         GameObject target = playerHealth != null ? playerHealth.gameObject : null;
         PlayObjectCardEffects(card, target);
+
+        if (playerController != null)
+        {
+            bool finished = false;
+            playerController.PlayObjectCardAnimation(
+                card,
+                () => ApplyObjectCardEffectLogic(card),
+                () => finished = true);
+
+            while (!finished)
+                yield return null;
+        }
+        else
+        {
+            ApplyObjectCardEffectLogic(card);
+        }
+
+        RefreshHandInteractableState();
+    }
+
+    private void ApplyObjectCardEffectLogic(ObjectCardData card)
+    {
+        if (card == null) return;
 
         switch (card.effectType)
         {
@@ -1000,6 +1031,11 @@ public class GameManager : MonoBehaviour
                 DrawCardsFromMainDeck(card.drawCardCount);
                 break;
         }
+    }
+
+    private void ExecuteObjectCardEffect(ObjectCardData card)
+    {
+        StartCoroutine(ExecuteObjectCardEffectRoutine(card));
     }
 
     public void PlayObjectCardEffects(ObjectCardData card, GameObject target = null)
@@ -1097,6 +1133,57 @@ public class GameManager : MonoBehaviour
         playerController.PlayCardAnimation(card, ApplyHeal, CompleteTurn);
     }
 
+    /// <summary>
+    /// Carta de bloqueo jugada al arrastrar al jugador. Activa bloqueo pendiente + animación (no termina turno).
+    /// </summary>
+    public void Card_Block(CardData card)
+    {
+        PlayCardEffects(card, playerHealth?.gameObject);
+
+        float upgradedValue = card.baseValue + card.individualBaseValueUpgrade;
+        float effectsMult = PlayerTurnEffects.Instance != null
+            ? PlayerTurnEffects.Instance.GetBlockMultiplier()
+            : 1f;
+        float finalBlockValue = upgradedValue * effectsMult * blockMultiplier;
+        float reductionMultiplier = 1f - (finalBlockValue / 100f);
+
+        void ApplyBlock()
+        {
+            if (enemyController != null)
+                enemyController.ApplyAttackReduction(reductionMultiplier);
+
+            if (playerController != null)
+            {
+                playerController.ActivateBlock(
+                    reductionMultiplier,
+                    card.blockBonusType,
+                    card.blockEnergyReward,
+                    card.blockCounterDamage);
+            }
+
+            PlayBlockCardSound();
+        }
+
+        if (playerController != null)
+            playerController.PlayCardAnimation(GetBlockAnimationCard(card), ApplyBlock, null);
+        else
+            ApplyBlock();
+    }
+
+    private CardData GetBlockAnimationCard(CardData card)
+    {
+        if (card.cardType == CardData.CardType.Block)
+            return card;
+
+        CardData animCard = ScriptableObject.CreateInstance<CardData>();
+        animCard.cardType = CardData.CardType.Block;
+        animCard.customAnimationTrigger = card.customAnimationTrigger;
+        animCard.customActionPointTime = card.customActionPointTime;
+        animCard.customAnimationDuration = card.customAnimationDuration;
+        animCard.cardSound = card.cardSound;
+        return animCard;
+    }
+
     // ►►► MÉTODO MODIFICADO PARA ESPERAR DIÁLOGOS ◄◄◄
     public IEnumerator EndPlayerTurn()
     {
@@ -1178,6 +1265,7 @@ public class GameManager : MonoBehaviour
         if (playerController != null)
         {
             playerController.DeactivateBlock();
+            playerController.ClearBlockBonuses();
         }
 
         // Limpiar efectos del turno anterior
@@ -1433,9 +1521,12 @@ public class GameManager : MonoBehaviour
     {
         PlayEnemyAttackSound();
 
-        if (playerController != null && playerController.HasBlockActive())
+        if (playerController != null)
         {
-            PlayBlockHitSound();
+            if (playerController.HasBlockActive())
+                PlayBlockHitSound();
+
+            playerController.ResolveBlockBonusOnEnemyHit();
         }
     }
 

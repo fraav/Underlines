@@ -22,12 +22,12 @@ MonoBehaviour:
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
-  customAnimationTrigger: 
+  customAnimationTrigger: Heal
   customActionPointTime: 0
   customAnimationDuration: 0
   cardSound: {fileID: 0}
   animationObjectActiveTime: 2
   nombreObjetoEnEscenaAActivar: 
-  animationPrefab: {fileID: 8617339864812495883, guid: 6d72ea234362a4c43ae9b8791e43f58f, type: 3}
+  animationPrefab: {fileID: 0}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0

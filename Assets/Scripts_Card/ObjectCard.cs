@@ -3,22 +3,23 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// Misma lógica de arrastre que Card.cs (copia alineada).
-/// Diferencia: objetivo solo Player y ejecuta TryPlayObjectCard (sin selección de turno).
+/// Arrastre alineado con Card.cs. Durante el drag reparenta al Canvas para coordenadas correctas
+/// (el panel objeto tiene anclas distintas al canvas).
 /// </summary>
 public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Vector3 escalaOriginal;
-
-    private bool seleccionada = false;
-    private bool arrastrando = false;
+    private bool seleccionada;
+    private bool arrastrando;
 
     private RectTransform rect;
     private RectTransform canvasRect;
     private Vector2 posicionInicial;
     private Canvas canvas;
-
     private Vector2 offsetDrag;
+
+    private Transform dragOriginalParent;
+    private int dragOriginalSiblingIndex;
 
     [Tooltip("Velocidad de retorno a la posición de la mano al cancelar el arrastre.")]
     public float velocidadAnimacion = 15f;
@@ -36,15 +37,11 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         canvas = GetComponentInParent<Canvas>();
         if (canvas != null)
-        {
             canvasRect = canvas.GetComponent<RectTransform>();
-        }
 
         outline = GetComponent<Outline>();
         if (outline == null)
-        {
             outline = gameObject.AddComponent<Outline>();
-        }
         outline.effectColor = colorOutlineBase;
         outline.effectDistance = new Vector2(3, 3);
         outline.enabled = false;
@@ -64,15 +61,11 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         if (!arrastrando && rect != null)
         {
             if (posicionInicial == Vector2.zero && rect.anchoredPosition != Vector2.zero)
-            {
                 posicionInicial = rect.anchoredPosition;
-            }
 
             float distanceToInitial = Vector2.Distance(rect.anchoredPosition, posicionInicial);
             if (distanceToInitial > 5f)
-            {
                 rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, posicionInicial, Time.deltaTime * velocidadAnimacion);
-            }
         }
     }
 
@@ -92,10 +85,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             return;
 
         ObjectCardDisplay cardDisplay = GetComponent<ObjectCardDisplay>();
-        if (cardDisplay == null || cardDisplay.currentCard == null)
-            return;
-
-        if (GameManager.Instance == null)
+        if (cardDisplay == null || cardDisplay.currentCard == null || GameManager.Instance == null)
             return;
 
         if (GameManager.Instance.currentTurn != GameManager.TurnState.PlayerTurn)
@@ -104,35 +94,26 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         if (!GameManager.Instance.CanAffordObjectEnergy(cardDisplay.currentCard))
             return;
 
-        if (rect == null)
-            rect = GetComponent<RectTransform>();
-
-        if (canvas == null)
-        {
-            canvas = GetComponentInParent<Canvas>();
-            if (canvas != null)
-                canvasRect = canvas.GetComponent<RectTransform>();
-        }
-
-        if (rect == null || canvasRect == null)
+        EnsureCanvasRefs();
+        if (rect == null || canvasRect == null || canvas == null)
             return;
 
-        if (posicionInicial == Vector2.zero || Vector2.Distance(posicionInicial, rect.anchoredPosition) > 0.1f)
-            posicionInicial = rect.anchoredPosition;
+        posicionInicial = rect.anchoredPosition;
+
+        dragOriginalParent = transform.parent;
+        dragOriginalSiblingIndex = transform.GetSiblingIndex();
+        transform.SetParent(canvas.transform, true);
+        transform.SetAsLastSibling();
 
         arrastrando = true;
         seleccionada = true;
         if (outline != null)
             outline.enabled = true;
 
-        Vector2 posicionMouse;
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouse))
+            canvasRect, eventData.position, eventData.pressEventCamera, out Vector2 posicionMouse))
         {
-            arrastrando = false;
-            seleccionada = false;
-            if (outline != null)
-                outline.enabled = false;
+            RestoreToHandParent();
             return;
         }
 
@@ -141,20 +122,16 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!arrastrando) return;
-
-        if (canvas == null || rect == null || canvasRect == null)
+        if (!arrastrando || canvas == null || rect == null || canvasRect == null)
             return;
 
-        Vector2 posicionCanvas;
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect, eventData.position, eventData.pressEventCamera, out posicionCanvas))
+            canvasRect, eventData.position, eventData.pressEventCamera, out Vector2 posicionCanvas))
         {
             return;
         }
 
         rect.anchoredPosition = posicionCanvas - offsetDrag;
-
         CheckValidTarget3D(eventData.position);
     }
 
@@ -175,14 +152,40 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             return;
         }
 
-        if (rect != null && posicionInicial == Vector2.zero)
-            posicionInicial = rect.anchoredPosition;
+        RestoreToHandParent();
+    }
 
+    private void RestoreToHandParent()
+    {
         arrastrando = false;
+
+        if (dragOriginalParent != null)
+        {
+            transform.SetParent(dragOriginalParent, false);
+            transform.SetSiblingIndex(dragOriginalSiblingIndex);
+        }
+
+        if (rect != null)
+            rect.anchoredPosition = posicionInicial;
 
         CanvasGroup cg = GetComponent<CanvasGroup>();
         if (cg != null)
             cg.alpha = 1f;
+
+        HandManager.Instance?.SyncObjectCardPositions();
+    }
+
+    private void EnsureCanvasRefs()
+    {
+        if (rect == null)
+            rect = GetComponent<RectTransform>();
+
+        if (canvas == null)
+        {
+            canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+                canvasRect = canvas.GetComponent<RectTransform>();
+        }
     }
 
     private void CheckValidTarget3D(Vector2 screenPosition)
@@ -197,18 +200,14 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     private GameObject GetTarget3D(Vector2 screenPosition)
     {
-        Camera camera = Camera.main;
-        if (camera == null) camera = FindObjectOfType<Camera>();
-
+        Camera camera = Camera.main ?? FindObjectOfType<Camera>();
         if (camera == null) return null;
 
         Ray ray = camera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            GameObject hitObject = hit.collider.gameObject;
-
-            if (hitObject.CompareTag("Player") || hitObject.CompareTag("Enemy"))
-                return hitObject;
+            if (hit.collider.CompareTag("Player") || hit.collider.CompareTag("Enemy"))
+                return hit.collider.gameObject;
         }
 
         return null;
@@ -236,8 +235,5 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         posicionInicial = newPosition;
     }
 
-    public bool IsBeingDragged()
-    {
-        return arrastrando;
-    }
+    public bool IsBeingDragged() => arrastrando;
 }

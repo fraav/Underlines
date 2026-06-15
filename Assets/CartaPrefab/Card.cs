@@ -209,6 +209,9 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
                     break;
             }
 
+            if (!isValidTarget && cardDisplay.currentCard.ShouldExecuteAsBlockCard())
+                isValidTarget = isPlayerTarget;
+
             if (isValidTarget)
             {
                 arrastrando = false;
@@ -249,6 +252,9 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
                     isValid = isPlayerTarget;
                     break;
             }
+
+            if (!isValid && cardDisplay.currentCard.ShouldExecuteAsBlockCard())
+                isValid = isPlayerTarget;
         }
 
         CanvasGroup cg = GetComponent<CanvasGroup>();

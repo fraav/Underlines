@@ -215,17 +215,26 @@ public class EnemyController : MonoBehaviour
                 if (GameManager.Instance != null && GameManager.Instance.playerHealth != null)
                 {
                     int finalDamage = Mathf.RoundToInt(action.value * currentAttackMultiplier);
-                    
-                    if (GameManager.Instance.playerController != null && 
-                        GameManager.Instance.playerController.HasBlockActive())
+                    bool blockedAttack = false;
+
+                    if (GameManager.Instance.playerController != null)
                     {
-                        float blockMultiplier = GameManager.Instance.playerController.GetBlockReductionMultiplier();
-                        finalDamage = Mathf.RoundToInt(finalDamage * blockMultiplier);
-                        GameManager.Instance.OnEnemyAttackApplied();
+                        if (GameManager.Instance.playerController.HasBlockActive())
+                        {
+                            float blockMultiplier = GameManager.Instance.playerController.GetBlockReductionMultiplier();
+                            finalDamage = Mathf.RoundToInt(finalDamage * blockMultiplier);
+                            blockedAttack = true;
+                        }
                     }
-                    
+
                     GameManager.Instance.playerHealth.TakeDamage(finalDamage);
                     OnEnemyAttack.Invoke();
+
+                    if (blockedAttack || (GameManager.Instance.playerController != null &&
+                        GameManager.Instance.playerController.ShouldResolveBlockBonusThisAttack()))
+                    {
+                        GameManager.Instance.OnEnemyAttackApplied();
+                    }
                 }
                 break;
 

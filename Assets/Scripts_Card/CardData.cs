@@ -52,6 +52,34 @@ public class CardData : ScriptableObject
     public BoosterEffectType boosterEffectType = BoosterEffectType.DoubleAction;
     public float boosterValue = 1.0f; // Valor del potenciador
 
+    [Header("Block Bonus (cartas de bloqueo especiales)")]
+    public BlockBonusType blockBonusType = BlockBonusType.None;
+
+    [Tooltip("Energía recuperada si bloqueas un ataque enemigo (RewardEnergyOnBlock).")]
+    [Min(1)]
+    public int blockEnergyReward = 1;
+
+    [Tooltip("Daño al enemigo si bloqueas un ataque (CounterDamageOnBlock).")]
+    [Min(0)]
+    public float blockCounterDamage = 100f;
+
+    public enum BlockBonusType
+    {
+        None,
+        RewardEnergyOnBlock,
+        CounterDamageOnBlock
+    }
+
+    public bool HasBlockBonusEffect()
+    {
+        return blockBonusType != BlockBonusType.None;
+    }
+
+    public bool ShouldExecuteAsBlockCard()
+    {
+        return cardType == CardType.Block || HasBlockBonusEffect();
+    }
+
     [Header("Objeto en Escena")]
     [Tooltip("Nombre exacto del objeto en la escena que se activará al jugar esta carta")]
     public string nombreObjetoEnEscenaAActivar = "";

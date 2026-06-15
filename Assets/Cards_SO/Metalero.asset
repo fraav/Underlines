@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96a0746ce4843254fbb0b867109c7d41, type: 3}
-  m_Name: NewCard 1
+  m_Name: Metalero
   m_EditorClassIdentifier: 
-  cardType: 3
+  cardType: 1
   baseValue: 10
   cardName: 50 PESO
-  description: "DUPLICA TU DA\xD1O"
+  description: "Si bloqueas un ataque enemigo, infliges 100 de da\xF1o."
   playEnergyCost: 4
   icon: {fileID: 21300000, guid: 120d14a82234dd24fa8791cf24ca5570, type: 3}
   shopIcon: {fileID: 0}
@@ -28,6 +28,9 @@ MonoBehaviour:
   individualDamageMultiplier: 1
   boosterEffectType: 1
   boosterValue: 4
+  blockBonusType: 2
+  blockEnergyReward: 1
+  blockCounterDamage: 100
   nombreObjetoEnEscenaAActivar: Container
   animationPrefab: {fileID: 5217584273669610250, guid: d08cd14c8b3b26146bd1420cc07818b4, type: 3}
   prefabSpawnPosition: {x: -49.35, y: -1.14, z: -4.887}
