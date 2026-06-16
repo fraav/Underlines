@@ -32,7 +32,7 @@ MonoBehaviour:
   blockEnergyReward: 1
   blockCounterDamage: 100
   nombreObjetoEnEscenaAActivar: Container
-  animationPrefab: {fileID: 5217584273669610250, guid: d08cd14c8b3b26146bd1420cc07818b4, type: 3}
+  animationPrefab: {fileID: 5217584273669610250, guid: 5d864465fc830bb42b644ab436cac298, type: 3}
   prefabSpawnPosition: {x: -49.35, y: -1.14, z: -4.887}
   attachToTarget: 0
   enableCustomEffects: 0

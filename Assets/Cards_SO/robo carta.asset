@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6d155fff8ea522449230f7bf7d5274a, type: 3}
-  m_Name: objeto 1
+  m_Name: robo carta
   m_EditorClassIdentifier: Assembly-CSharp::ObjectCardData
   cardName: 
   description: 
-  icon: {fileID: 21300000, guid: fa83b01291a44ea43a5eb8c1c1b5fb0a, type: 3}
+  icon: {fileID: 21300000, guid: 96dc267de3aff7d4090590279da5bc6f, type: 3}
   shopIcon: {fileID: 21300000, guid: 56dd889a4fe171d45914ffbc93819bcc, type: 3}
   effectType: 3
   baseValue: 50
-  restoreEnergyAmount: 2
+  restoreEnergyAmount: 1
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
-  customAnimationTrigger: Heal
+  customAnimationTrigger: 
   customActionPointTime: 0
   customAnimationDuration: 0
   cardSound: {fileID: 0}
   animationObjectActiveTime: 2
   nombreObjetoEnEscenaAActivar: 
-  animationPrefab: {fileID: 0}
+  animationPrefab: {fileID: 5420510525954485442, guid: 999d5950bf03c3144a07c8c2db0be2f5, type: 3}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
