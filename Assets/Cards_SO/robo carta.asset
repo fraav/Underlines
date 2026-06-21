@@ -22,6 +22,7 @@ MonoBehaviour:
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
+  animationPresentation: 1
   customAnimationTrigger: 
   customActionPointTime: 0
   customAnimationDuration: 0
@@ -31,3 +32,4 @@ MonoBehaviour:
   animationPrefab: {fileID: 5420510525954485442, guid: 999d5950bf03c3144a07c8c2db0be2f5, type: 3}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
+  prefabActionPointTime: 0

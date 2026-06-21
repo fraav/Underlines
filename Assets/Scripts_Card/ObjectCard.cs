@@ -15,6 +15,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     private RectTransform rect;
     private RectTransform canvasRect;
     private Vector2 posicionInicial;
+    private bool posicionInicialValida;
     private Canvas canvas;
     private Vector2 offsetDrag;
 
@@ -34,6 +35,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         rect = GetComponent<RectTransform>();
         escalaOriginal = transform.localScale;
         posicionInicial = rect.anchoredPosition;
+        posicionInicialValida = true;
 
         canvas = GetComponentInParent<Canvas>();
         if (canvas != null)
@@ -58,11 +60,8 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         transform.localScale = escalaOriginal;
         transform.localRotation = Quaternion.identity;
 
-        if (!arrastrando && rect != null)
+        if (!arrastrando && rect != null && posicionInicialValida)
         {
-            if (posicionInicial == Vector2.zero && rect.anchoredPosition != Vector2.zero)
-                posicionInicial = rect.anchoredPosition;
-
             float distanceToInitial = Vector2.Distance(rect.anchoredPosition, posicionInicial);
             if (distanceToInitial > 5f)
                 rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, posicionInicial, Time.deltaTime * velocidadAnimacion);
@@ -99,6 +98,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             return;
 
         posicionInicial = rect.anchoredPosition;
+        posicionInicialValida = true;
 
         dragOriginalParent = transform.parent;
         dragOriginalSiblingIndex = transform.GetSiblingIndex();
@@ -147,6 +147,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         if (target != null && cardDisplay != null && cardDisplay.currentCard != null &&
             target.CompareTag("Player"))
         {
+            ReparentToHandContainer();
             arrastrando = false;
             GameManager.Instance.TryPlayObjectCard(cardDisplay);
             return;
@@ -155,24 +156,22 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         RestoreToHandParent();
     }
 
+    private void ReparentToHandContainer()
+    {
+        if (dragOriginalParent == null) return;
+
+        transform.SetParent(dragOriginalParent, true);
+        transform.SetSiblingIndex(dragOriginalSiblingIndex);
+    }
+
     private void RestoreToHandParent()
     {
         arrastrando = false;
-
-        if (dragOriginalParent != null)
-        {
-            transform.SetParent(dragOriginalParent, false);
-            transform.SetSiblingIndex(dragOriginalSiblingIndex);
-        }
-
-        if (rect != null)
-            rect.anchoredPosition = posicionInicial;
+        ReparentToHandContainer();
 
         CanvasGroup cg = GetComponent<CanvasGroup>();
         if (cg != null)
             cg.alpha = 1f;
-
-        HandManager.Instance?.SyncObjectCardPositions();
     }
 
     private void EnsureCanvasRefs()
@@ -233,6 +232,7 @@ public class ObjectCard : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             rect = GetComponent<RectTransform>();
 
         posicionInicial = newPosition;
+        posicionInicialValida = true;
     }
 
     public bool IsBeingDragged() => arrastrando;

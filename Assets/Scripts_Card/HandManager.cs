@@ -43,8 +43,29 @@ public class HandManager : MonoBehaviour
         if (objectCardPrefab == null)
             objectCardPrefab = cardPrefab;
 
+        DisableLayoutOnHandContainer();
         DisableLayoutOnObjectHandContainer();
         StartCoroutine(InitializeHand());
+    }
+
+    /// <summary>
+    /// El layout group interfiere con el posicionamiento manual.
+    /// </summary>
+    private void DisableLayoutOnHandContainer()
+    {
+        if (handContainer == null) return;
+
+        VerticalLayoutGroup vlg = handContainer.GetComponent<VerticalLayoutGroup>();
+        if (vlg != null)
+            vlg.enabled = false;
+
+        HorizontalLayoutGroup hlg = handContainer.GetComponent<HorizontalLayoutGroup>();
+        if (hlg != null)
+            hlg.enabled = false;
+
+        ContentSizeFitter csf = handContainer.GetComponent<ContentSizeFitter>();
+        if (csf != null)
+            csf.enabled = false;
     }
 
     /// <summary>
@@ -98,6 +119,37 @@ public class HandManager : MonoBehaviour
         }
 
         ArrangeCardsHorizontal(spawnedCards, cardSpacing, startXPosition, startYPosition);
+        UpdateInteractableState();
+        StartCoroutine(DelayedUpdateInteractableState());
+    }
+
+    /// <summary>
+    /// Añade cartas robadas sin mover las que ya están en la mano.
+    /// La nueva carta aparece a la izquierda de la fila existente.
+    /// </summary>
+    public void AddCardsToHand(IReadOnlyList<CardData> cards)
+    {
+        if (cards == null || cards.Count == 0) return;
+
+        foreach (CardData card in cards)
+        {
+            if (card == null) continue;
+
+            GameObject newCard = Instantiate(cardPrefab, handContainer);
+            CardDisplay display = newCard.GetComponent<CardDisplay>();
+            if (display == null)
+            {
+                Destroy(newCard);
+                continue;
+            }
+
+            display.Initialize(card);
+            spawnedCards.Add(newCard);
+
+            float x = GetNewCardXPosition();
+            ApplyCardPosition(newCard, new Vector2(x, startYPosition), newCard.GetComponent<Card>(), null);
+        }
+
         UpdateInteractableState();
         StartCoroutine(DelayedUpdateInteractableState());
     }
@@ -174,6 +226,25 @@ public class HandManager : MonoBehaviour
         list.Clear();
     }
 
+    private float GetNewCardXPosition()
+    {
+        if (spawnedCards.Count <= 1)
+            return startXPosition;
+
+        float leftmost = startXPosition;
+        for (int i = 0; i < spawnedCards.Count - 1; i++)
+        {
+            GameObject card = spawnedCards[i];
+            if (card == null) continue;
+
+            RectTransform rt = card.GetComponent<RectTransform>();
+            if (rt != null)
+                leftmost = Mathf.Min(leftmost, rt.anchoredPosition.x);
+        }
+
+        return leftmost - cardSpacing;
+    }
+
     private void ArrangeCardsHorizontal(List<GameObject> cards, float spacing, float startX, float startY)
     {
         int cardCount = cards.Count;
@@ -188,7 +259,7 @@ public class HandManager : MonoBehaviour
             if (cardComponent != null && cardComponent.IsBeingDragged())
                 continue;
 
-            float x = startX + i * spacing;
+            float x = startX + (cardCount - 1 - i) * spacing;
             float y = startY;
             ApplyCardPosition(card, new Vector2(x, y), cardComponent, null);
         }

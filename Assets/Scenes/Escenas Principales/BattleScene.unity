@@ -19372,7 +19372,7 @@ MonoBehaviour:
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ReverseArrangement: 1
 --- !u!114 &258743364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67199,7 +67199,7 @@ MonoBehaviour:
   cardPrefab: {fileID: 3060040327483675434}
   handContainer: {fileID: 258743362}
   cardSpacing: 220
-  startXPosition: -180
+  startXPosition: 0
   startYPosition: 0
   objectCardPrefab: {fileID: 5459052531377889888, guid: 0ea10be2cb64c57488796d7b1e978b8b, type: 3}
   objectHandContainer: {fileID: 1007310648}

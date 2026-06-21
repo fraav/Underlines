@@ -41,16 +41,43 @@ public class ObjectCardData : ScriptableObject
     [Header("Mejoras (mismo patrón que CardData)")]
     public float individualBaseValueUpgrade = 0f;
 
-    [Header("Animación y audio (configurar en editor)")]
+    [Header("Animación al jugar")]
+    [Tooltip("PlayerAnimatorTrigger: trigger en el Animator del jugador. AnimationPrefab: prefab u objeto en escena (como cartas de personaje).")]
+    public ObjectAnimationPresentation animationPresentation = ObjectAnimationPresentation.PlayerAnimatorTrigger;
+
+    public enum ObjectAnimationPresentation
+    {
+        PlayerAnimatorTrigger,
+        AnimationPrefab
+    }
+
+    public bool UsesPlayerAnimator()
+    {
+        return animationPresentation == ObjectAnimationPresentation.PlayerAnimatorTrigger;
+    }
+
+    public bool UsesAnimationPrefab()
+    {
+        return animationPresentation == ObjectAnimationPresentation.AnimationPrefab;
+    }
+
+    [Header("Player Animator (solo si animationPresentation = PlayerAnimatorTrigger)")]
     public string customAnimationTrigger = "";
     public float customActionPointTime = 0f;
     public float customAnimationDuration = 0f;
+
+    [Header("Audio")]
     public AudioClip cardSound;
+
+    [Header("Animation Prefab (solo si animationPresentation = AnimationPrefab)")]
     public float animationObjectActiveTime = 2f;
     public string nombreObjetoEnEscenaAActivar = "";
     public GameObject animationPrefab;
     public Vector3 prefabSpawnPosition = Vector3.zero;
     public bool attachToTarget = false;
+
+    [Tooltip("Momento del efecto con prefab (0 = 0.5s por defecto). Igual que action point en cartas.")]
+    public float prefabActionPointTime = 0f;
 
     public GameObject GetObjetoAActivar()
     {

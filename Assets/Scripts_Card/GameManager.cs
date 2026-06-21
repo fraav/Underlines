@@ -983,9 +983,20 @@ public class GameManager : MonoBehaviour
         if (card == null) yield break;
 
         GameObject target = playerHealth != null ? playerHealth.gameObject : null;
-        PlayObjectCardEffects(card, target);
+        PlayObjectCardSound(card);
 
-        if (playerController != null)
+        if (card.UsesAnimationPrefab())
+        {
+            PlayObjectCardVisual(card, target);
+
+            float actionPoint = card.prefabActionPointTime > 0f
+                ? card.prefabActionPointTime
+                : (card.customActionPointTime > 0f ? card.customActionPointTime : 0.5f);
+
+            yield return new WaitForSeconds(actionPoint);
+            ApplyObjectCardEffectLogic(card);
+        }
+        else if (playerController != null)
         {
             bool finished = false;
             playerController.PlayObjectCardAnimation(
@@ -1041,11 +1052,23 @@ public class GameManager : MonoBehaviour
     public void PlayObjectCardEffects(ObjectCardData card, GameObject target = null)
     {
         if (card == null) return;
+        PlayObjectCardSound(card);
+        PlayObjectCardVisual(card, target);
+    }
+
+    private void PlayObjectCardSound(ObjectCardData card)
+    {
+        if (card == null) return;
 
         if (card.cardSound != null)
             AudioSource.PlayClipAtPoint(card.cardSound, Camera.main.transform.position);
         else
             PlayHealCardSound();
+    }
+
+    private void PlayObjectCardVisual(ObjectCardData card, GameObject target = null)
+    {
+        if (card == null || !card.UsesAnimationPrefab()) return;
 
         if (card.animationPrefab != null)
             SpawnObjectAnimationPrefab(card, target);
@@ -1341,6 +1364,8 @@ public class GameManager : MonoBehaviour
     {
         if (count <= 0) return 0;
 
+        int handSizeBefore = currentHand.Count;
+        List<CardData> drawnCards = new List<CardData>();
         int drawn = 0;
         for (int i = 0; i < count; i++)
         {
@@ -1359,12 +1384,18 @@ public class GameManager : MonoBehaviour
             CardData card = availableDeck[0];
             availableDeck.RemoveAt(0);
             currentHand.Add(card);
+            drawnCards.Add(card);
             drawn++;
             Debug.Log($"[GameManager] Carta robada (extra): {card.cardName}");
         }
 
         if (HandManager.Instance != null)
-            HandManager.Instance.RefreshHand();
+        {
+            if (handSizeBefore == 0)
+                HandManager.Instance.RefreshHand();
+            else
+                HandManager.Instance.AddCardsToHand(drawnCards);
+        }
 
         return drawn;
     }

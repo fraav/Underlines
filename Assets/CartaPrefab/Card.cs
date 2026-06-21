@@ -12,9 +12,12 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
     private RectTransform rect;
     private RectTransform canvasRect;
     private Vector2 posicionInicial;
+    private bool posicionInicialValida;
     private Canvas canvas;
 
     private Vector2 offsetDrag;
+    private Transform dragOriginalParent;
+    private int dragOriginalSiblingIndex;
 
     [Tooltip("Velocidad de retorno a la posición de la mano al cancelar el arrastre.")]
     public float velocidadAnimacion = 15f;
@@ -29,6 +32,7 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
         rect = GetComponent<RectTransform>();
         escalaOriginal = transform.localScale;
         posicionInicial = rect.anchoredPosition;
+        posicionInicialValida = true;
 
         canvas = GetComponentInParent<Canvas>();
         if (canvas != null)
@@ -57,13 +61,8 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
         transform.localScale = escalaOriginal;
         transform.localRotation = Quaternion.identity;
 
-        if (!arrastrando && rect != null)
+        if (!arrastrando && rect != null && posicionInicialValida)
         {
-            if (posicionInicial == Vector2.zero && rect.anchoredPosition != Vector2.zero)
-            {
-                posicionInicial = rect.anchoredPosition;
-            }
-
             float distanceToInitial = Vector2.Distance(rect.anchoredPosition, posicionInicial);
             if (distanceToInitial > 5f)
             {
@@ -129,21 +128,24 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
             }
         }
 
-        if (rect == null || canvasRect == null)
+        if (rect == null || canvasRect == null || canvas == null)
         {
             Debug.LogError("[Card] No se pueden obtener referencias necesarias para el arrastre");
             return;
         }
 
-        if (posicionInicial == Vector2.zero || Vector2.Distance(posicionInicial, rect.anchoredPosition) > 0.1f)
-        {
-            posicionInicial = rect.anchoredPosition;
-        }
+        posicionInicial = rect.anchoredPosition;
+        posicionInicialValida = true;
 
         if (!GameManager.Instance.StartTargetSelection(cardDisplay.currentCard, cardDisplay))
         {
             return;
         }
+
+        dragOriginalParent = transform.parent;
+        dragOriginalSiblingIndex = transform.GetSiblingIndex();
+        transform.SetParent(canvas.transform, true);
+        transform.SetAsLastSibling();
 
         arrastrando = true;
         seleccionada = true;
@@ -154,7 +156,7 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out posicionMouse))
         {
             Debug.LogWarning("[Card] No se pudo convertir la posición del mouse a coordenadas del canvas");
-            arrastrando = false;
+            RestoreToHandParent();
             GameManager.Instance.CancelSelection();
             return;
         }
@@ -214,20 +216,33 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
 
             if (isValidTarget)
             {
+                ReparentToHandContainer();
                 arrastrando = false;
                 GameManager.Instance.SelectTarget(target);
                 return;
             }
         }
 
-        if (rect != null && posicionInicial == Vector2.zero)
-        {
-            posicionInicial = rect.anchoredPosition;
-        }
-
-        arrastrando = false;
-
+        RestoreToHandParent();
         GameManager.Instance.CancelSelection();
+    }
+
+    private void ReparentToHandContainer()
+    {
+        if (dragOriginalParent == null) return;
+
+        transform.SetParent(dragOriginalParent, true);
+        transform.SetSiblingIndex(dragOriginalSiblingIndex);
+    }
+
+    private void RestoreToHandParent()
+    {
+        arrastrando = false;
+        ReparentToHandContainer();
+
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg != null)
+            cg.alpha = 1f;
     }
 
     private void CheckValidTarget3D(Vector2 screenPosition)
@@ -310,6 +325,7 @@ public class Card : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDra
         }
 
         posicionInicial = newPosition;
+        posicionInicialValida = true;
     }
 
     public bool IsBeingDragged()
