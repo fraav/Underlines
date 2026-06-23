@@ -46673,9 +46673,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a22bc775841e746ae99356602c2151, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueSequenceName: BattleStart
-  timelineDirector: {fileID: 1073532916}
-  dialogueSystem: {fileID: 1856821954}
 --- !u!4 &615023493
 Transform:
   m_ObjectHideFlags: 0
@@ -94962,6 +94959,143 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1235743757}
   m_CullTransparentMesh: 1
+--- !u!1 &1235812558
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1235812560}
+  - component: {fileID: 1235812559}
+  m_Layer: 0
+  m_Name: Spline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1235812559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235812558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dab5c7d4c32e743048dfca98e2d5914f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Splines::UnityEngine.Splines.SplineContainer
+  m_Spline:
+    m_EditModeType: 1
+    m_Knots: []
+    m_MetaData: []
+    m_Closed: 0
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Splines:
+  - m_EditModeType: 1
+    m_Knots:
+    - Position:
+        x: 0
+        y: 0
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -0
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0
+      Rotation:
+        value:
+          x: 1
+          y: 0
+          z: 0
+          w: 0
+    - Position:
+        x: 0
+        y: 0
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -22.969599
+      TangentOut:
+        x: 0
+        y: 0
+        z: 22.969599
+      Rotation:
+        value:
+          x: 0.045594476
+          y: -7.2746496e-11
+          z: 0.99896014
+          w: 3.3202904e-12
+    - Position:
+        x: 20.92395
+        y: -0.000000033453944
+        z: 228.74097
+      TangentIn:
+        x: -0
+        y: -0
+        z: -22.969599
+      TangentOut:
+        x: 0
+        y: 0
+        z: 22.969599
+      Rotation:
+        value:
+          x: 0.045594476
+          y: -7.2746496e-11
+          z: 0.99896014
+          w: 3.3202904e-12
+    m_MetaData:
+    - Mode: 4
+      Tension: 0.5
+    - Mode: 0
+      Tension: 0.5
+    - Mode: 0
+      Tension: 0.5
+    m_Closed: 0
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Knots:
+    m_KnotsLink:
+    - Knots:
+      - Spline: 0
+        Knot: 0
+      - Spline: 0
+        Knot: 1
+--- !u!4 &1235812560
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235812558}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1541.5062, y: -0.000000728287, z: -2073.0706}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1236229687
 GameObject:
   m_ObjectHideFlags: 0
@@ -100861,7 +100995,7 @@ Animator:
   m_GameObject: {fileID: 1327040614}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 9d83059309c46db42b75d839b685d9f0, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -102727,11 +102861,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a555e1d3d4d6124c8e6c76b0dbf4aaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueSystem: {fileID: 1856821954}
-  dialogueSequenceName: BattleStart
-  triggerOnStart: 1
-  triggerOnCollision: 0
-  triggerOnClick: 0
 --- !u!4 &1359492956
 Transform:
   m_ObjectHideFlags: 0
@@ -140043,91 +140172,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38f3d384a3e478046b5b28b7b76e5a8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueCanvas: {fileID: 20143415}
-  leftSpeechBubble: {fileID: 1591871722}
-  leftCharacterText: {fileID: 29906009}
-  leftCharacterName: {fileID: 572369402}
-  rightSpeechBubble: {fileID: 610409446}
-  rightCharacterText: {fileID: 969726036}
-  rightCharacterName: {fileID: 1785904331}
-  dialogueSequences:
-  - sequenceName: BattleStart
-    dialogueLines:
-    - text: Puto
-      characterName: Clpper
-      bubblePosition: 0
-      typeSound: {fileID: 8300000, guid: b70b21cdb88a04249b59df05a4ccfa46, type: 3}
-      textSpeed: 0.15
-      onStartLine:
-        m_PersistentCalls:
-          m_Calls: []
-      onEndLine:
-        m_PersistentCalls:
-          m_Calls: []
-    - text: tu
-      characterName: Robot
-      bubblePosition: 1
-      typeSound: {fileID: 8300000, guid: b70b21cdb88a04249b59df05a4ccfa46, type: 3}
-      textSpeed: 0.15
-      onStartLine:
-        m_PersistentCalls:
-          m_Calls: []
-      onEndLine:
-        m_PersistentCalls:
-          m_Calls: []
-    onStartSequence:
-      m_PersistentCalls:
-        m_Calls: []
-    onEndSequence:
-      m_PersistentCalls:
-        m_Calls: []
-  - sequenceName: 'Low Health Dialogue '
-    dialogueLines:
-    - text: Vida Baja
-      characterName: Robot
-      bubblePosition: 1
-      typeSound: {fileID: 8300000, guid: b70b21cdb88a04249b59df05a4ccfa46, type: 3}
-      textSpeed: 0.1
-      onStartLine:
-        m_PersistentCalls:
-          m_Calls: []
-      onEndLine:
-        m_PersistentCalls:
-          m_Calls: []
-    - text: Cagaste
-      characterName: Clipper
-      bubblePosition: 0
-      typeSound: {fileID: 8300000, guid: b70b21cdb88a04249b59df05a4ccfa46, type: 3}
-      textSpeed: 0.1
-      onStartLine:
-        m_PersistentCalls:
-          m_Calls: []
-      onEndLine:
-        m_PersistentCalls:
-          m_Calls: []
-    onStartSequence:
-      m_PersistentCalls:
-        m_Calls: []
-    onEndSequence:
-      m_PersistentCalls:
-        m_Calls: []
-  allowMouseInput: 1
-  allowKeyboardInput: 0
-  advanceKey: 32
-  audioSource: {fileID: 0}
-  typeSoundVolume: 0.5
-  objectsToDisable:
-  - {fileID: 2987238205935224882}
-  - {fileID: 433456531}
-  - {fileID: 787064217}
-  - {fileID: 812484703}
-  - {fileID: 724734144}
-  - {fileID: 258743361}
-  - {fileID: 812484703}
-  - {fileID: 0}
-  exitAnimationTrigger: 
-  exitAnimationDelay: 0.3
-  reenableObjectsOnDialogueEnd: 1
 --- !u!4 &1856821955
 Transform:
   m_ObjectHideFlags: 0
@@ -163676,3 +163720,4 @@ SceneRoots:
   - {fileID: 821386393}
   - {fileID: 1072555451}
   - {fileID: 228889534}
+  - {fileID: 1235812560}
