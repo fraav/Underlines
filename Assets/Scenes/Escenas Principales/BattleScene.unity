@@ -163245,7 +163245,7 @@ MonoBehaviour:
   baseAttackValue: 50
   baseBlockValue: 10
   baseHealValue: 10
-  buttonsContainer: {fileID: 0}
+  buttonsContainer: {fileID: 927492805}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
