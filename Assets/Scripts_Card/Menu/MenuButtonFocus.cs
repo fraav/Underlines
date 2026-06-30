@@ -17,6 +17,8 @@ public class MenuButtonFocus : MonoBehaviour, IPointerClickHandler
     [Tooltip("Transform vacío que define posición y rotación de cámara al enfocar este botón.")]
     public Transform focusPoint;
 
+    public GameObject gameobject;
+
     [Header("Comportamiento")]
     [Tooltip("Si está activo, el primer click enfoca la cámara y el botón no ejecuta su acción todavía.")]
     public bool requireFocusBeforeAction = true;
@@ -52,6 +54,7 @@ public class MenuButtonFocus : MonoBehaviour, IPointerClickHandler
         {
             // Si la cámara está en otro foco, primero la regresamos y luego enfocamos este.
             cam.FocusOn(focusPoint);
+            gameobject.SetActive(this);
             MenuClickAwayHandler.Instance?.SetActiveButton(this);
             _isThisButtonFocused = true;
 
@@ -64,6 +67,7 @@ public class MenuButtonFocus : MonoBehaviour, IPointerClickHandler
     private void HandleReturnedToOverview()
     {
         _isThisButtonFocused = false;
+   
     }
 
     /// <summary>
@@ -72,5 +76,6 @@ public class MenuButtonFocus : MonoBehaviour, IPointerClickHandler
     public void ResetFocusState()
     {
         _isThisButtonFocused = false;
+        gameobject.SetActive(false);
     }
 }
