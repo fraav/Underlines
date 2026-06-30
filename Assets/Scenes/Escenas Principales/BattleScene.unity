@@ -70986,8 +70986,8 @@ MonoBehaviour:
   blockMultiplier: 1
   healMultiplier: 1
   allCards:
-  - {fileID: 11400000, guid: 09a0bcab7e117094c81bd9c1ba685860, type: 2}
-  - {fileID: 11400000, guid: 87aad5802e4cf404994fbfd039f06d71, type: 2}
+  - {fileID: 11400000, guid: d46e7dbfb9de0e34484fe79bb2dea0e1, type: 2}
+  - {fileID: 11400000, guid: c8b60b1ca6469e04bbe575ad9db6af3d, type: 2}
   - {fileID: 11400000, guid: 09a0bcab7e117094c81bd9c1ba685860, type: 2}
   - {fileID: 11400000, guid: 87aad5802e4cf404994fbfd039f06d71, type: 2}
   allObjectCards:
@@ -99891,7 +99891,7 @@ MonoBehaviour:
   objectsToDisableDuringCardAnimation: []
   blockAnimationTrigger: Block
   blockIdleAnimationTrigger: BlockIdle
-  blockAutoDeactivateTime: 3
+  blockAutoDeactivateTime: 0.2
   damageAnimationTrigger: T_Damage
   damageWhileBlockingAnimationTrigger: TakeDamageWhileBlocking
   healthSystem: {fileID: 1313455313}

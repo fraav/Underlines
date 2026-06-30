@@ -18,10 +18,11 @@ MonoBehaviour:
   shopIcon: {fileID: 0}
   effectType: 2
   baseValue: 15
-  restoreEnergyAmount: 2
+  restoreEnergyAmount: 3
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
+  animationPresentation: 0
   customAnimationTrigger: megafono
   customActionPointTime: 0
   customAnimationDuration: 0
@@ -31,3 +32,4 @@ MonoBehaviour:
   animationPrefab: {fileID: 0}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
+  prefabActionPointTime: 0

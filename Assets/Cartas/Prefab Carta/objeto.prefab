@@ -287,16 +287,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 5459052531377889888}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b10f9a87f13cab45b1c1f888a30616a, type: 3}
+  m_Script: {fileID: 11500000, guid: 96f62f0355d046540a46f1bc7ea08786, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: 7516124384556452442}
   titleText: {fileID: 0}
   descriptionText: {fileID: 0}
-  descriptionPanel: {fileID: 0}
-  fullDescriptionText: {fileID: 0}
   selectionIndicator: {fileID: 0}
-  selectedScale: 1.1
   currentCard: {fileID: 0}
 --- !u!82 &6145357223222016123
 AudioSource:

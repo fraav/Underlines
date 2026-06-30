@@ -39,11 +39,12 @@ public class PlayerController : MonoBehaviour
     // Sistema de bloqueo
     private bool hasBlockActive = false;
     private bool hasBlockPending = false;
+    private bool hasBlockStance = false;
     private float blockReductionMultiplier = 1.0f;
     private Coroutine blockAutoDeactivateCoroutine;
 
     private CardData.BlockBonusType pendingBlockBonus = CardData.BlockBonusType.None;
-    private int pendingBlockEnergyReward = 1;
+    private float pendingBlockHealReward = 10f;
     private float pendingBlockCounterDamage = 10f;
     private bool blockTriggeredThisAttack;
 
@@ -224,45 +225,98 @@ public class PlayerController : MonoBehaviour
     // Método para activar el bloqueo (ahora solo lo marca como pendiente)
     public void ActivateBlock(float reductionMultiplier)
     {
-        MergeBlockState(reductionMultiplier, CardData.BlockBonusType.None, 1, 0f);
+        MergeBlockState(reductionMultiplier, CardData.BlockBonusType.None, 0f, 0f);
     }
 
-    public void ActivateBlock(float reductionMultiplier, CardData.BlockBonusType bonusType, int energyReward, float counterDamage)
+    public void ActivateBlock(float reductionMultiplier, CardData.BlockBonusType bonusType, float blockHealReward, float counterDamage)
     {
-        MergeBlockState(reductionMultiplier, bonusType, energyReward, counterDamage);
+        MergeBlockState(reductionMultiplier, bonusType, blockHealReward, counterDamage);
+    }
+
+    /// <summary>
+    /// Activa la postura de bloqueo visual (BlockIdle). Solo debe llamarse desde el gatillo de bloqueo.
+    /// </summary>
+    public void EnterBlockStance()
+    {
+        hasBlockStance = true;
+        PlayBlockIdleAnimation();
+        Debug.Log("[PlayerController] Postura de bloqueo activada (gatillo).");
+    }
+
+    /// <summary>
+    /// Cancela la preparación de bloqueo (p. ej. al usar el gatillo de ataque).
+    /// </summary>
+    public void CancelBlockPreparation()
+    {
+        hasBlockPending = false;
+        blockReductionMultiplier = 1.0f;
+        ClearBlockBonuses();
+        ExitBlockStance();
+        Debug.Log("[PlayerController] Preparación de bloqueo cancelada.");
+    }
+
+    /// <summary>
+    /// Sale de la postura de bloqueo sin haber recibido un ataque enemigo.
+    /// </summary>
+    public void ResolveBlockStanceWithoutAttack()
+    {
+        hasBlockActive = false;
+        hasBlockPending = false;
+        blockReductionMultiplier = 1.0f;
+        ClearBlockBonuses();
+        ExitBlockStance();
+        StopBlockAutoDeactivateTimer();
+        Debug.Log("[PlayerController] Postura de bloqueo liberada (enemigo no atacó).");
+    }
+
+    public bool HasBlockStance()
+    {
+        return hasBlockStance;
+    }
+
+    private void ExitBlockStance()
+    {
+        hasBlockStance = false;
+        StopBlockIdleAnimation();
     }
 
     /// <summary>
     /// Acumula bloqueo: mejor reducción (menor multiplicador) y conserva bonus de carta si el botón no trae bonus.
     /// </summary>
-    private void MergeBlockState(float reductionMultiplier, CardData.BlockBonusType bonusType, int energyReward, float counterDamage)
+    private void MergeBlockState(float reductionMultiplier, CardData.BlockBonusType bonusType, float blockHealReward, float counterDamage)
     {
         blockReductionMultiplier = Mathf.Min(blockReductionMultiplier, reductionMultiplier);
 
         if (bonusType != CardData.BlockBonusType.None)
         {
             pendingBlockBonus = bonusType;
-            pendingBlockEnergyReward = Mathf.Max(1, energyReward);
+            pendingBlockHealReward = Mathf.Max(0f, blockHealReward);
             pendingBlockCounterDamage = counterDamage;
         }
 
         hasBlockPending = true;
-        Debug.Log($"[PlayerController] Bloqueo pendiente. Reducción: {blockReductionMultiplier}, Bonus: {pendingBlockBonus}, Counter: {pendingBlockCounterDamage}");
+        Debug.Log($"[PlayerController] Bloqueo pendiente. Reducción: {blockReductionMultiplier}, Bonus: {pendingBlockBonus}, Heal: {pendingBlockHealReward}, Counter: {pendingBlockCounterDamage}");
     }
 
-    // Método para activar el bloqueo pendiente (se llama cuando el enemigo ataca)
+    /// <summary>
+    /// Activa el bloqueo mecánico al inicio de un ataque enemigo. Requiere postura de bloqueo (gatillo).
+    /// </summary>
     public void ActivatePendingBlock()
     {
-        if (hasBlockPending || hasBlockActive)
+        if (!hasBlockStance)
         {
-            hasBlockActive = true;
-            hasBlockPending = false;
-            blockTriggeredThisAttack = true;
-            Debug.Log($"[PlayerController] Bloqueo activo para ataque enemigo. Bonus: {pendingBlockBonus}, Counter: {pendingBlockCounterDamage}");
-            
-            PlayBlockIdleAnimation();
-            StartBlockAutoDeactivateTimer();
+            Debug.Log("[PlayerController] Bloqueo ignorado: no se activó el gatillo de bloqueo.");
+            return;
         }
+
+        if (!hasBlockPending && blockReductionMultiplier >= 1f)
+            return;
+
+        hasBlockActive = true;
+        hasBlockPending = false;
+        blockTriggeredThisAttack = true;
+        Debug.Log($"[PlayerController] Bloqueo activo para ataque enemigo. Bonus: {pendingBlockBonus}, Counter: {pendingBlockCounterDamage}");
+        StartBlockAutoDeactivateTimer();
     }
 
     public bool HasPendingBlockBonus()
@@ -278,7 +332,7 @@ public class PlayerController : MonoBehaviour
     public void ClearBlockBonuses()
     {
         pendingBlockBonus = CardData.BlockBonusType.None;
-        pendingBlockEnergyReward = 1;
+        pendingBlockHealReward = 0f;
         pendingBlockCounterDamage = 0f;
         blockTriggeredThisAttack = false;
     }
@@ -289,8 +343,7 @@ public class PlayerController : MonoBehaviour
         hasBlockActive = false;
         hasBlockPending = false;
         blockReductionMultiplier = 1.0f;
-        
-        StopBlockIdleAnimation();
+        ExitBlockStance();
         StopBlockAutoDeactivateTimer();
         
         Debug.Log("[PlayerController] Bloqueo mecánico desactivado (bonus conservado hasta resolver)");
@@ -333,9 +386,14 @@ public class PlayerController : MonoBehaviour
 
         switch (pendingBlockBonus)
         {
-            case CardData.BlockBonusType.RewardEnergyOnBlock:
-                GameManager.Instance.RefundEnergy(pendingBlockEnergyReward);
-                Debug.Log($"[PlayerController] Bloqueo exitoso: +{pendingBlockEnergyReward} energía");
+            case CardData.BlockBonusType.RewardHealOnBlock:
+                int healAmount = Mathf.RoundToInt(pendingBlockHealReward);
+                if (healAmount > 0 && GameManager.Instance.playerHealth != null)
+                {
+                    GameManager.Instance.playerHealth.Heal(healAmount);
+                    GameManager.Instance.PlayHealCardSound();
+                    Debug.Log($"[PlayerController] Bloqueo exitoso: +{healAmount} curación");
+                }
                 break;
 
             case CardData.BlockBonusType.CounterDamageOnBlock:

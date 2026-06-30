@@ -176,10 +176,10 @@ public class HandManager : MonoBehaviour
         {
             GameObject newCard = Instantiate(prefab, objectHandContainer);
 
-            // Evitar conflicto si el prefab duplicado aún trae Card/CardDisplay
             Card legacyCard = newCard.GetComponent<Card>();
             if (legacyCard != null)
                 Destroy(legacyCard);
+
             CardDisplay legacyDisplay = newCard.GetComponent<CardDisplay>();
             if (legacyDisplay != null)
                 Destroy(legacyDisplay);

@@ -16,12 +16,13 @@ MonoBehaviour:
   description: 
   icon: {fileID: 21300000, guid: 39c6e1cba2612844798f9dad94549369, type: 3}
   shopIcon: {fileID: 21300000, guid: 56dd889a4fe171d45914ffbc93819bcc, type: 3}
-  effectType: 1
-  baseValue: 50
+  effectType: 0
+  baseValue: 2
   restoreEnergyAmount: 1
   drawCardCount: 1
   playEnergyCost: 3
   individualBaseValueUpgrade: 0
+  animationPresentation: 0
   customAnimationTrigger: Heal
   customActionPointTime: 0
   customAnimationDuration: 0
@@ -31,3 +32,4 @@ MonoBehaviour:
   animationPrefab: {fileID: 0}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
+  prefabActionPointTime: 0

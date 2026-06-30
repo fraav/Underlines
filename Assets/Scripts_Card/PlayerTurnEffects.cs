@@ -45,6 +45,8 @@ public class PlayerTurnEffects : MonoBehaviour
                     return $"Aumenta el bloqueo en {value * 100}%";
                 case CardData.BoosterEffectType.IncreaseHeal:
                     return $"Aumenta la curación en {value * 100}%";
+                case CardData.BoosterEffectType.Heal:
+                    return "Curación instantánea al jugar";
                 default:
                     return "Efecto desconocido";
             }

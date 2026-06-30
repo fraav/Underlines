@@ -181,6 +181,11 @@ public class EnemyController : MonoBehaviour
         float remainingTime = action.duration - action.actionPointTime;
         if (remainingTime > 0) yield return new WaitForSeconds(remainingTime);
 
+        if (action.actionType != EnemyAction.ActionType.Damage && GameManager.Instance != null)
+        {
+            GameManager.Instance.OnEnemyNonAttackAction();
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnEnemyTurnEnd();

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "NewCard", menuName = "Card Game/Card")]
 public class CardData : ScriptableObject
@@ -43,9 +44,10 @@ public class CardData : ScriptableObject
     // Para cartas potenciadoras (Booster)
     public enum BoosterEffectType { 
         DoubleAction,       // Duplica la acción siguiente
-        IncreaseDamage,    // Aumenta el daño
+        IncreaseDamage,    // Aumenta el daño de la próxima acción
         IncreaseBlock,     // Aumenta el bloqueo
-        IncreaseHeal       // Aumenta la curación
+        IncreaseHeal,      // Aumenta la curación de la próxima acción
+        Heal               // Curación instantánea al jugar la carta
     }
     
     [Header("Booster Settings")]
@@ -55,9 +57,10 @@ public class CardData : ScriptableObject
     [Header("Block Bonus (cartas de bloqueo especiales)")]
     public BlockBonusType blockBonusType = BlockBonusType.None;
 
-    [Tooltip("Energía recuperada si bloqueas un ataque enemigo (RewardEnergyOnBlock).")]
-    [Min(1)]
-    public int blockEnergyReward = 1;
+    [Tooltip("Curación al bloquear un ataque enemigo (RewardHealOnBlock).")]
+    [Min(0)]
+    [FormerlySerializedAs("blockEnergyReward")]
+    public float blockHealReward = 10f;
 
     [Tooltip("Daño al enemigo si bloqueas un ataque (CounterDamageOnBlock).")]
     [Min(0)]
@@ -66,7 +69,7 @@ public class CardData : ScriptableObject
     public enum BlockBonusType
     {
         None,
-        RewardEnergyOnBlock,
+        RewardHealOnBlock,
         CounterDamageOnBlock
     }
 

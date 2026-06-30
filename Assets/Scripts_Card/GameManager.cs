@@ -931,22 +931,30 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"[GameManager] Card_Booster called with: {card.cardName}, effect: {card.boosterEffectType}");
 
-        // Los efectos de sonido y objeto ya se reprodujeron en ExecuteCardAction
-        
-        // Agregar el efecto a los efectos acumulados
-        if (PlayerTurnEffects.Instance != null)
+        if (card.boosterEffectType == CardData.BoosterEffectType.Heal)
+        {
+            float upgradedValue = card.baseValue + card.individualBaseValueUpgrade;
+            float effectsMult = PlayerTurnEffects.Instance != null
+                ? PlayerTurnEffects.Instance.GetHealMultiplier()
+                : 1f;
+            float finalHeal = upgradedValue * effectsMult * healMultiplier;
+
+            if (playerHealth != null)
+            {
+                playerHealth.Heal(Mathf.RoundToInt(finalHeal));
+                PlayHealCardSound();
+                Debug.Log($"[GameManager] Booster Heal: +{finalHeal:F1} vida");
+            }
+        }
+        else if (PlayerTurnEffects.Instance != null)
         {
             PlayerTurnEffects.Instance.AddEffect(card);
             Debug.Log($"[GameManager] Efecto agregado: {card.boosterEffectType}");
         }
 
-        // Actualizar display de efectos
         if (EffectsDisplayUI.Instance != null)
-        {
             EffectsDisplayUI.Instance.RefreshDisplay();
-        }
 
-        // IMPORTANTE: Las cartas potenciadoras NO terminan el turno
         Debug.Log("[GameManager] Carta potenciadora jugada. El turno continúa, puedes jugar más cartas.");
     }
 
@@ -1172,15 +1180,12 @@ public class GameManager : MonoBehaviour
 
         void ApplyBlock()
         {
-            if (enemyController != null)
-                enemyController.ApplyAttackReduction(reductionMultiplier);
-
             if (playerController != null)
             {
                 playerController.ActivateBlock(
                     reductionMultiplier,
                     card.blockBonusType,
-                    card.blockEnergyReward,
+                    card.blockHealReward,
                     card.blockCounterDamage);
             }
 
@@ -1537,15 +1542,19 @@ public class GameManager : MonoBehaviour
 
     public void OnEnemyAttackStart()
     {
-        if (playerController != null && playerController.HasBlockPending())
+        if (playerController != null && playerController.HasBlockStance())
         {
             playerController.ActivatePendingBlock();
-        }
 
-        if (playerController != null && playerController.HasBlockActive())
-        {
-            playerController.PlayBlockAnimation();
+            if (playerController.HasBlockActive())
+                playerController.PlayBlockAnimation();
         }
+    }
+
+    public void OnEnemyNonAttackAction()
+    {
+        if (playerController != null)
+            playerController.ResolveBlockStanceWithoutAttack();
     }
 
     public void OnEnemyAttackApplied()

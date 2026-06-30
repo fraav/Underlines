@@ -141,6 +141,8 @@ public class CardPurchaseShopItemV2 : ShopItem
                 return $"Aumenta el bloqueo en {cardToPurchase.boosterValue * 100}%";
             case CardData.BoosterEffectType.IncreaseHeal:
                 return $"Aumenta la curación en {cardToPurchase.boosterValue * 100}%";
+            case CardData.BoosterEffectType.Heal:
+                return $"Curación instantánea: {cardToPurchase.baseValue} HP";
             default:
                 return cardToPurchase.description;
         }

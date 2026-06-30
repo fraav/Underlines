@@ -181,8 +181,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
             case CardData.CardType.Block:
                 float blockValue = upgradedValue * GameManager.Instance.blockMultiplier;
                 string blockDesc = $"Reduce: {blockValue:F0}%";
-                if (currentCard.blockBonusType == CardData.BlockBonusType.RewardEnergyOnBlock)
-                    blockDesc += $" | +{currentCard.blockEnergyReward}⚡ al bloquear";
+                if (currentCard.blockBonusType == CardData.BlockBonusType.RewardHealOnBlock)
+                    blockDesc += $" | +{currentCard.blockHealReward:F0} HP al bloquear";
                 else if (currentCard.blockBonusType == CardData.BlockBonusType.CounterDamageOnBlock)
                     blockDesc += $" | {currentCard.blockCounterDamage:F0} daño al bloquear";
                 return blockDesc;
@@ -238,8 +238,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
 
         switch (currentCard.blockBonusType)
         {
-            case CardData.BlockBonusType.RewardEnergyOnBlock:
-                return $"Si bloqueas un ataque: recuperas {currentCard.blockEnergyReward} de energía";
+            case CardData.BlockBonusType.RewardHealOnBlock:
+                return $"Si bloqueas un ataque: recuperas {currentCard.blockHealReward:F0} de vida";
             case CardData.BlockBonusType.CounterDamageOnBlock:
                 return $"Si bloqueas un ataque: infliges {currentCard.blockCounterDamage:F0} de daño al enemigo";
             default:
@@ -261,6 +261,8 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 return $"Bloqueo +{currentCard.boosterValue * 100}%";
             case CardData.BoosterEffectType.IncreaseHeal:
                 return $"Curación +{currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.Heal:
+                return $"Curación instantánea";
             default:
                 return currentCard.description;
         }
@@ -280,6 +282,12 @@ public class CardDisplay : MonoBehaviour, IPointerDownHandler
                 return $"Aumenta el bloqueo en {currentCard.boosterValue * 100}%";
             case CardData.BoosterEffectType.IncreaseHeal:
                 return $"Aumenta la curación en {currentCard.boosterValue * 100}%";
+            case CardData.BoosterEffectType.Heal:
+            {
+                float healValue = (currentCard.baseValue + currentCard.individualBaseValueUpgrade) *
+                    (GameManager.Instance != null ? GameManager.Instance.healMultiplier : 1f);
+                return $"Restaura {healValue:F0} de vida al jugarla";
+            }
             default:
                 return "Efecto desconocido";
         }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96a0746ce4843254fbb0b867109c7d41, type: 3}
   m_Name: Mistico
   m_EditorClassIdentifier: 
-  cardType: 1
+  cardType: 3
   baseValue: 1
   cardName: Lucyy
   description: ta loca
@@ -29,7 +29,7 @@ MonoBehaviour:
   boosterEffectType: 2
   boosterValue: 1
   blockBonusType: 1
-  blockEnergyReward: 4
+  blockHealReward: 60
   blockCounterDamage: 0
   nombreObjetoEnEscenaAActivar: Container
   animationPrefab: {fileID: 8617339864812495883, guid: 6d72ea234362a4c43ae9b8791e43f58f, type: 3}

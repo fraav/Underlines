@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Loka
   m_EditorClassIdentifier: 
   cardType: 3
-  baseValue: 1
+  baseValue: 70
   cardName: Lucyy
   description: ta loca
-  playEnergyCost: 4
+  playEnergyCost: 3
   icon: {fileID: 21300000, guid: 4c85e4746eae0064b8e70c7bd1cd918f, type: 3}
   shopIcon: {fileID: 0}
   customAnimationTrigger: 
@@ -26,8 +26,11 @@ MonoBehaviour:
   animationObjectActiveTime: 2
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
-  boosterEffectType: 0
-  boosterValue: 1
+  boosterEffectType: 4
+  boosterValue: 70
+  blockBonusType: 0
+  blockHealReward: 10
+  blockCounterDamage: 100
   nombreObjetoEnEscenaAActivar: Container
   animationPrefab: {fileID: 8617339864812495883, guid: 6d72ea234362a4c43ae9b8791e43f58f, type: 3}
   prefabSpawnPosition: {x: -49.75, y: -1.53, z: -3.28}

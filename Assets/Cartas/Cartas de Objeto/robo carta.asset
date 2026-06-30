@@ -20,7 +20,7 @@ MonoBehaviour:
   baseValue: 50
   restoreEnergyAmount: 1
   drawCardCount: 1
-  playEnergyCost: 1
+  playEnergyCost: 2
   individualBaseValueUpgrade: 0
   animationPresentation: 1
   customAnimationTrigger: 

@@ -68,33 +68,50 @@ public class CardInfoPanel : MonoBehaviour
 
         Debug.Log($"Mostrando información de carta: {cardData.cardName}");
 
-        // Actualizar información de la carta
         UpdateCardInfo(cardData);
-
-        // Mostrar panel
         ShowPanel();
+        BlockAllInteractions();
+    }
 
-        // Bloquear interacciones
+    public void ShowObjectCardInfo(ObjectCardData cardData)
+    {
+        if (cardData == null) return;
+
+        Debug.Log($"Mostrando información de carta objeto: {cardData.cardName}");
+
+        UpdateObjectCardInfo(cardData);
+        ShowPanel();
         BlockAllInteractions();
     }
 
     private void UpdateCardInfo(CardData cardData)
     {
-        // Actualizar imagen
         if (cardImage != null && cardData.icon != null)
             cardImage.sprite = cardData.icon;
 
-        // Actualizar nombre
         if (cardNameText != null)
             cardNameText.text = cardData.cardName;
 
-        // Actualizar descripción
         if (cardDescriptionText != null)
             cardDescriptionText.text = cardData.description;
 
-        // Actualizar efecto con valores calculados
         if (cardEffectText != null)
             cardEffectText.text = GetCardEffectText(cardData);
+    }
+
+    private void UpdateObjectCardInfo(ObjectCardData cardData)
+    {
+        if (cardImage != null && cardData.icon != null)
+            cardImage.sprite = cardData.icon;
+
+        if (cardNameText != null)
+            cardNameText.text = cardData.cardName;
+
+        if (cardDescriptionText != null)
+            cardDescriptionText.text = cardData.description;
+
+        if (cardEffectText != null)
+            cardEffectText.text = GetObjectCardEffectText(cardData);
     }
 
     private string GetCardEffectText(CardData cardData)
@@ -129,6 +146,51 @@ public class CardInfoPanel : MonoBehaviour
 
             default:
                 return "Tipo de carta desconocido";
+        }
+    }
+
+    private string GetObjectCardEffectText(ObjectCardData cardData)
+    {
+        int energyCost = GameManager.Instance != null
+            ? GameManager.Instance.GetObjectPlayEnergyCost(cardData)
+            : cardData.playEnergyCost;
+
+        string costLine = $"Coste de energía: <color=#FFD700>{energyCost}</color>\n\n";
+
+        switch (cardData.effectType)
+        {
+            case ObjectCardData.ObjectEffectType.DoubleNextAction:
+                return costLine +
+                       "<color=#FFAA44><b>OBJETO — POTENCIADOR</b></color>\n\n" +
+                       "Duplica la próxima acción del jugador (ataque, curación o bloqueo básico).\n\n" +
+                       "Efecto instantáneo. No termina el turno.";
+
+            case ObjectCardData.ObjectEffectType.Heal:
+                float healValue = (cardData.baseValue + cardData.individualBaseValueUpgrade) *
+                    (GameManager.Instance != null ? GameManager.Instance.healMultiplier : 1f);
+                return costLine +
+                       "<color=#44FF44><b>OBJETO — CURACIÓN</b></color>\n\n" +
+                       $"Restaura <color=#FFD700>{healValue:F1}</color> de vida al jugador.\n\n" +
+                       $"Valor base: {cardData.baseValue + cardData.individualBaseValueUpgrade:F1}\n" +
+                       (GameManager.Instance != null
+                           ? $"Multiplicador de curación: {GameManager.Instance.healMultiplier:F1}x\n\n"
+                           : "\n") +
+                       "Efecto instantáneo. No termina el turno.";
+
+            case ObjectCardData.ObjectEffectType.RestoreEnergy:
+                return costLine +
+                       "<color=#44AAFF><b>OBJETO — ENERGÍA</b></color>\n\n" +
+                       $"Restaura <color=#FFD700>{cardData.restoreEnergyAmount}</color> de energía.\n\n" +
+                       "Efecto instantáneo. No termina el turno.";
+
+            case ObjectCardData.ObjectEffectType.DrawCard:
+                return costLine +
+                       "<color=#AA88FF><b>OBJETO — ROBO</b></color>\n\n" +
+                       $"Roba <color=#FFD700>{cardData.drawCardCount}</color> carta(s) del mazo principal.\n\n" +
+                       "Efecto instantáneo. No termina el turno.";
+
+            default:
+                return costLine + cardData.description;
         }
     }
 

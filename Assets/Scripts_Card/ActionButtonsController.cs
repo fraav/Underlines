@@ -196,6 +196,11 @@ public class ActionButtonsController : MonoBehaviour
         
         Debug.Log("[ActionButtonsController] Iniciando ejecución de ataque...");
 
+        if (GameManager.Instance != null && GameManager.Instance.playerController != null)
+        {
+            GameManager.Instance.playerController.CancelBlockPreparation();
+        }
+
         // Obtener efectos acumulados
         int doubleActionCount = 0;
         float damageMultiplier = 1.0f;
@@ -276,6 +281,11 @@ public class ActionButtonsController : MonoBehaviour
 
         // El bloqueo siempre se ejecuta una sola vez, independientemente de DoubleAction
         yield return StartCoroutine(PerformBlockAnimation(reductionMultiplier));
+
+        if (GameManager.Instance != null && GameManager.Instance.playerController != null)
+        {
+            GameManager.Instance.playerController.EnterBlockStance();
+        }
 
         yield return StartCoroutine(EndPlayerTurnAfterActions());
     }
@@ -373,17 +383,9 @@ public class ActionButtonsController : MonoBehaviour
 
         void ApplyBlock()
         {
-            if (GameManager.Instance != null)
+            if (GameManager.Instance != null && GameManager.Instance.playerController != null)
             {
-                if (GameManager.Instance.enemyController != null)
-                {
-                    GameManager.Instance.enemyController.ApplyAttackReduction(reductionMultiplier);
-                }
-
-                if (GameManager.Instance.playerController != null)
-                {
-                    GameManager.Instance.playerController.ActivateBlock(reductionMultiplier);
-                }
+                GameManager.Instance.playerController.ActivateBlock(reductionMultiplier);
             }
         }
 
