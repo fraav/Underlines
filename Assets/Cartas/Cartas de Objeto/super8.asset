@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjectCardData
   cardName: 
   description: 
-  icon: {fileID: 21300000, guid: 39c6e1cba2612844798f9dad94549369, type: 3}
+  icon: {fileID: 21300000, guid: a6ae7c1629fece1429389d8c8f2554d9, type: 3}
   shopIcon: {fileID: 21300000, guid: 56dd889a4fe171d45914ffbc93819bcc, type: 3}
   effectType: 1
   baseValue: 25
@@ -22,6 +22,7 @@ MonoBehaviour:
   drawCardCount: 1
   playEnergyCost: 1
   individualBaseValueUpgrade: 0
+  animationPresentation: 0
   customAnimationTrigger: super8
   customActionPointTime: 0
   customAnimationDuration: 0
@@ -31,3 +32,4 @@ MonoBehaviour:
   animationPrefab: {fileID: 0}
   prefabSpawnPosition: {x: 0, y: 0, z: 0}
   attachToTarget: 0
+  prefabActionPointTime: 0

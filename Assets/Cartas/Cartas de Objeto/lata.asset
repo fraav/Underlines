@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjectCardData
   cardName: 
   description: 
-  icon: {fileID: 21300000, guid: 39c6e1cba2612844798f9dad94549369, type: 3}
+  icon: {fileID: 21300000, guid: 6cdeb614c2178314db0ed545a54c39c5, type: 3}
   shopIcon: {fileID: 21300000, guid: 56dd889a4fe171d45914ffbc93819bcc, type: 3}
-  effectType: 0
-  baseValue: 2
+  effectType: 1
+  baseValue: 70
   restoreEnergyAmount: 1
   drawCardCount: 1
   playEnergyCost: 3

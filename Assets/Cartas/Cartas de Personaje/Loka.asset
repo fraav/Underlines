@@ -22,11 +22,11 @@ MonoBehaviour:
   customAnimationTrigger: 
   customActionPointTime: 0
   customAnimationDuration: 0
-  cardSound: {fileID: 8300000, guid: 728a0d47a54516a44aa35609bdd3143a, type: 3}
-  animationObjectActiveTime: 2
+  cardSound: {fileID: 8300000, guid: 1dcac97cee1c2d74badcaa062cc49758, type: 3}
+  animationObjectActiveTime: 2.27
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
-  boosterEffectType: 4
+  boosterEffectType: 0
   boosterValue: 70
   blockBonusType: 0
   blockHealReward: 10

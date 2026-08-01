@@ -22,8 +22,8 @@ MonoBehaviour:
   customAnimationTrigger: 
   customActionPointTime: 0
   customAnimationDuration: 0
-  cardSound: {fileID: 8300000, guid: f21071a51f0609549927277cab22045f, type: 3}
-  animationObjectActiveTime: 2
+  cardSound: {fileID: 8300000, guid: 17d1bce39aa0a80419726d13c4f156f5, type: 3}
+  animationObjectActiveTime: 2.23
   individualBaseValueUpgrade: 0
   individualDamageMultiplier: 1
   boosterEffectType: 1
